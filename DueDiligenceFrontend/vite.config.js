@@ -5,11 +5,13 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: true, // listen on all interfaces (required for Traefik/Caddy)
-    port: 3000, // ensure this matches the port Traefik expects
+    host: '0.0.0.0', // listen on all interfaces
+    port: 5173, // sandbox port
     allowedHosts: [
+      '5173-ihzqwl5fhfcbjidc9trwd-c81df28e.sandbox.novita.ai',
       'ecg8sggokso8g00o8okoc8sc.18.143.160.131.sslip.io',
       'localhost',
+      '.sandbox.novita.ai', // Allow all sandbox domains
     ],
     proxy: {
       // Proxy API requests to Flask backend during development
