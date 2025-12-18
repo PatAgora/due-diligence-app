@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>System Settings</h2>
+
+  <!-- Core system settings -->
+  <form method="POST" class="mt-3">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="mb-3">
+      <label for="rework_overdue_days" class="form-label">Rework Overdue Days</label>
+      <input type="number" class="form-control" id="rework_overdue_days" name="rework_overdue_days" value="{{ settings.rework_overdue_days }}">
+    </div>
+
+    <div class="mb-3">
+      <label for="default_task_limit" class="form-label">Default Reviewer Task Limit</label>
+      <input type="number" class="form-control" id="default_task_limit" name="default_task_limit" value="{{ settings.default_task_limit }}">
+    </div>
+
+    <div class="mb-3">
+      <label for="password_expiry_days" class="form-label">Password Expiry Interval (days)</label>
+      <input type="number" class="form-control" id="password_expiry_days" name="password_expiry_days" value="{{ settings.password_expiry_days }}">
+    </div>
+
+    <button type="submit" class="btn btn-success">Save Changes</button>
+  </form>
+
+  <style>
+    h3 {
+      margin-top: 30px;
+    }
+    form.d-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    form.d-inline input {
+      margin-right: 5px;
+    }
+  </style>
+</div>
+{% endblock %}

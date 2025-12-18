@@ -1,0 +1,293 @@
+/* ---------------- Base ---------------- */
+:root {
+  --brand-dark: #1c1f24;     /* dark grey from your logo background */
+  --brand-orange: #f37021;
+  --bg: #f7f8fa;
+  --card-bg: #fff;
+  --border: #ddd;
+  --muted: #666;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: #222;
+}
+
+/* ---------------- Topbar ---------------- */
+.topbar {
+  background: var(--brand-dark);
+  padding: 8px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 3px solid var(--brand-orange);
+}
+
+.topbar .brand { display: flex; align-items: center; gap: 10px; }
+.topbar .logo { max-height: 48px; width: auto; }
+.topbar .brand .title { color: #fff; font-weight: 600; }
+
+/* Right-side nav links (white -> orange on hover) */
+.topbar .nav-actions a,
+.topbar .nav-actions .btn {
+  color: #fff;
+  text-decoration: none;
+  margin-left: 18px;
+  font-size: 15px;
+  font-weight: 500;
+  background: none;
+  border: none;
+  padding: 0;
+  height: auto;
+  cursor: pointer;
+  transition: color .2s ease;
+}
+
+.topbar .nav-actions a:hover,
+.topbar .nav-actions .btn:hover,
+.topbar .nav-actions a.active {
+  color: var(--brand-orange);
+}
+
+/* Health / SME status indicator */
+.topbar .health {
+  font-size: 0.95em;
+  color: #fff;                     /* base white */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.topbar .health.ok { color: #3ccf7c; }   /* Online */
+.topbar .health.err { color: #e74c3c; }  /* Offline */
+
+/* ---------------- Layout ---------------- */
+main {
+  max-width: 960px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+
+section {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+}
+
+h2 { margin-top: 0; font-size: 1.2em; color: #111; }
+
+/* ---------------- Chat ---------------- */
+.chat { position: relative; }      /* allow hero overlay positioning */
+
+#chat-window {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fafafa;
+  height: 300px;
+  overflow-y: auto;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.msg { margin: 6px 0; line-height: 1.4; }
+.msg.user strong { color: #111; }
+.msg.user { text-align: right; }
+.msg.bot strong, .msg.assistant strong { color: var(--brand-orange); }
+.msg.thinking { opacity: 0.7; font-style: italic; }
+
+/* --- Hero overlay image that sits over the chat window --- */
+.hero-overlay {
+  position: absolute;
+  left: 20px;                      /* align with section padding */
+  right: 20px;
+  top: 66px;                       /* just above #chat-window in your layout */
+  height: 300px;                   /* match #chat-window height */
+  border-radius: 8px;
+  pointer-events: none;            /* allow clicks to pass through */
+  overflow: hidden;
+  display: none;                   /* default hidden; toggle via HTML if desired */
+}
+.hero-overlay img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;               /* fill while preserving aspect */
+  opacity: 0.6;                    /* tasteful blend over chat area */
+  filter: saturate(1) contrast(1.05);
+}
+
+/* ---------------- Forms ---------------- */
+form { display: flex; gap: 8px; }
+
+form input[type="text"] {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+form button {
+  background: var(--brand-orange);
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  height: 40px;                 /* unify Ask button height */
+}
+form button:hover { background: #e25e11; }
+form button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Row that contains the referral button under the Ask form */
+.actions-bar { margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+.actions-bar .spacer { flex: 1; }
+
+/* Make Raise referral visually identical to Ask */
+#raise-referral {
+  background: var(--brand-orange);
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  height: 40px;                 /* same height as Ask */
+  display: none;                /* app.js toggles visibility */
+}
+#raise-referral:hover { background: #e25e11; }
+#raise-referral:disabled { opacity: .6; cursor: not-allowed; }
+
+/* ---------------- Admin Docs List ---------------- */
+.doc-table { display: grid; gap: 12px; margin-top: 10px; }
+
+.doc-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--border);
+  padding: 10px;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.doc-title { font-weight: bold; }
+.doc-meta { color: var(--muted); font-size: 0.9em; margin-right: 10px; }
+
+.doc-del {
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.doc-del:hover { background: #c0392b; }
+
+/* ---------------- Card list (My Referrals) ---------------- */
+.card-list { display: grid; gap: 12px; margin-top: 10px; }
+.card {
+  border: 1px solid var(--border);
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.card-row { margin: 4px 0; }
+.card-actions { margin-top: 8px; display:flex; gap:10px; align-items:center; }
+.badge {
+  display: inline-block;
+  font-size: .8em;
+  background: #fff3e9;
+  color: var(--brand-orange);
+  border: 1px solid #ffd7bd;
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+/* ---------------- Misc ---------------- */
+.muted { color: var(--muted); font-size: 0.9em; }
+.muted-small { color: var(--muted); font-size: 0.8em; }
+
+/* ---------------- Referral Modal ---------------- */
+dialog#referral-modal {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 600px;
+  width: 100%;
+  background: var(--card-bg);
+}
+dialog#referral-modal::backdrop { background: rgba(0,0,0,.35); }
+
+/* Override global "form {display:flex}" for the dialog */
+dialog#referral-modal form { display: block; }
+
+/* Vertical, comfortable layout */
+dialog#referral-modal form.ref-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ref-form .field { display: flex; flex-direction: column; gap: 6px; }
+
+.ref-form textarea {
+  min-height: 110px;
+  resize: vertical;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+}
+
+.ref-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Generic button helpers (used in dialog) */
+.btn {
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 10px 16px;
+  font-size: 0.95em;
+  height: 40px;
+}
+.btn-primary { background: var(--brand-orange); color: #fff; }
+.btn-primary:hover { background: #e25e11; }
+.btn-ghost { background: #eee; color: #333; }
+.btn-ghost:hover { background: #ddd; }
+
+/* ---------------- Admin Settings Layout Fix ---------------- */
+section.settings #config-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;   /* two side-by-side fields */
+  gap: 12px 16px;
+  align-items: start;
+}
+
+section.settings #config-form .field {
+  margin: 0;
+}
+
+section.settings #config-form .field input {
+  width: 100%;
+}
+
+section.settings #config-form .form-actions {
+  grid-column: 1 / -1;              /* button row spans both cols */
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 6px;
+}
+
+@media (max-width: 768px) {
+  section.settings #config-form {
+    grid-template-columns: 1fr;     /* stack fields on small screens */
+  }
+}

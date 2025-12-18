@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block content %}
+{% set outcome = outcome or '' %}
+{% set comment = comment or '' %}
+{% set rework_notes = rework_notes or '' %}
+{% set rework_required = rework_required if rework_required is not none else false %}
+
+<div class="review-panel">
+  <div class="review-header">
+    <h2><strong>Review Panel – Level {{ level or 'N/A' }}</strong></h2>
+    <div class="review-info">
+      <p><strong>Task ID:</strong> {{ task_id }}</p>
+      <p><strong>Status:</strong> {{ status }}</p>
+      <p><strong>Reviewer:</strong> {{ reviewer_name or 'Unassigned' }}</p>
+      <p><strong>Score:</strong> {{ total_score or 'N/A' }}</p>
+    </div>
+  </div>
+
+  {% if hit_type == "individual" %}
+    {% include "review_individual.html" %}
+  {% elif hit_type == "entity" %}
+    {% include "review_entity.html" %}
+  {% elif hit_type == "payment" %}
+    {% include "review_payment.html" %}
+  {% endif %}
+
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="task_id" value="{{ task_id }}">
+
+    {% if system_rationale %}
+    <div class="form-group">
+      <label for="system_rationale"><strong>Screening Engine Rationale</strong></label>
+      <textarea class="readonly-cell" readonly id="system_rationale">{{ system_rationale }}</textarea>
+    </div>
+    {% endif %}
+
+    <div class="form-group">
+      <label for="match_explanation"><strong>Match Explanation</strong></label>
+      <textarea class="readonly-cell" readonly id="match_explanation">{{ review.match_explanation if review and 'match_explanation' in review else 'No explanation provided.' }}</textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="outcome">Outcome 🔒</label>
+      <input type="text" class="readonly-cell" readonly value="{{ review['l' ~ level ~ '_outcome'] if review and ('l' ~ level ~ '_outcome') in review else '—' }}">
+    </div>
+
+    <div class="form-group">
+      <label for="primary_rationale">Decision RCA 🔒</label>
+      <input type="text" class="readonly-cell" readonly value="{{ review['l' ~ level ~ '_primary_rationale'] if review and ('l' ~ level ~ '_primary_rationale') in review else '—' }}">
+    </div>
+
+    <div class="form-group">
+      <label for="rationale">Decision Rationale 🔒</label>
+      <textarea class="readonly-cell" readonly rows="4">{{ review['l' ~ level ~ '_rationale'] if review and ('l' ~ level ~ '_rationale') in review else '—' }}</textarea>
+    </div>
+
+    <fieldset class="mt-4 border p-3">
+      <legend><strong>QC / QA Review</strong></legend>
+
+      <div class="form-group mb-3">
+        <label for="outcome"><strong>QC Outcome</strong></label>
+        <select name="outcome" class="form-select" required>
+          <option value="">-- Select --</option>
+          <option value="Pass" {% if outcome == "Pass" %}selected{% endif %}>Pass</option>
+          <option value="Pass with Feedback" {% if outcome == "Pass with Feedback" %}selected{% endif %}>Pass with Feedback</option>
+          <option value="Fail" {% if outcome == "Fail" %}selected{% endif %}>Fail</option>
+        </select>
+      </div>
+
+      <div class="form-check mb-3">
+        <input type="checkbox" class="form-check-input" id="rework_required" name="rework_required" {% if rework_required %}checked{% endif %}>
+        <label class="form-check-label" for="rework_required">Rework Required</label>
+      </div>
+
+      <div class="form-group mb-3">
+        <label for="rework_notes"><strong>What Rework is Required?</strong></label>
+        <textarea class="form-control" name="rework_notes" id="rework_notes" rows="3">{{ rework_notes }}</textarea>
+      </div>
+
+      <div class="form-group mb-4">
+        <label for="comment"><strong>Feedback / Comments</strong></label>
+        <textarea class="form-control" name="comment" id="comment" rows="3">{{ comment }}</textarea>
+      </div>
+
+      <div class="review-buttons">
+        <button type="submit" class="btn btn-primary">Submit Review</button>
+        <button type="submit" name="action" value="refer_sme" class="btn btn-warning">Refer to SME</button>
+      </div>
+    </fieldset>
+  </form>
+</div>
+
+<style>
+.review-panel { padding: 20px; font-family: Arial, sans-serif; }
+.review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.review-info p { margin: 4px 0; font-size: 14px; }
+textarea.readonly-cell,
+input.readonly-cell {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f0f0f0;
+  color: #333;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.review-buttons { display: flex; gap: 10px; margin-top: 16px; }
+.review-buttons .btn { padding: 10px 18px; font-size: 14px; border-radius: 4px; cursor: pointer; border: none; }
+.btn-primary { background-color: #007bff; color: white; }
+.btn-warning { background-color: #ffc107; color: black; }
+</style>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="fw-bold mb-3">Upload / Ingest</h2>
+<p class="text-muted">
+  Upload transactions CSV (columns: <code>id, txn_date, customer_id, direction, amount, currency, base_amount, country_iso2, payer_sort_code, payee_sort_code, channel, narrative</code>).
+  You can also upload reference data.
+</p>
+
+<form method="post" enctype="multipart/form-data" class="mb-4">
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Transactions CSV</label>
+      <input class="form-control" type="file" name="tx_file" accept=".csv">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Country Risk CSV</label>
+      <input class="form-control" type="file" name="country_file" accept=".csv">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Sort Codes CSV</label>
+      <input class="form-control" type="file" name="sort_file" accept=".csv">
+    </div>
+  </div>
+  <div class="mt-3">
+    <button class="btn btn-primary">Upload & Process</button>
+    <a class="btn btn-outline-secondary" href="{{ url_for('download_sample', name='transactions_sample.csv') }}">Download sample transactions</a>
+    <a class="btn btn-outline-secondary" href="{{ url_for('download_sample', name='ref_country_risk.csv') }}">Sample country risk</a>
+    <a class="btn btn-outline-secondary" href="{{ url_for('download_sample', name='ref_sort_codes.csv') }}">Sample sort codes</a>
+  </div>
+</form>
+{% endblock %}

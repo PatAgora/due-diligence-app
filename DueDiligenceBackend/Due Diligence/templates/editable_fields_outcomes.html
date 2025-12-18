@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Editable Fields • Outcomes</h2>
+
+  <div class="row">
+    <div class="col-lg-6">
+      <form method="post" class="card mb-4">
+        <div class="card-body">
+          <h5 class="card-title">Add Outcome</h5>
+          <div class="mb-3">
+            <label class="form-label">Outcome Name</label>
+            <input type="text" class="form-control" name="name" placeholder="e.g. Discount" required>
+          </div>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-primary">Add</button>
+        </div>
+      </form>
+
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Existing Outcomes</h5>
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr><th style="width:60%">Name</th><th class="text-end">Actions</th></tr>
+            </thead>
+            <tbody>
+              {% for o in outcomes %}
+                <tr>
+                  <td>{{ o['name'] }}</td>
+                  <td class="text-end">
+                    <form method="post" action="{{ url_for('admin_delete_outcome', outcome_id=o['id']) }}" onsubmit="return confirm('Delete this outcome?')">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="btn btn-sm btn-outline-danger">Delete</button>
+                    </form>
+                  </td>
+                </tr>
+              {% else %}
+                <tr><td colspan="2" class="text-muted">No outcomes yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <p class="text-muted small mb-0">Changes here are live. They immediately update the Outcome dropdown in case reviews.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

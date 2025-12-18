@@ -1,0 +1,41 @@
+<div class="comparison-table mt-4">
+  <h3 class="mb-3">Entity Information</h3>
+  <table class="table table-bordered">
+    <thead class="table-light">
+      <tr>
+        <th>Field</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Entity Name</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.entity_name or '—' }}</textarea></td>
+      </tr>
+      <tr>
+        <td>Entity Type</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.entity_type or '—' }}</textarea></td>
+      </tr>
+      <tr>
+        <td>Registration Number</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.entity_registration_number or '—' }}</textarea></td>
+      </tr>
+      <tr>
+        <td>Country of Incorporation</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.entity_country_of_incorporation or '—' }}</textarea></td>
+      </tr>
+      <tr>
+        <td>Industry</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.entity_industry or '—' }}</textarea></td>
+      </tr>
+      <tr>
+        <td>Related Persons</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.entity_related_persons or '—' }}</textarea></td>
+      </tr>
+      <tr>
+        <td>Address</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.address or '—' }}</textarea></td>
+      </tr>
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="fw-bold mb-0">QC Lead Dashboard (Level {{ level|default('') }})</h1>
+  </div>
+
+  <style>
+    .hm-zero { color:#6c757d; opacity:.75; }
+    .cell-link { display:block; color:inherit; text-decoration:none; }
+    .cell-link:hover { text-decoration: underline; }
+    .card-title { font-weight: 600; }
+  </style>
+
+  <!-- Filters -->
+  <form method="get" class="row g-2 mb-4 align-items-center">
+    <div class="col-auto">
+      <select name="date_range" class="form-select form-select-sm">
+        <option value="this_week"  {{ 'selected' if selected_date=='this_week'  else '' }}>Current Week</option>
+        <option value="prev_week"  {{ 'selected' if selected_date=='prev_week'  else '' }}>Previous Week</option>
+        <option value="last_30"    {{ 'selected' if selected_date=='last_30'    else '' }}>Last 30 Days</option>
+        <option value="all_time"   {{ 'selected' if selected_date=='all_time'   else '' }}>All Time</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+    </div>
+  </form>
+
+  <!-- KPI Cards (white tiles like TL) -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-md-3">
+      <div class="card text-center p-4 shadow-sm">
+        <h6 class="mb-1">Active WIP</h6>
+        <div class="display-6 text-primary">{{ active_wip|default(0) }}</div>
+        <small class="text-muted">Awaiting finalisation at Level {{ level|default('') }}</small>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="card text-center p-4 shadow-sm">
+        <h6 class="mb-1">Completed</h6>
+        <div class="display-6 text-primary">{{ total_completed|default(0) }}</div>
+        <small class="text-muted">Filtered by selected date</small>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="card text-center p-4 shadow-sm">
+        <h6 class="mb-1">Outstanding Reworks</h6>
+        <div class="display-6 text-primary">{{ outstanding_reworks|default(0) }}</div>
+        <small class="text-muted">Not yet finalised</small>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="card text-center p-4 shadow-sm">
+        <h6 class="mb-1">QC Pass %</h6>
+        <div class="display-6 text-primary">{{ qc_pass_pct|default(0) }}%</div>
+        <small class="text-muted">Filtered by selected date</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Three panels row: Quality Stats, Individual Output (Completed), Sampling Rates -->
+  <div class="row g-4 mb-4 align-items-stretch">
+    <!-- Quality Stats -->
+    <div class="col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body d-flex flex-column align-items-center">
+          <h5 class="card-title">Quality Stats</h5>
+          {% if qc_sample|default(0) > 0 %}
+            <div id="qualityChart" style="height:200px; width:200px;"></div>
+            <p class="mt-auto text-muted">Sample: {{ qc_sample }}</p>
+          {% else %}
+            <div class="flex-fill d-flex align-items-center justify-content-center w-100" style="min-height: 200px;">
+              <span class="text-muted">No QC data available for the selected period.</span>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Individual Output (Completed) for QC -->
+    <div class="col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title">Individual Output (Completed)</h5>
+          <div class="flex-grow-1" style="position: relative; height: 220px;">
+            <canvas id="qcOutputChart"></canvas>
+          </div>
+          <small class="text-muted mt-2">Completed QC checks by reviewer (date filter applied)</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sampling Rates -->
+    <div class="col-lg-4">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title">Sampling Rates</h5>
+          <div class="table-responsive">
+            <table class="table table-sm mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Reviewer</th>
+                  <th class="text-end">Rate %</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% if sampling_rates|default([]) %}
+                  {% for s in sampling_rates %}
+                    <tr>
+                      <td class="fw-semibold">{{ s.reviewer_name }}</td>
+                      <td class="text-end">{{ "%.1f"|format(s.rate) }}%</td>
+                    </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr><td colspan="2" class="text-muted text-center">No sampling data</td></tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team WIP summary (clickable) BELOW the three panels -->
+  <div class="card shadow-sm p-3 mb-5">
+    <h5 class="mb-3">Team WIP</h5>
+    <div class="table-responsive">
+      <table class="table table-striped table-sm mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>QC Reviewer</th>
+            <th class="text-end">Assigned</th>
+            <th class="text-end">In Progress</th>
+            <th class="text-end">Rework Pending</th>
+            <th class="text-end">Pending Recheck</th>
+            <th class="text-end">Total WIP</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if team_wip_rows|default([]) %}
+            {% for r in team_wip_rows %}
+              <tr>
+                <td>{{ r.reviewer_name }}</td>
+                <td class="text-end">
+                  <a class="cell-link" href="{{ url_for('qc_wip_cases', bucket='assigned', reviewer_id=r.reviewer_id) }}">{{ r.assigned }}</a>
+                </td>
+                <td class="text-end">
+                  <a class="cell-link" href="{{ url_for('qc_wip_cases', bucket='in_progress', reviewer_id=r.reviewer_id) }}">{{ r.in_progress }}</a>
+                </td>
+                <td class="text-end">
+                  <a class="cell-link" href="{{ url_for('qc_wip_cases', bucket='rework_pending', reviewer_id=r.reviewer_id) }}">{{ r.rework_pending }}</a>
+                </td>
+                <td class="text-end">
+                  <a class="cell-link" href="{{ url_for('qc_wip_cases', bucket='pending_recheck', reviewer_id=r.reviewer_id) }}">{{ r.pending_recheck }}</a>
+                </td>
+                <td class="text-end fw-semibold">
+                  <a class="cell-link" href="{{ url_for('qc_wip_cases', bucket='assigned', reviewer_id=r.reviewer_id) }}">{{ r.total_wip }}</a>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="6" class="text-center text-muted">No active WIP</td></tr>
+          {% endif %}
+          <tr class="table-active">
+            <td class="fw-semibold">Awaiting Assignment</td>
+            <td class="text-end" colspan="5">
+              <a class="cell-link" href="{{ url_for('qc_wip_cases', bucket='awaiting_assignment') }}">{{ awaiting_assignment|default(0) }}</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.plot.ly/plotly-2.29.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+{# Quality pie #}
+{% if qc_sample|default(0) > 0 %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const qc_pct = parseFloat("{{ qc_pass_pct|default(0) }}");
+  Plotly.newPlot("qualityChart", [{
+    values: [qc_pct, 100 - qc_pct],
+    labels: ['Pass','Fail'],
+    type: 'pie',
+    hole: 0.5,
+    marker: { colors: ['#22c55e','#ef4444'] }
+  }], {
+    height: 250,
+    width: 250,
+    showlegend: true,
+    margin: { t:10, b:0, l:0, r:0 },
+    legend: { orientation:'h', x:0.5, xanchor:'center', y:-0.1 }
+  });
+});
+</script>
+{% endif %}
+
+{# Individual Output (Completed) – horizontal bars #}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const el = document.getElementById('qcOutputChart');
+  if (!el) return;
+
+  const labels = {{ reviewer_output_labels|default([])|tojson }};
+  const counts = {{ reviewer_output_counts|default([])|tojson }};
+
+  if (!Array.isArray(labels) || labels.length === 0) return;
+
+  new Chart(el, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{ label: 'Completed', data: counts }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { beginAtZero: true, ticks: { precision:0 } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+});
+</script>
+{% endblock %}

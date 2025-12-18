@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>QC Allocation Panel</h2>
+    <form method="get" class="row g-3 mt-3">
+        <div class="col-md-3">
+            <label for="level" class="form-label">Filter by Level</label>
+            <select name="level" id="level" class="form-select" onchange="this.form.submit()">
+                <option value="">All</option>
+                <option value="1" {% if selected_level == '1' %}selected{% endif %}>Level 1</option>
+                <option value="2" {% if selected_level == '2' %}selected{% endif %}>Level 2</option>
+                <option value="3" {% if selected_level == '3' %}selected{% endif %}>Level 3</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="reviewer_id" class="form-label">Filter by Reviewer</label>
+            <select name="reviewer_id" id="reviewer_id" class="form-select" onchange="this.form.submit()">
+                <option value="">All</option>
+                {% for reviewer in reviewers %}
+                    <option value="{{ reviewer.id }}" {% if selected_reviewer and selected_reviewer|int == reviewer.id %}selected{% endif %}>
+                        {{ reviewer.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    <table class="table table-striped mt-4">
+        <thead class="table-dark">
+            <tr>
+                <th>Task ID</th>
+                <th>Level</th>
+                <th>Reviewer</th>
+                <th>Status</th>
+                <th>Last Updated</th>
+                <th>QC Assigned To</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for review in reviews %}
+            <tr>
+                <td>{{ review.task_id }}</td>
+                <td>Level {{ review.level }}</td>
+                <td>{{ review.reviewer_name or 'Unassigned' }}</td>
+                <td>{{ review.status }}</td>
+                <td>{{ review.updated_at }}</td>
+                <td>
+                    {% if review.qc_assigned_to %}
+                        {{ review.qc_assigned_to }}
+                    {% else %}
+                        <em>Not assigned</em>
+                    {% endif %}
+                </td>
+                <td>
+                    <form method="post" action="/assign_qc/{{ review.id }}">
+                        <button class="btn btn-sm btn-primary" type="submit">Assign to Me</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

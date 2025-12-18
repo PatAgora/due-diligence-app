@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Permissions Editor</h2>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST">
+    <table class="table table-bordered align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>Role</th>
+          <th>Feature</th>
+          <th class="text-center">Can View</th>
+          <th class="text-center">Can Edit</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for perm in permissions %}
+        {% set i = loop.index0 %}
+        <tr>
+          <td>
+            <input type="hidden" name="role" value="{{ perm.role }}">
+            {{ perm.role | friendly_role }}
+          </td>
+          <td>
+            <input type="hidden" name="feature" value="{{ perm.feature }}">
+            {{ perm.feature }}
+          </td>
+          <td class="text-center">
+            <input type="checkbox" name="view_{{ i }}" {% if perm.can_view %}checked{% endif %}>
+          </td>
+          <td class="text-center">
+            <input type="checkbox" name="edit_{{ i }}" {% if perm.can_edit %}checked{% endif %}>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <hr>
+
+    <h5 class="mt-4">Add New Permission</h5>
+    <table class="table align-middle">
+      <tr>
+        <td>
+          <select class="form-select" name="role">
+            <option disabled selected>Choose Role</option>
+            <option value="admin">Admin</option>
+            <option value="team_lead_l1">Team Lead (Level 1)</option>
+            <option value="team_lead_l2">Team Lead (Level 2)</option>
+            <option value="reviewer_l1">Reviewer (Level 1)</option>
+            <option value="reviewer_l2">Reviewer (Level 2)</option>
+            <option value="reviewer_l3">Reviewer (Level 3)</option>
+            <option value="qc">Quality Control</option>
+            <option value="qa">Quality Assurance</option>
+            <option value="sme">Subject Matter Expert</option>
+            <option value="operations_manager">Operations Manager</option>
+          </select>
+        </td>
+        <td>
+          <select class="form-select" name="feature">
+            <option disabled selected>Choose Feature</option>
+            <option value="view_dashboard">View Dashboard</option>
+            <option value="assign_tasks">Assign Tasks</option>
+            <option value="review_tasks">Review Tasks</option>
+            <option value="edit_users">Edit Users</option>
+            <option value="reset_passwords">Reset Passwords</option>
+            <option value="invite_users">Invite Users</option>
+            <option value="view_qc_qa">View QC/QA</option>
+            <option value="manage_settings">Manage Settings</option>
+          </select>
+        </td>
+        <td class="text-center">
+          <input type="checkbox" name="view_{{ permissions|length }}">
+        </td>
+        <td class="text-center">
+          <input type="checkbox" name="edit_{{ permissions|length }}">
+        </td>
+      </tr>
+    </table>
+
+    <button type="submit" class="btn btn-success">Save Changes</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="review-panel">
+    <h2><strong>Review Panel – Task {{ review.task_id }}</strong></h2>
+    <p><strong>Customer ID:</strong> {{ review.customer_id }} | <strong>Watchlist ID:</strong> {{ review.watchlist_id }}</p>
+    <p><strong>Hit Type:</strong> {{ review.hit_type }} | <strong>System Rationale:</strong> {{ review.system_rationale }}</p>
+
+    <!-- Level 1 Review Form -->
+    <div class="card mb-3">
+        <div class="card-header bg-primary text-white">Level 1 Review</div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('submit_review', task_id=review.task_id, level=1) }}">
+                <div class="mb-2">
+                    <label for="l1_outcome">Outcome:</label>
+                    <select name="outcome" class="form-control">
+                        <option value="Discount" {% if review.l1_outcome == 'Discount' %}selected{% endif %}>Discount</option>
+                        <option value="Potential True Match" {% if review.l1_outcome == 'Potential True Match' %}selected{% endif %}>Potential True Match</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="l1_rationale">Rationale:</label>
+                    <textarea name="rationale" class="form-control">{{ review.l1_rationale or '' }}</textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Submit Level 1 Review</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Level 2 -->
+    <div class="card mb-3">
+        <div class="card-header bg-warning text-dark">
+            <a class="text-dark" data-bs-toggle="collapse" href="#level2" role="button">Level 2 Review</a>
+        </div>
+        <div id="level2" class="collapse">
+            <div class="card-body">
+                {% if review.l2_outcome %}
+                    <p><strong>Outcome:</strong> {{ review.l2_outcome }}</p>
+                    <p><strong>Rationale:</strong> {{ review.l2_rationale }}</p>
+                {% else %}
+                    <form method="POST" action="{{ url_for('submit_review', task_id=review.task_id, level=2) }}">
+                        <div class="mb-2">
+                            <label for="l2_outcome">Outcome:</label>
+                            <select name="outcome" class="form-control">
+                                <option value="Escalated to Level 3">Escalated to Level 3</option>
+                                <option value="Potential True Match">Potential True Match</option>
+                                <option value="Discount">Discount</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="l2_rationale">Rationale:</label>
+                            <textarea name="rationale" class="form-control">{{ review.l2_rationale or '' }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-warning">Submit Level 2 Review</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Level 3 -->
+    <div class="card mb-3">
+        <div class="card-header bg-danger text-white">
+            <a class="text-white" data-bs-toggle="collapse" href="#level3" role="button">Level 3 Review</a>
+        </div>
+        <div id="level3" class="collapse">
+            <div class="card-body">
+                {% if review.l3_outcome %}
+                    <p><strong>Outcome:</strong> {{ review.l3_outcome }}</p>
+                    <p><strong>Rationale:</strong> {{ review.l3_rationale }}</p>
+                {% else %}
+                    <form method="POST" action="{{ url_for('submit_review', task_id=review.task_id, level=3) }}">
+                        <div class="mb-2">
+                            <label for="l3_outcome">Outcome:</label>
+                            <select name="outcome" class="form-control">
+                                <option value="Final Approval">Final Approval</option>
+                                <option value="Discount">Discount</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="l3_rationale">Rationale:</label>
+                            <textarea name="rationale" class="form-control">{{ review.l3_rationale or '' }}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Submit Level 3 Review</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

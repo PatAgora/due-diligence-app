@@ -1,0 +1,35 @@
+/* MyTasks component styles - matching the HTML template */
+.my-tasks-container {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.my-tasks-container .container-fluid,
+.my-tasks-container > .container-fluid {
+  padding-left: 0 !important;
+  padding-right: 10px !important;
+  margin-left: 0 !important;
+}
+
+/* Override Bootstrap's default container-fluid padding */
+.my-tasks-container .container-fluid {
+  --bs-gutter-x: 0 !important;
+}
+
+/* Force remove all left padding/margin from all direct children */
+.my-tasks-container > * {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+/* Override any Bootstrap row/col padding */
+.my-tasks-container .row {
+  --bs-gutter-x: 0 !important;
+  margin-left: 0 !important;
+}
+
+.my-tasks-container [class*="col-"] {
+  padding-left: 0 !important;
+}
+

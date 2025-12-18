@@ -1,0 +1,227 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import BaseLayout from './BaseLayout';
+import './ReviewerPanel.css';
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+
+function ReviewerPanel() {
+  const { taskId } = useParams();
+  const navigate = useNavigate();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    console.log('[ReviewerPanel] Mounted with taskId:', taskId);
+    if (taskId) {
+      fetchTaskData();
+    } else {
+      console.error('[ReviewerPanel] No taskId provided!');
+    }
+  }, [taskId]);
+
+  const fetchTaskData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      console.log('[ReviewerPanel] Fetching task data for:', taskId);
+      const response = await fetch(
+        `${BASE_URL}/api/reviewer_panel/${taskId}`,
+        {
+          credentials: 'include',
+          headers: { 'Accept': 'application/json' },
+        }
+      );
+
+      console.log('[ReviewerPanel] Response status:', response.status);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Task not found');
+        }
+        if (response.status === 403) {
+          throw new Error('Access denied');
+        }
+        const errorText = await response.text();
+        console.error('[ReviewerPanel] Error response:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}`);
+      }
+
+      const taskData = await response.json();
+      console.log('[ReviewerPanel] Loaded task data:', taskData);
+      setData(taskData);
+    } catch (err) {
+      console.error('[ReviewerPanel] Error fetching task data:', err);
+      setError(err.message || 'Failed to load task');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <BaseLayout>
+        <div className="container my-4">
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        </div>
+      </BaseLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <BaseLayout>
+        <div className="container my-4">
+          <div className="alert alert-danger">
+            <h4 className="alert-heading">Error</h4>
+            <p>{error}</p>
+            <button className="btn btn-primary" onClick={() => navigate(-1)}>
+              Go Back
+            </button>
+          </div>
+        </div>
+      </BaseLayout>
+    );
+  }
+
+  const review = data?.review || {};
+  const match = data?.match || {};
+
+  return (
+    <BaseLayout>
+      <div className="container-fluid my-4">
+        {/* Header */}
+        <div className="case-header mb-4">
+          <h1>Task Review: {taskId}</h1>
+          <div className="d-flex gap-2 mb-3">
+            <span className="badge bg-primary">Level: {review.level || 1}</span>
+            <span className="badge bg-info">
+              Match Score: {match.total_score || 'N/A'}
+            </span>
+            <span className="badge bg-secondary">
+              Type: {match.hit_type || 'Individual'}
+            </span>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <div className="row">
+          <div className="col-lg-9">
+            {/* Customer Information */}
+            <div className="card mb-3">
+              <div className="card-header">
+                <h5 className="mb-0">Customer Information</h5>
+              </div>
+              <div className="card-body">
+                <dl className="row">
+                  <dt className="col-sm-3">Customer Name</dt>
+                  <dd className="col-sm-9">{review.customer_name || '—'}</dd>
+                  
+                  <dt className="col-sm-3">DOB</dt>
+                  <dd className="col-sm-9">{review.customer_dob || '—'}</dd>
+                  
+                  <dt className="col-sm-3">Address</dt>
+                  <dd className="col-sm-9">{review.customer_address || '—'}</dd>
+                </dl>
+              </div>
+            </div>
+
+            {/* Watchlist Match Information */}
+            <div className="card mb-3">
+              <div className="card-header">
+                <h5 className="mb-0">Watchlist Match</h5>
+              </div>
+              <div className="card-body">
+                <dl className="row">
+                  <dt className="col-sm-3">Watchlist Name</dt>
+                  <dd className="col-sm-9">{match.watchlist_name || '—'}</dd>
+                  
+                  <dt className="col-sm-3">Match Explanation</dt>
+                  <dd className="col-sm-9">{match.match_explanation || '—'}</dd>
+                  
+                  <dt className="col-sm-3">Total Score</dt>
+                  <dd className="col-sm-9">{match.total_score || '—'}</dd>
+                </dl>
+              </div>
+            </div>
+
+            {/* Decision Section */}
+            <div className="card mb-3">
+              <div className="card-header">
+                <h5 className="mb-0">Review Decision</h5>
+              </div>
+              <div className="card-body">
+                <div className="mb-3">
+                  <label className="form-label">Outcome</label>
+                  <select className="form-select">
+                    <option value="">-- Select Outcome --</option>
+                    {data?.outcomes?.map((outcome, idx) => (
+                      <option key={idx} value={outcome.name}>
+                        {outcome.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="mb-3">
+                  <label className="form-label">Rationale</label>
+                  <textarea
+                    className="form-control"
+                    rows="4"
+                    placeholder="Enter your rationale..."
+                  ></textarea>
+                </div>
+
+                <div className="d-flex gap-2">
+                  <button className="btn btn-primary">Save</button>
+                  <button className="btn btn-success">Complete</button>
+                  <button className="btn btn-secondary" onClick={() => navigate(-1)}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="col-lg-3">
+            <div className="card sticky-side">
+              <div className="card-header">
+                <h6 className="mb-0">Assignment Info</h6>
+              </div>
+              <div className="card-body">
+                <dl className="small">
+                  <dt>Assigned To</dt>
+                  <dd>{review.assigned_to_name || '—'}</dd>
+                  
+                  <dt>Status</dt>
+                  <dd>
+                    <span className="badge bg-warning">
+                      {review.status || 'In Progress'}
+                    </span>
+                  </dd>
+                  
+                  <dt>Updated</dt>
+                  <dd>
+                    {review.updated_at
+                      ? new Date(review.updated_at).toLocaleString()
+                      : '—'}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </BaseLayout>
+  );
+}
+
+export default ReviewerPanel;
+

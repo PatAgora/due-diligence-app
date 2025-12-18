@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback – Scrutinise Bot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <style>
+    /* Enhanced styling that aligns with modern interface design */
+    :root {
+      --brand-dark: #1a1a1a;
+      --brand-orange: #ff6b35;
+      --brand-orange-light: #ff8659;
+      --text-primary: #1a1a1a;
+      --text-secondary: #666666;
+      --text-muted: #999999;
+      --bg-primary: #ffffff;
+      --bg-card: #ffffff;
+      --bg-section: #f8f9fa;
+      --border-color: #e5e7eb;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+
+    /* Header styling matching other pages */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: var(--brand-dark);
+      border-bottom: 3px solid var(--brand-orange);
+      padding: 1rem 2rem;
+      box-shadow: var(--shadow-md);
+    }
+
+    .topbar .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Brain icon matching other pages */
+    .ai-brain-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--brand-orange);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse-brain 3s infinite;
+    }
+
+    .ai-brain-icon i {
+      font-size: 20px;
+      color: white;
+    }
+
+    @keyframes pulse-brain {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.7); }
+      50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 107, 53, 0); }
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .brand-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+      color: white;
+      line-height: 1.2;
+    }
+
+    .brand-subtitle {
+      font-size: 0.875rem;
+      font-weight: 400;
+      margin: 0;
+      color: var(--brand-orange-light);
+      line-height: 1.2;
+    }
+
+    .topbar .health {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      background: var(--bg-section);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+
+    .topbar .health.ok {
+      background: #dcfce7;
+      color: #166534;
+      border-color: #bbf7d0;
+    }
+
+    .topbar .health.err {
+      background: #fef2f2;
+      color: #dc2626;
+      border-color: #fecaca;
+    }
+
+    /* Main content */
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    section {
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      padding: 2rem;
+    }
+
+    h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0 0 1.5rem 0;
+      color: var(--text-primary);
+    }
+
+    /* Enhanced toolbar */
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      padding: 1.5rem;
+      background: var(--bg-section);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+    }
+
+    .toolbar label {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .toolbar select {
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      background: white;
+      color: var(--text-primary);
+      margin-left: 8px;
+    }
+
+    .toolbar .spacer { flex: 1; }
+
+    /* Enhanced buttons */
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-ghost {
+      background: white;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg-section);
+      color: var(--text-primary);
+      transform: translateY(-1px);
+    }
+
+    /* Enhanced KPI cards */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .card h3 {
+      margin: 0 0 0.75rem 0;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card .num {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .card.positive .num {
+      color: #22c55e;
+    }
+
+    .card.negative .num {
+      color: #ef4444;
+    }
+
+    .card.warning .num {
+      color: #f59e0b;
+    }
+
+
+
+    /* Outstanding queries section */
+    .outstanding-section {
+      margin-top: 2rem;
+      background: var(--bg-section);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      border-left: 4px solid var(--brand-orange);
+    }
+
+    .outstanding-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .outstanding-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+
+    .outstanding-card {
+      background: white;
+      border-radius: 8px;
+      padding: 1rem;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .outstanding-metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .outstanding-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .outstanding-value {
+      font-weight: 600;
+      font-size: 1.125rem;
+    }
+
+    /* Monospace styling */
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: var(--bg-section);
+      padding: 4px 6px;
+      border-radius: 4px;
+    }
+
+    /* Loading states */
+    .muted {
+      color: var(--text-muted);
+      text-align: center;
+      padding: 2rem;
+      font-style: italic;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .topbar {
+        padding: 1rem;
+      }
+
+      main {
+        padding: 1rem;
+      }
+
+      section {
+        padding: 1rem;
+      }
+
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .outstanding-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="ai-brain-icon">
+        <i class="fas fa-brain"></i>
+      </div>
+      <div class="brand-text">
+        <h1 class="brand-title">Scrutinise</h1>
+        <p class="brand-subtitle">Your SME</p>
+      </div>
+    </div>
+    <div class="health" id="health">Checking backend…</div>
+  </header>
+
+  <main>
+    <section>
+      <h2>Feedback Dashboard</h2>
+
+      <div class="toolbar">
+        <label>
+          <i class="fas fa-calendar-alt"></i>
+          Range:
+          <select id="range">
+            <option value="">All time</option>
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="90d">Last 90 days</option>
+          </select>
+        </label>
+        <button id="refresh" type="button" class="btn btn-ghost">
+          <i class="fas fa-sync-alt"></i>
+          Refresh
+        </button>
+        <div class="spacer"></div>
+        <a id="export-csv" href="/admin/feedback/export?fmt=csv" target="_blank">
+          <button type="button" class="btn btn-ghost">
+            <i class="fas fa-file-csv"></i>
+            Export CSV
+          </button>
+        </a>
+        <a href="/admin">
+          <button type="button" class="btn btn-ghost">
+            <i class="fas fa-arrow-left"></i>
+            Back to Admin
+          </button>
+        </a>
+      </div>
+
+      <!-- KPI cards -->
+      <div class="cards">
+        <div class="card">
+          <h3><i class="fas fa-comments"></i> Total Responses</h3>
+          <div class="num" id="kpi-total">—</div>
+        </div>
+        <div class="card positive">
+          <h3><i class="fas fa-thumbs-up"></i> Positive</h3>
+          <div class="num" id="kpi-yes">—</div>
+        </div>
+        <div class="card negative">
+          <h3><i class="fas fa-thumbs-down"></i> Negative</h3>
+          <div class="num" id="kpi-no">—</div>
+        </div>
+        <div class="card">
+          <h3><i class="fas fa-percentage"></i> Satisfaction Rate</h3>
+          <div class="num" id="kpi-rate">—</div>
+        </div>
+      </div>
+
+      <!-- Outstanding Queries Section -->
+      <div class="outstanding-section">
+        <div class="outstanding-title">
+          <i class="fas fa-clock"></i>
+          Outstanding SME Queries
+        </div>
+        <div class="outstanding-grid">
+          <div class="outstanding-card">
+            <div class="outstanding-metric">
+              <span class="outstanding-label">Open Referrals</span>
+              <span class="outstanding-value" id="open-count">—</span>
+            </div>
+            <div class="outstanding-metric">
+              <span class="outstanding-label">Average Age</span>
+              <span class="outstanding-value" id="avg-age">—</span>
+            </div>
+          </div>
+          <div class="outstanding-card">
+            <div class="outstanding-metric">
+              <span class="outstanding-label">Oldest Query</span>
+              <span class="outstanding-value" id="oldest-query">—</span>
+            </div>
+            <div class="outstanding-metric">
+              <span class="outstanding-label">Last 24h</span>
+              <span class="outstanding-value" id="recent-queries">—</span>
+            </div>
+          </div>
+          <div class="outstanding-card">
+            <div class="outstanding-metric">
+              <span class="outstanding-label">Needs Attention</span>
+              <span class="outstanding-value warning" id="attention-count">—</span>
+            </div>
+            <div class="outstanding-metric">
+              <span class="outstanding-label">Average Response Time</span>
+              <span class="outstanding-value" id="avg-response">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+    </section>
+  </main>
+
+  <script>
+    async function checkHealth() {
+      const el = document.getElementById('health');
+      try { 
+        await fetch('/health'); 
+        el.innerHTML = '<i class="fas fa-check-circle"></i> Ready'; 
+        el.classList.add('ok'); 
+        el.classList.remove('err'); 
+      }
+      catch { 
+        el.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Backend unreachable'; 
+        el.classList.add('err'); 
+        el.classList.remove('ok'); 
+      }
+    }
+    checkHealth();
+
+    const elTotal = document.getElementById('kpi-total');
+    const elYes = document.getElementById('kpi-yes');
+    const elNo = document.getElementById('kpi-no');
+    const elRate = document.getElementById('kpi-rate');
+    const rangeSel = document.getElementById('range');
+    const refreshBtn = document.getElementById('refresh');
+    const expCsv = document.getElementById('export-csv');
+
+    // Outstanding queries elements
+    const openCount = document.getElementById('open-count');
+    const avgAge = document.getElementById('avg-age');
+    const oldestQuery = document.getElementById('oldest-query');
+    const recentQueries = document.getElementById('recent-queries');
+    const attentionCount = document.getElementById('attention-count');
+    const avgResponse = document.getElementById('avg-response');
+
+    function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+    function pct(y, t){ return t ? Math.round((y/t)*1000)/10 : 0; }
+
+    function formatDuration(hours) {
+      if (hours < 24) return `${Math.round(hours)}h`;
+      const days = Math.floor(hours / 24);
+      const remainingHours = Math.round(hours % 24);
+      return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
+    }
+
+    function updateExportLinks() {
+      const r = rangeSel.value ? `&range=${encodeURIComponent(rangeSel.value)}` : '';
+      expCsv.href = `/admin/feedback/export?fmt=csv${r}`;
+    }
+
+    async function loadOutstandingQueries() {
+      try {
+        const res = await fetch('/admin/referrals/data?status=open');
+        const data = await res.json();
+        const referrals = Array.isArray(data.data) ? data.data : [];
+
+        const now = Date.now();
+        const ages = referrals.map(r => {
+          const created = new Date(r.ts).getTime();
+          return (now - created) / (1000 * 60 * 60); // hours
+        });
+
+        const last24h = referrals.filter(r => {
+          const created = new Date(r.ts).getTime();
+          return (now - created) < (24 * 60 * 60 * 1000);
+        }).length;
+
+        const needsAttention = ages.filter(age => age > 48).length; // > 2 days
+
+        openCount.textContent = referrals.length;
+        avgAge.textContent = ages.length ? formatDuration(ages.reduce((a, b) => a + b, 0) / ages.length) : '—';
+        oldestQuery.textContent = ages.length ? formatDuration(Math.max(...ages)) : '—';
+        recentQueries.textContent = last24h;
+        attentionCount.textContent = needsAttention;
+
+        // Calculate average response time from closed referrals
+        const closedRes = await fetch('/admin/referrals/data?status=closed');
+        const closedData = await closedRes.json();
+        const closedReferrals = Array.isArray(closedData.data) ? closedData.data : [];
+        
+        const responseTimes = closedReferrals.map(r => {
+          if (r.ts && r.closed_ts) {
+            const created = new Date(r.ts).getTime();
+            const closed = new Date(r.closed_ts).getTime();
+            return (closed - created) / (1000 * 60 * 60); // hours
+          }
+          return null;
+        }).filter(time => time !== null);
+
+        avgResponse.textContent = responseTimes.length ? 
+          formatDuration(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length) : '—';
+
+      } catch (e) {
+        console.error('Failed to load outstanding queries:', e);
+        openCount.textContent = avgAge.textContent = oldestQuery.textContent = 
+        recentQueries.textContent = attentionCount.textContent = avgResponse.textContent = '—';
+      }
+    }
+
+
+
+    async function load() {
+      try {
+        const r = rangeSel.value ? `?range=${encodeURIComponent(rangeSel.value)}` : '';
+        const res = await fetch(`/admin/feedback/data${r}`);
+        const json = await res.json();
+
+        const totals = json?.totals || { yes:0, no:0, total:0 };
+        const daily = Array.isArray(json?.daily) ? json.daily : [];
+
+        // KPIs
+        elYes.textContent = totals.yes ?? 0;
+        elNo.textContent = totals.no ?? 0;
+        elTotal.textContent = totals.total ?? ((totals.yes||0)+(totals.no||0));
+        const total = (totals.total ?? 0) || ((totals.yes||0)+(totals.no||0));
+        elRate.textContent = `${pct(totals.yes||0, total)}%`;
+
+
+
+        updateExportLinks();
+
+        // Load outstanding queries
+        await loadOutstandingQueries();
+
+      } catch (e) {
+        console.error('Load error:', e);
+        elYes.textContent = elNo.textContent = elTotal.textContent = elRate.textContent = '—';
+      }
+    }
+
+    rangeSel.addEventListener('change', load);
+    refreshBtn.addEventListener('click', load);
+
+    // Auto-refresh outstanding queries every 30 seconds
+    setInterval(loadOutstandingQueries, 30000);
+
+    // Initial load
+    load();
+  </script>
+</body>
+</html>

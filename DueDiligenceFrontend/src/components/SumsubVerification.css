@@ -1,0 +1,150 @@
+.sumsub-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f5f7fa;
+}
+
+.sumsub-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e0e4e8;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.sumsub-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sumsub-logo {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.sumsub-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.sumsub-brand-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a202c;
+  line-height: 1.2;
+}
+
+.sumsub-brand-subtitle {
+  font-size: 0.875rem;
+  color: #718096;
+  line-height: 1.2;
+}
+
+.sumsub-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sumsub-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #4a5568;
+}
+
+.sumsub-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.sumsub-nav-link:hover {
+  background: #5568d3;
+}
+
+.sumsub-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 1.5rem;
+  min-height: 0;
+}
+
+.sumsub-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 1rem;
+  color: #718096;
+}
+
+.sumsub-sdk-container {
+  flex: 1;
+  border: 1px solid #e0e4e8;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  min-height: 600px;
+  position: relative;
+}
+
+.sumsub-iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+  border: none;
+  display: block;
+}
+
+.sumsub-status-info {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e0e4e8;
+}
+
+.sumsub-status-info h5 {
+  margin-bottom: 1rem;
+  color: #1a202c;
+  font-weight: 600;
+}
+
+.sumsub-status-info p {
+  margin-bottom: 0.5rem;
+  color: #4a5568;
+  font-size: 0.875rem;
+}
+
+.sumsub-status-info strong {
+  color: #1a202c;
+  font-weight: 600;
+}
+
+

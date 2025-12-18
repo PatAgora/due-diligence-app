@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="fw-bold mb-3">AI Outreach</h2>
+
+<!-- Period only (no max-per-tag control) -->
+<form method="get" action="{{ url_for('ai_analysis') }}" class="row g-2 align-items-end mb-3">
+  <input type="hidden" name="customer_id" value="{{ customer_id or '' }}">
+  <div class="col-auto">
+    <label class="form-label">Period</label>
+    <select class="form-select" name="period">
+      <option value="all"  {{ 'selected' if period=='all' else '' }}>All time</option>
+      <option value="3m"   {{ 'selected' if period=='3m' else '' }}>Last 3 months</option>
+      <option value="6m"   {{ 'selected' if period=='6m' else '' }}>Last 6 months</option>
+      <option value="12m"  {{ 'selected' if period=='12m' else '' }}>Last 12 months</option>
+    </select>
+  </div>
+  <div class="col-auto">
+    <button class="btn btn-outline-secondary mt-4">Apply</button>
+  </div>
+</form>
+
+{% if customer_id %}
+<div class="alert alert-info py-2 d-flex align-items-center justify-content-between">
+  <div>
+    Prepared questions are based on alerts for <strong>{{ customer_id }}</strong>
+    {% if period_from and period_to %}(range: {{ period_from }} → {{ period_to }}){% endif %}.
+  </div>
+  {% if params and params.cfg_ai_use_llm %}
+    <span class="badge text-bg-success">Normalised with AI</span>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Action buttons -->
+<div class="d-flex gap-2 mb-3">
+  <form method="post" class="d-inline">
+    <input type="hidden" name="customer_id" value="{{ customer_id or '' }}">
+    <input type="hidden" name="period" value="{{ period or '' }}">
+    <input type="hidden" name="action" value="build">
+    <button class="btn btn-primary">
+      Prepare Questions
+    </button>
+  </form>
+
+  <form method="post" class="d-inline">
+    <input type="hidden" name="customer_id" value="{{ customer_id or '' }}">
+    <input type="hidden" name="period" value="{{ period or '' }}">
+    <input type="hidden" name="case_id" value="{{ case.id if case else '' }}">
+    <input type="hidden" name="action" value="outreach">
+    <button class="btn btn-secondary">
+      Build Outreach Pack
+    </button>
+  </form>
+</div>
+
+{% if outreach_text %}
+<div class="card mb-3">
+  <div class="card-header fw-semibold">Draft Outreach Email</div>
+  <div class="card-body">
+    <p class="text-muted small mb-2">Copy/paste into your email tool (or export later):</p>
+    <pre class="mb-0" style="white-space:pre-wrap">{{ outreach_text }}</pre>
+  </div>
+</div>
+{% endif %}
+
+<!-- Questions Table -->
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <div class="fw-semibold">
+      {% if case %}
+        Case #{{ case.id }} — {{ case.created_at }}
+      {% else %}
+        No case yet — click “Prepare Questions”
+      {% endif %}
+    </div>
+
+    {% if case and case.assessment_risk %}
+      <div>
+        <span class="badge text-bg-dark me-2">Residual Score: {{ case.assessment_score }}</span>
+        <span class="badge text-bg-{{ 'danger' if case.assessment_risk in ['CRITICAL','HIGH'] else 'warning' if case.assessment_risk=='MEDIUM' else 'secondary' }}">
+          {{ case.assessment_risk }}
+        </span>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="card-body p-0">
+    <form method="post">
+      <input type="hidden" name="customer_id" value="{{ customer_id or '' }}">
+      <input type="hidden" name="period" value="{{ period or '' }}">
+      <input type="hidden" name="case_id" value="{{ case.id if case else '' }}">
+
+      <table class="table table-bordered table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 14rem;">Rule Tag</th>
+            <th>Customer Question (normalised &amp; transaction-specific)</th>
+            <th style="width: 36%;">Answer / Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set rows = answers if answers and answers|length else proposed_questions %}
+          {% for r in rows %}
+          <tr>
+            <td>
+              <span class="badge text-bg-secondary">{{ (r.tag or '—') }}</span>
+              <div class="small mt-2">
+                {% set linked = r.source_details|length if r.source_details else 0 %}
+                <a href="{{ url_for('alerts', customer_id=customer_id) }}" class="text-decoration-none">
+                  Linked alerts: {{ linked }}
+                </a>
+              </div>
+            </td>
+
+            <td>
+              <div class="fw-semibold mb-1">
+                {{ r.question_nice or r.question }}
+              </div>
+            </td>
+
+            <td>
+              {% if r.id %}
+                <input type="hidden" name="qid" value="{{ r.id }}">
+                <textarea class="form-control" name="answer_{{ r.id }}" rows="4"
+                          placeholder="Add the customer’s response or your notes here...">{{ r.answer or '' }}</textarea>
+              {% else %}
+                <div class="text-muted">Will be created after you click <strong>Prepare Questions</strong>.</div>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="3" class="text-muted text-center py-5">
+              No questions yet. Click <strong>Prepare Questions</strong> to generate them.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% if rows and rows|length and case %}
+      <div class="d-flex gap-2 p-3">
+        <button class="btn btn-primary" name="action" value="save">Save Responses</button>
+        <button class="btn btn-outline-success" name="action" value="assess">Run Assessment</button>
+      </div>
+      {% endif %}
+    </form>
+  </div>
+
+  {% if case and case.assessment_summary %}
+  <div class="card-footer">
+    <h6 class="fw-semibold mb-2">Assessment Summary</h6>
+    <pre class="mb-0" style="white-space:pre-wrap">{{ case.assessment_summary }}</pre>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

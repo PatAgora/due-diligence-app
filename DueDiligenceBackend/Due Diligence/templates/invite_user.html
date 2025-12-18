@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Invite New User</h2>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST">
+    <div class="mb-3">
+      <label for="email" class="form-label">Email address:</label>
+      <input type="email" class="form-control" name="email" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="name" class="form-label">Full Name:</label>
+      <input type="text" class="form-control" name="name" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="role" class="form-label">Role:</label>
+      <select class="form-select" name="role" required>
+        <option value="">-- Select Role --</option>
+        <option value="reviewer_1">Reviewer Level 1</option>
+        <option value="reviewer_2">Reviewer Level 2</option>
+        <option value="reviewer_3">Reviewer Level 3</option>
+        <option value="team_lead">Team Lead</option>
+        <option value="qc">QC</option>
+        <option value="qa">QA</option>
+        <option value="sme">SME</option>
+        <option value="operations_manager">Operations Manager</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="team_lead" class="form-label">Team Lead (optional):</label>
+      <select class="form-select" name="team_lead">
+        <option value="">-- None --</option>
+        {% for lead in team_leads %}
+        <option value="{{ lead }}">{{ lead }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Send Invite</button>
+    <a href="{{ url_for('list_users') }}" class="btn btn-secondary ms-2">Cancel</a>
+  </form>
+</div>
+{% endblock %}

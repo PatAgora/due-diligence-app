@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scrutinise Bot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <style>
+    /* Enhanced styling additions that work with existing CSS */
+    :root {
+      --brand-dark: #1a1a1a;
+      --brand-orange: #ff6b35;
+      --brand-orange-light: #ff8659;
+      --text-primary: #1a1a1a;
+      --text-secondary: #666666;
+      --bg-primary: #ffffff;
+      --bg-card: #ffffff;
+      --border-color: #e5e7eb;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Enhanced header styling */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: var(--brand-dark);
+      border-bottom: 3px solid var(--brand-orange);
+      padding: 1rem 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .topbar .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .topbar .logo {
+      width: 40px;
+      height: 40px;
+      background: var(--brand-orange);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .topbar .logo i {
+      font-size: 1.5rem;
+      color: white;
+      animation: brainPulse 2s infinite ease-in-out;
+    }
+
+    @keyframes brainPulse {
+      0%, 100% { opacity: 0.9; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+
+    .topbar .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .brand-title {
+      color: white;
+      font-weight: 700;
+      font-size: 1.5rem;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 0;
+    }
+
+    .brand-subtitle {
+      color: var(--brand-orange-light);
+      font-weight: 400;
+      font-size: 0.875rem;
+      letter-spacing: 0;
+      line-height: 1.2;
+      margin: 0;
+    }
+
+    .topbar .right { 
+      display: flex; 
+      align-items: center; 
+      gap: 2rem; 
+    }
+
+    .nav-link { 
+      color: #b3b3b3; 
+      text-decoration: none;
+      font-weight: 500;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.875rem;
+    }
+    .nav-link:hover { 
+      color: var(--brand-orange);
+      background: rgba(255,107,53,0.1);
+    }
+
+    .health {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: #2d2d2d;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .health::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #999;
+      animation: statusPulse 2s infinite;
+    }
+
+    .health.ok { color: #22c55e; }
+    .health.ok::before { background: #22c55e; }
+    .health.err { color: #ef4444; }
+    .health.err::before { background: #ef4444; }
+
+    @keyframes statusPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Enhanced main content */
+    main {
+      max-width: 1200px; /* Increased from 1000px */
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    .chat {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* Enhanced chat box */
+    .chat-box { 
+      position: relative;
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-color);
+      min-height: 500px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      width: 100%; /* Ensure full width */
+    }
+
+    #chat-window {
+      flex: 1;
+      padding: 2rem; /* Increased padding */
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+
+    #chat-window::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #chat-window::-webkit-scrollbar-track {
+      background: #f1f3f4;
+    }
+
+    #chat-window::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 3px;
+    }
+
+    #chat-window::-webkit-scrollbar-thumb:hover {
+      background: var(--brand-orange);
+    }
+
+    /* Enhanced overlay */
+    .chat-overlay {
+      position: absolute; 
+      inset: 0; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: var(--radius-xl);
+      pointer-events: auto;
+      transition: all 0.3s ease;
+      z-index: 10;
+    }
+
+    .chat-overlay.hidden { 
+      opacity: 0; 
+      pointer-events: none;
+      transform: scale(0.95);
+    }
+
+    .chat-overlay .welcome-content {
+      text-align: center;
+      max-width: 600px;
+      padding: 2rem;
+    }
+
+    .chat-overlay .ready-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 1.25rem 2rem;
+      background: rgba(34, 197, 94, 0.1);
+      border: 2px solid rgba(34, 197, 94, 0.3);
+      border-radius: var(--radius-lg);
+      color: #22c55e;
+      font-weight: 500;
+      font-size: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .chat-overlay .ready-indicator i {
+      font-size: 1.25rem;
+      color: #22c55e;
+    }
+
+    .chat-overlay .start-chat-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 2rem;
+      background: var(--brand-orange);
+      color: white;
+      border: none;
+      border-radius: var(--radius-lg);
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 20px rgba(255,107,53,0.3);
+    }
+
+    .chat-overlay .start-chat-btn:hover {
+      background: var(--brand-orange-light);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(255,107,53,0.4);
+    }
+
+    /* Enhanced form styling - WIDER INPUT */
+    #ask-form {
+      padding: 2rem 3rem; /* Increased padding significantly */
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-card);
+      border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    }
+
+    .form-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem; /* Increased gap */
+      background: #f1f3f4;
+      border: 2px solid var(--border-color);
+      border-radius: 30px; /* More rounded */
+      padding: 0.75rem 1rem; /* Increased padding */
+      transition: all 0.2s ease;
+      width: 100%;
+      max-width: none; /* Remove any width constraints */
+    }
+
+    .form-row:focus-within {
+      border-color: var(--brand-orange);
+      box-shadow: 0 0 0 4px rgba(255,107,53,0.1);
+    }
+
+    #q {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 1.25rem 2rem; /* Increased padding for larger input */
+      font-size: 1.1rem; /* Slightly larger font */
+      font-family: inherit;
+      color: var(--text-primary);
+      min-width: 0;
+      width: 100%;
+    }
+
+    #q::placeholder {
+      color: #999999;
+    }
+
+    .send-btn {
+      width: 56px; /* Increased size */
+      height: 56px;
+      background: #f1f3f4;
+      border: none;
+      border-radius: 50%;
+      color: #999;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0; /* Prevent shrinking */
+    }
+
+    .send-btn:hover,
+    .send-btn.active {
+      background: var(--brand-orange);
+      color: white;
+      transform: scale(1.05);
+    }
+
+    /* Enhanced actions bar */
+    .actions-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem 2rem; /* Increased padding to match form */
+      font-size: 0.875rem;
+      color: #999999;
+    }
+
+    .powered-by {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: #999999;
+    }
+
+    .powered-by i {
+      color: var(--brand-orange);
+    }
+
+    /* Button styles */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: var(--radius-lg);
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--brand-orange);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--brand-orange-light);
+      transform: translateY(-1px);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-ghost:hover {
+      background: #f1f3f4;
+      color: var(--text-primary);
+    }
+
+    /* Enhanced modal */
+    #referral-modal {
+      border: none;
+      border-radius: var(--radius-xl);
+      background: transparent;
+      padding: 0;
+      max-width: 600px;
+      width: 90vw;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+
+    #referral-modal::backdrop {
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+    }
+
+    .ref-form {
+      background: white;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .ref-form h3 {
+      background: #f8f9fa;
+      margin: 0;
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .field {
+      margin: 1.5rem 2rem;
+    }
+
+    .field label {
+      display: block;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .field textarea {
+      width: 100%;
+      min-height: 120px;
+      background: #f1f3f4;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      resize: vertical;
+      transition: border-color 0.2s ease;
+    }
+
+    .field textarea:focus {
+      outline: none;
+      border-color: var(--brand-orange);
+    }
+
+    .ref-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      padding: 1.5rem 2rem;
+      background: #f8f9fa;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* Message styling for when messages are added */
+    .message {
+      margin-bottom: 1.5rem;
+      animation: messageSlideIn 0.3s ease-out;
+    }
+
+    @keyframes messageSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.user {
+      text-align: right;
+    }
+
+    .message.assistant {
+      text-align: left;
+    }
+
+    .message-content {
+      display: inline-block;
+      max-width: 80%;
+      padding: 1rem 1.25rem;
+      border-radius: var(--radius-lg);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      word-wrap: break-word;
+    }
+
+    .message.user .message-content {
+      background: var(--brand-orange);
+      color: white;
+    }
+
+    .message.assistant .message-content {
+      background: #f1f3f4;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .topbar {
+        padding: 1rem;
+      }
+
+      .topbar .right {
+        gap: 1rem;
+      }
+
+      .nav-link span {
+        display: none;
+      }
+
+      main {
+        padding: 1rem 0.5rem;
+      }
+
+      .chat-overlay .welcome-content {
+        padding: 1rem;
+      }
+
+      #ask-form {
+        padding: 1.5rem 1rem;
+      }
+
+      .actions-bar {
+        padding: 0 1rem 1.5rem;
+      }
+
+      .form-row {
+        padding: 0.5rem 0.75rem;
+      }
+
+      #q {
+        padding: 1rem 1.25rem;
+        font-size: 1rem;
+      }
+
+      .send-btn {
+        width: 48px;
+        height: 48px;
+      }
+
+      #referral-modal {
+        width: 95vw;
+        margin: 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .brand-title {
+        font-size: 1.2rem;
+      }
+
+      .brand-subtitle {
+        font-size: 0.8rem;
+      }
+
+      .form-row {
+        padding: 0.25rem 0.5rem;
+        gap: 0.5rem;
+      }
+
+      #q {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+      }
+
+      .send-btn {
+        width: 40px;
+        height: 40px;
+      }
+
+      #ask-form {
+        padding: 1rem 0.5rem;
+      }
+
+      .actions-bar {
+        padding: 0 0.5rem 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">
+        <i class="fas fa-brain"></i>
+      </div>
+      <div class="brand-text">
+        <div class="brand-title">Scrutinise</div>
+        <div class="brand-subtitle">Your SME</div>
+      </div>
+    </div>
+
+    <div class="right">
+      <!-- SME Status: Online/Offline -->
+      <div class="health" id="health-container">
+        SME Status: <span id="health">Checking…</span>
+      </div>
+
+      <!-- My referrals link -->
+      <a class="nav-link" href="/my_referrals">
+        <i class="fas fa-clipboard-list"></i>
+        My Referrals
+      </a>
+
+      <!-- Logout button -->
+      <a class="nav-link" href="/logout">
+        <i class="fas fa-sign-out-alt"></i>
+        Logout
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <section class="chat">
+      <!-- Wrap the chat window so we can overlay the welcome screen -->
+      <div class="chat-box">
+        <div id="chat-window"></div>
+
+        <!-- Welcome Overlay -->
+        <div id="chat-hero" class="chat-overlay">
+          <div class="welcome-content">
+            <div class="ready-indicator">
+              <i class="fas fa-check-circle"></i>
+              <span>I am trained on financial crime policies, procedures and guidance.</span>
+            </div>
+            <button class="start-chat-btn" id="startChatBtn">
+              <span>Start Conversation</span>
+              <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <form id="ask-form">
+          <div class="form-row">
+            <input type="text" id="q" name="q" placeholder="Ask about your organisation's policies, procedures, or escalation guidance..." required />
+            <button type="submit" class="send-btn" id="sendBtn">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </form>
+
+        <div class="actions-bar">
+          <div id="retrieval-hint" class="muted"></div>
+          <div class="powered-by">
+            <i class="fas fa-brain"></i>
+            Powered by Scrutinise AI
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    // Enhanced SME Status with modern styling
+    (function () {
+      const healthSpan = document.getElementById('health');
+      const healthContainer = document.getElementById('health-container');
+
+      async function ping() {
+        try {
+          const res = await fetch('/health', { cache: 'no-store' });
+          if (!res.ok) throw new Error('bad status');
+          healthSpan.textContent = 'Online';
+          healthContainer.classList.add('ok');
+          healthContainer.classList.remove('err');
+        } catch {
+          healthSpan.textContent = 'Offline';
+          healthContainer.classList.add('err');
+          healthContainer.classList.remove('ok');
+        }
+      }
+      ping();
+      setInterval(ping, 15000);
+    })();
+
+    // Enhanced overlay behaviour with modern interactions
+    (function () {
+      const hero = document.getElementById('chat-hero');
+      const chat = document.getElementById('chat-window');
+      const startBtn = document.getElementById('startChatBtn');
+      const input = document.getElementById('q');
+      
+      if (!hero || !chat) return;
+
+      function hideOverlay() {
+        hero.classList.add('hidden');
+        // Focus input after overlay is hidden
+        setTimeout(() => {
+          if (input && window.innerWidth > 768) {
+            input.focus();
+          }
+        }, 300);
+      }
+
+      // Hide when user clicks the overlay or start button
+      hero.addEventListener('click', hideOverlay);
+      if (startBtn) startBtn.addEventListener('click', hideOverlay);
+
+      // Hide once any message is appended
+      const mo = new MutationObserver(() => {
+        if (chat.children.length > 0) {
+          hideOverlay();
+        }
+      });
+      mo.observe(chat, { childList: true });
+
+      // Also hide when the input is focused (first interaction)
+      if (input) input.addEventListener('focus', hideOverlay);
+    })();
+
+    // Enhanced form interactions
+    (function() {
+      const input = document.getElementById('q');
+      const sendBtn = document.getElementById('sendBtn');
+      
+      if (!input || !sendBtn) return;
+
+      // Enhanced input handling
+      input.addEventListener('input', (e) => {
+        const hasText = e.target.value.trim().length > 0;
+        sendBtn.classList.toggle('active', hasText);
+      });
+
+      // Enhanced keyboard support
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          const form = document.getElementById('ask-form');
+          if (form) form.dispatchEvent(new Event('submit'));
+        }
+      });
+
+      // Store questions/answers for referrals
+      const form = document.getElementById('ask-form');
+      if (form) {
+        form.addEventListener('submit', (e) => {
+          if (input.value.trim()) {
+            window.__lastQuestion = input.value.trim();
+          }
+        });
+      }
+    })();
+
+    // Your existing referral modal code (unchanged for compatibility)
+    (function () {
+      const modal     = document.getElementById('referral-modal');
+      const openBtn   = document.getElementById('raise-referral');
+      const cancelBtn = document.getElementById('referral-cancel');
+      const form      = document.getElementById('referral-form');
+      const result    = document.getElementById('referral-result');
+      const qPreview  = document.getElementById('ref-q-preview');
+      const aPreview  = document.getElementById('ref-a-preview');
+
+      function setDefaults() {
+        if (qPreview) qPreview.value = window.__lastQuestion || '';
+        if (aPreview) aPreview.value = window.__lastAnswer || '';
+      }
+
+      if (openBtn) {
+        openBtn.addEventListener('click', () => {
+          setDefaults();
+          try { modal.showModal(); } catch { modal.setAttribute('open', 'open'); }
+        });
+      }
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+          modal.close ? modal.close() : modal.removeAttribute('open');
+        });
+      }
+      if (form) {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          if (result) result.textContent = 'Submitting…';
+
+          const fd = new FormData();
+          fd.append('reason', '');
+          fd.append('question', window.__lastQuestion || '');
+          fd.append('answer', window.__lastAnswer || '');
+
+          try {
+            const res  = await fetch('/referral', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (result) result.textContent = data?.message || 'Referral logged';
+            setTimeout(() => { modal.close ? modal.close() : modal.removeAttribute('open'); }, 600);
+          } catch {
+            if (result) result.textContent = 'Failed to submit referral.';
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

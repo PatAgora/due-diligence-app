@@ -1,0 +1,428 @@
+{% extends "base.html" %}
+
+{% block navbar %}
+  {{ super() }}
+  
+  <a class="nav-link" href="{{ url_for('assign_tasks') }}">
+    <i class="bi bi-person-plus"></i>
+    <span>Assign Tasks</span>
+  </a>{% endblock %}
+
+
+
+{# OPS_MI_DASHBOARD v2025-09-25-1317 #}
+
+{% block content %}
+<div class="container-fluid px-0">
+  <div class="row g-4 mb-4">
+    <div class="col-12 col-xl-8">
+      <div class="soft-card hover-lift p-4 h-100">
+        <div class="d-flex align-items-center justify-content-between flex-wrap mb-3">
+          <h5 class="mb-2 mb-sm-0 fw-bold text-uppercase small text-secondary">Dashboard Filters</h5>
+        </div>
+        <form method="get" class="row gy-3 gx-3 align-items-end">
+          <div class="col-12 col-md-5 col-lg-4">
+            <label class="form-label text-muted small fw-semibold">Date Range</label>
+            <div class="position-relative">
+              <select name="date_range" class="form-select form-select-lg">
+                {% for dr in date_ranges %}
+                <option value="{{ dr.value }}" {% if dr.value == selected_date %}selected{% endif %}>{{ dr.label }}</option>
+                {% endfor %}
+              </select>
+              <i class="bi bi-caret-down-fill position-absolute end-0 top-50 translate-middle-y pe-3 text-muted"></i>
+            </div>
+          </div>
+          <div class="col-12 col-md-5 col-lg-4">
+            <label class="form-label text-muted small fw-semibold">Team</label>
+            <div class="position-relative">
+              <select name="team" class="form-select form-select-lg">
+                {% for t in teams %}
+                <option value="{{ t.value }}" {% if t.value == selected_team %}selected{% endif %}>{{ t.label }}</option>
+                {% endfor %}
+              </select>
+              <i class="bi bi-caret-down-fill position-absolute end-0 top-50 translate-middle-y pe-3 text-muted"></i>
+            </div>
+          </div>
+          <div class="col-12 col-md-2 col-lg-4">
+            <label class="form-label invisible d-none d-md-block">.</label>
+            <button type="submit" class="btn btn-lg w-100" style="background:#f59e0b;color:#fff;">
+              <i class="bi bi-funnel me-2"></i>Apply Filters
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="col-12 col-xl-4">
+      <div class="soft-card hover-lift p-4 h-100 d-flex flex-column">
+        <h5 class="fw-bold text-uppercase small text-secondary mb-3">Export Data</h5>
+        <div class="mt-auto">
+          <a href="{{ url_for('export_excel', date_range=selected_date, team=selected_team) }}" class="btn btn-outline-dark btn-lg px-4">
+            <i class="bi bi-file-earmark-excel me-2"></i>Download Excel
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .kpi-card{position:relative;border:1px solid #eef1f5;border-top-width:4px;border-radius:14px;background:#fff;padding:18px;height:100%;box-shadow:0 2px 8px rgba(0,0,0,.04);transition:transform .08s ease, box-shadow .08s ease;}
+    .kpi-card:hover{transform:translateY(-2px); box-shadow:4px 6px 16px rgba(16,24,40,.12);}
+    .kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+    .kpi-icon{display:inline-flex;align-items:center;justify-content:center;height:40px;width:40px;border-radius:999px;background:#f5f7fb;font-size:1.1rem;}
+    .kpi-metric{font-size:2.25rem;line-height:1.1;font-weight:800;color:#0f172a;}
+    .kpi-label{color:#475569;font-weight:600;letter-spacing:.2px;}
+    .kpi-accent-orange{border-top-color:#f59e0b}.kpi-accent-green{border-top-color:#22c55e}.kpi-accent-cyan{border-top-color:#06b6d4}.kpi-accent-amber{border-top-color:#fbbf24}
+    .kpi-icon.orange{color:#b45309;background:#fff7ed}.kpi-icon.green{color:#166534;background:#ecfdf5}.kpi-icon.cyan{color:#155e75;background:#ecfeff}.kpi-icon.amber{color:#92400e;background:#fffbeb}
+    .cell-link{display:block;color:inherit;text-decoration:none}
+    .cell-link:hover{text-decoration:underline}
+    .status-card,.soft-card,.card.soft-eq{border:1px solid #eef1f5;border-radius:16px;background:#fff;box-shadow:0 2px 8px rgba(16,24,40,.06);transition:transform .08s ease, box-shadow .08s ease;}
+    .hover-lift:hover,.status-card:hover,.card.soft-eq:hover{transform:translateY(-2px); box-shadow:4px 6px 16px rgba(16,24,40,.12);}
+    .age-cell{font-weight:700;border-radius:12px;display:inline-block;min-width:64px;padding:.35rem .75rem;}
+    .age-green{background:rgba(16,185,129,.15);color:#0f766e}
+    .age-amber{background:rgba(251,191,36,.2);color:#92400e}
+    .age-red{background:rgba(239,68,68,.15);color:#991b1b}
+    .chip{display:inline-block;padding:.1rem .5rem;border-radius:.5rem;font-weight:700;line-height:1.4;}
+    .chip-warn{border:2px solid #f59e0b;color:#b45309;background:transparent;}
+    .chip-danger{border:2px solid #ef4444;color:#991b1b;background:transparent;}
+    .table-clean> :not(caption)>*>*{background:transparent;border-bottom:1px solid #eef1f5;}
+  </style>
+
+  <div class="row g-3 mb-5">
+    <div class="col-sm-6 col-md-3">
+      <a class="text-reset text-decoration-none" href="{{ url_for('ops_mi_cases', date_range=selected_date, team=selected_team) }}"><div class="kpi-card kpi-accent-orange">
+        <div class="kpi-top"><span class="kpi-icon orange"><i class="bi bi-people-fill"></i></span></div>
+        <div class="kpi-metric">{{ total_screened }}</div>
+        <div class="kpi-label mt-1">Total Population</div>
+      </div></a>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <a class="text-reset text-decoration-none" href="{{ url_for('ops_mi_cases', status='Completed', date_range=selected_date, team=selected_team) }}"><div class="kpi-card kpi-accent-green">
+        <div class="kpi-top"><span class="kpi-icon green"><i class="bi bi-check2-circle"></i></span></div>
+        <div class="kpi-metric">{{ total_completed or 0 }}</div>
+        <div class="kpi-label mt-1">Completed</div>
+      </div></a>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <a class="text-reset text-decoration-none" href="{{ url_for('ops_mi_cases', qc=1, date_range=selected_date, team=selected_team) }}"><div class="kpi-card kpi-accent-cyan">
+        <div class="kpi-top"><span class="kpi-icon cyan"><i class="bi bi-clipboard2-check"></i></span></div>
+        <div class="kpi-metric">{{ qc_sample }}</div>
+        <div class="kpi-label mt-1">Total QC Checked</div>
+      </div></a>
+    </div>
+    <div class="col-sm-6 col-md-3">
+      <div class="kpi-card kpi-accent-amber">
+        <div class="kpi-top"><span class="kpi-icon amber"><i class="bi bi-percent"></i></span></div>
+        <div class="kpi-metric">{{ qc_pass_pct }}%</div>
+        <div class="kpi-label mt-1">QC Pass Rate</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-5 align-items-stretch">
+    <div class="col-lg-4">
+      <div class="card soft-eq h-100">
+        <div class="card-body d-flex flex-column align-items-center">
+          <h5 class="card-title">Quality Stats</h5>
+          {% if qc_sample > 0 %}
+          <div class="flex-fill d-flex align-items-center justify-content-center w-100">
+            <div id="qualityChart" style="height:220px; width:220px;"></div>
+          </div>
+          <div id="qualityLegend" class="mt-2 small text-muted text-center"></div>
+          {% else %}
+          <div class="flex-fill d-flex align-items-center justify-content-center">
+            <span class="text-muted">No QC data available for the selected period.</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="status-card hover-lift h-100">
+        <div class="p-3 d-flex flex-column h-100">
+          <h5 class="mb-2">Planning</h5>
+          <div class="flex-grow-1" style="position: relative; height: 220px;">
+            <canvas id="planningChart"></canvas>
+          </div>
+          <div class="mt-3 text-center"><a href="{{ url_for('planning') }}" class="btn btn-outline-secondary btn-sm">Edit Forecast</a></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="status-card hover-lift h-100">
+        <div class="p-3 d-flex flex-column h-100">
+          <h5 class="mb-3">Chaser Cycle (Current Week)</h5>
+          <div class="table-responsive">
+            <table class="table table-clean table-sm mb-0">
+              <thead class="table-white">
+                <tr class="text-secondary">
+                  <th>Date</th>
+                  {% for h in chaser_headers %}
+                  <th class="text-center">{{ h }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% if chaser_week_rows and chaser_headers %}
+                  {% for row in chaser_week_rows[:5] %}
+                    
+                  <tr>
+                    <td class="fw-semibold">{{ row.date }}</td>
+                    {% for h in chaser_headers %}
+                      {% set v = row[h] %}
+                      <td class="text-center">
+                        {% if v > 0 %}
+                          {% if h == 'Overdue' %}
+                            <a class="cell-link" href="{{ url_for('ops_mi_cases', team=selected_team, overdue='1', week_date=row.iso) }}">
+                              <span class="chip chip-danger">{{ v }}</span>
+                            </a>
+                          {% else %}
+                            <a class="cell-link" href="{{ url_for('ops_mi_cases', team=selected_team, chaser_type=h, week_date=row.iso) }}">
+                              <span class="chip chip-warn">{{ v }}</span>
+                            </a>
+                          {% endif %}
+                        {% else %}
+                          {{ v }}
+                        {% endif %}
+                      </td>
+                                      {% endfor %}
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr><td colspan="{{ 1 + (chaser_headers|length) }}" class="text-center text-muted">No chaser data.</td></tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+          <div class="small text-muted mt-2">Counts include only items not yet issued.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-card hover-lift p-4 mb-5">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h4 class="mb-0 fw-bold">Case Status &amp; Age Profile</h4>
+    </div>
+    <div class="table-responsive">
+      <table class="ignore-filter table align-middle mb-0" data-ignore-filter="true">
+        <thead class="table-white">
+          <tr class="text-uppercase small text-secondary">
+            <th>Status</th>
+            <th class="text-end">Count</th>
+            <th class="text-end">Percent</th>
+            <th class="text-center">≤12 Days</th>
+            <th class="text-center">13–35 Days</th>
+            <th class="text-center">35+ Days</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if distribution %}
+            {% for row in distribution %}
+              {% set ages = age_by_status.get(row.status, {}) %}
+              {% set a12 = ages.get("1–2 days", 0) %}
+              {% set a35 = ages.get("3–5 days", 0) %}
+              {% set a5p = ages.get("5 days+", 0) %}
+              <tr>
+                <td>
+  <a class="cell-link" href="{{ url_for('ops_mi_cases', outcome=row.outcome,  status=row.status, raw_status=row.status, date_range=selected_date, team=selected_team) }}">
+    {% if row.status == 'IRC - Awaiting Outreach' %}Initial Review Complete - Awaiting Outreach{% else %}{{ row.status }}{% endif %}
+  </a>
+</td>
+                <td class="text-end"><a class="cell-link" href="{{ url_for('ops_mi_cases', outcome=row.outcome,  status=row.status, raw_status=row.status, date_range=selected_date, team=selected_team) }}"><strong>{{ row.count }}</strong></a></td>
+                <td class="text-end"><strong>{{ "%.1f"|format(row.pct) }}%</strong></td>
+                <td class="text-center"><a class="cell-link" href="{{ url_for('ops_mi_cases', outcome=row.outcome,  status=row.status, raw_status=row.status, age_bucket='1–2 days', date_range=selected_date, team=selected_team) }}"><span class="age-cell age-green">{{ a12 }}</span></a></td>
+                <td class="text-center"><a class="cell-link" href="{{ url_for('ops_mi_cases', outcome=row.outcome,  status=row.status, raw_status=row.status, age_bucket='3–5 days', date_range=selected_date, team=selected_team) }}"><span class="age-cell age-amber">{{ a35 }}</span></a></td>
+                <td class="text-center"><a class="cell-link" href="{{ url_for('ops_mi_cases', outcome=row.outcome,  status=row.status, raw_status=row.status, age_bucket='5 days+', date_range=selected_date, team=selected_team) }}"><span class="age-cell age-red">{{ a5p }}</span></a></td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="6" class="text-center text-muted">No data available</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="status-card hover-lift p-4 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="mb-0 fw-bold">Outcome</h5>
+    </div>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="table-white">
+          <tr class="text-uppercase small text-secondary">
+            <th>Outcome</th>
+            <th class="text-end" style="min-width:90px;">Count</th>
+            <th class="text-end" style="min-width:100px;">Percent</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if outcome_breakdown and outcome_breakdown|length > 0 %}
+            {% for r in outcome_breakdown %}
+            <tr>
+              <td><a class="cell-link" href="{{ url_for('ops_mi_cases', status='Completed', raw_status='Completed', outcome=r.label, date_range=selected_date, team=selected_team) }}"><strong>{{ r.label }}</strong></a></td>
+              <td class="text-end"><a class="cell-link" href="{{ url_for('ops_mi_cases', status='Completed', raw_status='Completed', outcome=r.label, date_range=selected_date, team=selected_team) }}"><strong>{{ r.count }}</strong></a></td>
+              <td class="text-end"><strong>{{ "%.1f"|format(r.pct) }}%</strong></td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr><td colspan="3" class="text-center text-muted">No Outcome data for the selected filters.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.plot.ly/plotly-2.29.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+{% if qc_sample > 0 %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const qc_pct = parseFloat("{{ qc_pass_pct|default(0) }}");
+    const pass = isNaN(qc_pct) ? 0 : qc_pct;
+    const fail = 100 - pass;
+    const data = [{ values:[pass,fail], labels:['Pass','Fail'], type:'pie', hole:0.7, sort:false, direction:'clockwise', marker:{ colors:['#22c55e','#ef4444'] }, textinfo:'none' }];
+    const layout = { height:220, width:220, margin:{t:10,b:10,l:10,r:10}, showlegend:false, annotations:[{ text:`${pass.toFixed(0)}%`, font:{size:28,color:'#111827',family:'Inter,system-ui,-apple-system,Segoe UI,Roboto'}, showarrow:false, x:0.5, y:0.5 }] };
+    Plotly.newPlot('qualityChart', data, layout, { displayModeBar:false });
+    const legend = document.getElementById('qualityLegend');
+    if (legend) legend.innerHTML = `<span class="me-3"><i class="bi bi-circle-fill" style="color:#22c55e"></i>Pass</span><span><i class="bi bi-circle-fill" style="color:#ef4444"></i>Fail</span>`;
+  });
+</script>
+{% endif %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const ctx = document.getElementById('planningChart'); if (!ctx) return;
+    new Chart(ctx, {
+      data: { labels: {{ plan_labels|tojson }}, datasets: [ { type:'bar', label:'Forecast', data: {{ plan_forecast|tojson }} }, { type:'line', label:'Actual', data: {{ plan_actual|tojson }}, tension:0.4 } ] },
+      options: { responsive:true, maintainAspectRatio:false, scales:{ x:{ grid:{ display:false } }, y:{ beginAtZero:true } }, plugins:{ legend:{ position:'top' } } }
+    });
+  });
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    try {
+      const assignUrl = "{{ url_for('assign_tasks') }}";
+      const bulkUrl = "{{ url_for('assign_tasks_bulk') }}";
+      function makeItem(text, href) {
+        const li = document.createElement('li');
+        li.className = 'nav-item';
+        const a = document.createElement('a');
+        a.className = 'nav-link';
+        a.href = href;
+        a.textContent = text;
+        li.appendChild(a);
+        return li;
+      }
+      const candidateLists = document.querySelectorAll('#sidebar-nav ul, nav .navbar-nav, .sidebar .nav, .navbar-nav');
+      let appended = false;
+      candidateLists.forEach(function(ul) {
+        try {
+          ul.appendChild(makeItem('Assign Task', assignUrl));
+          ul.appendChild(makeItem('Bulk Assign Task', bulkUrl));
+          appended = true;
+        } catch(err) {}
+      });
+    } catch (e) {
+      // no-op
+    }
+  });
+</script>
+{% endblock %}
+
+<script>
+// Force the navbar "Assign Tasks" link to point to the correct route
+document.addEventListener("DOMContentLoaded", function () {
+  try {
+    var assignHref = "{{ url_for('assign_tasks') }}";
+    var navLinks = document.querySelectorAll('.sidebar-nav a.nav-link, nav a.nav-link, .navbar a.nav-link');
+    navLinks.forEach(function(a){
+      var label = (a.textContent || '').trim().toLowerCase();
+      if (label === 'assign tasks' || label === 'assign task') {
+        a.setAttribute('href', assignHref);
+      }
+    });
+  } catch(e){ /* noop */ }
+});
+</script>
+
+<script>
+// === Guard to keep "Case Status & Age Profile" table unfiltered ===
+(function(){
+  function getProtectedTable(){
+    return document.querySelector('table[data-ignore-filter="true"]');
+  }
+  function installCSS(){
+    var css = document.createElement("style");
+    css.textContent = `
+      table.ignore-filter tr { display: table-row !important; visibility: visible !important; }
+      table.ignore-filter [hidden] { display: table-row !important; visibility: visible !important; }
+    `;
+    document.head.appendChild(css);
+  }
+  function wrapFilterFunctions(){
+    var fnNames = ["applyFilters","applyFilter","updateFilters","runFilters","filterTable","onFilterChange"];
+    fnNames.forEach(function(name){
+      try{
+        var orig = window[name];
+        if (typeof orig === "function"){
+          window[name] = function(){
+            var tbl = getProtectedTable();
+            var placeholder = document.createComment("ignore-filter-placeholder");
+            var parent = tbl && tbl.parentNode;
+            if (tbl && parent){
+              parent.insertBefore(placeholder, tbl);
+              parent.removeChild(tbl);
+            }
+            try {
+              return orig.apply(this, arguments);
+            } finally {
+              if (placeholder && placeholder.parentNode && tbl){
+                placeholder.parentNode.insertBefore(tbl, placeholder);
+                placeholder.parentNode.removeChild(placeholder);
+              }
+            }
+          }
+        }
+      } catch(e){ /* noop */ }
+    });
+  }
+  function watchMutations(){
+    var tbl = getProtectedTable();
+    if (!tbl) return;
+    var mo = new MutationObserver(function(muts){
+      muts.forEach(function(m){
+        if (m.type === "attributes" && m.target){
+          var t = m.target;
+          if (t.tagName === "TR" || t.tagName === "TD" || t === tbl){
+            var st = getComputedStyle(t);
+            if (st.display === "none" || t.hasAttribute("hidden")){
+              t.style.display = (t.tagName === "TD") ? "table-cell" : "table-row";
+              t.removeAttribute("hidden");
+            }
+          }
+        }
+      });
+    });
+    mo.observe(tbl, { subtree:true, attributes:true, attributeFilter:["style","hidden","class"] });
+  }
+  function init(){
+    installCSS();
+    wrapFilterFunctions();
+    setTimeout(watchMutations, 200);
+  }
+  if (document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>

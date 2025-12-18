@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>SME Review for Task {{ review.task_id }}</h2>
+
+    <!-- Task Summary -->
+    <div class="review-header mb-4">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Customer ID:</strong> {{ review.customer_id }}</p>
+                <p><strong>Watchlist ID:</strong> {{ review.watchlist_id }}</p>
+                <p><strong>Hit Type:</strong> {{ review.hit_type }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Match Score:</strong> {{ match.total_score if match else 'N/A' }}</p>
+                <p><strong>System Rationale:</strong> {{ review.system_rationale or 'N/A' }}</p>
+                <p><strong>Level 1 Outcome:</strong> {{ review.l1_outcome or '—' }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Watchlist Section -->
+    <div class="comparison-table mb-4">
+        <h4>Watchlist Record</h4>
+        <table class="table table-bordered">
+            <thead><tr><th>Field</th><th>Value</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><strong>Watchlist Name</strong></td>
+                    <td><textarea readonly class="readonly-cell">{{ review.watchlist_name or "—" }}</textarea></td>
+                </tr>
+                {% for field, value in watchlist_fields %}
+                <tr>
+                    <td>{{ field.replace('_', ' ') | title }}</td>
+                    <td><textarea readonly class="readonly-cell">{{ value if value else "—" }}</textarea></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Customer / Entity / Payment Record -->
+    <div class="comparison-table mb-4">
+        <h4>{{ record_type }} Record</h4>
+        <table class="table table-bordered">
+            <thead><tr><th>Field</th><th>Value</th></tr></thead>
+            <tbody>
+                {% for field, value in dynamic_fields %}
+                <tr>
+                    <td>{{ field.replace('_', ' ') | title }}</td>
+                    <td><textarea readonly class="readonly-cell">{{ value if value else "—" }}</textarea></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Reviewer Inputs if Available -->
+    <div class="card mb-4">
+        <div class="card-header bg-light"><strong>Reviewer Input</strong></div>
+        <div class="card-body">
+            <p><strong>Outcome:</strong> {{ review.l1_outcome or 'Pending' }}</p>
+            <p><strong>Primary Rationale:</strong> {{ review.l1_primary_rationale or '—' }}</p>
+            <p><strong>Decision Rationale:</strong> {{ review.l1_rationale or '—' }}</p>
+        </div>
+    </div>
+
+    <!-- SME Advice Form -->
+    <form method="POST">
+        <div class="mb-3">
+            <label for="sme_advice" class="form-label">SME Advice</label>
+            <textarea class="form-control" name="sme_advice" id="sme_advice" rows="6" required>{{ review.sme_advice or '' }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-success">Submit SME Advice</button>
+        <a href="{{ url_for('sme_queue') }}" class="btn btn-secondary ms-2">Back to Queue</a>
+    </form>
+
+    {% if review.sme_status == 'Completed' %}
+    <div class="alert alert-info mt-3">✅ This task has already been marked as <strong>Completed</strong> by SME. You may update the advice if needed.</div>
+    {% endif %}
+</div>
+
+<style>
+.readonly-cell {
+    width: 100%;
+    min-height: 24px;
+    resize: vertical;
+    border: 1px solid #ccc;
+    padding: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    background-color: #f9f9f9;
+    color: #333;
+    box-sizing: border-box;
+}
+</style>
+{% endblock %}

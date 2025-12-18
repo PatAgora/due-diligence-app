@@ -1,0 +1,1363 @@
+{% extends "base.html" %}
+
+{% block navbar %}
+  {#<a class="nav-link text-secondary fw-semibold" href="{{ url_for('reviewer_dashboard') }}">
+    <i class="bi bi-speedometer2"></i> Dashboard#}
+  </a>
+  {{ super() }}
+{% endblock %}
+
+
+{% block content %}
+<style>
+  .case-header h1 { font-weight: 800; letter-spacing:.2px; }
+  .meta dt { color:#6c757d; font-weight:600; }
+  .meta dd { margin-bottom:.25rem; }
+  .card-compact .card-body { padding:1rem 1.25rem; }
+
+  .case-main   { position: relative; z-index: 1; }
+  .sticky-side { position: sticky; top: 84px; z-index: 0; }
+  @media (max-width: 991.98px) { .sticky-side { position: static; } }
+
+  .table-compare th, .table-compare td { vertical-align: middle; }
+  .value-box { padding:.5rem .75rem; border:1px solid #e9ecef; border-radius:.5rem; background:#fff; min-height:42px; display:flex; align-items:center; }
+
+  .action-bar { position: sticky; bottom: -1px; z-index: 5; background:#fff; border-top:1px solid #e9ecef; }
+
+  .badge-tight { font-weight:600; letter-spacing:.15px; }
+  .section-hdr { background:#e9f1ff; border-bottom:1px solid #dbe6ff; }
+  .section-hdr .title { font-weight:700; }
+
+  /* DDG widths */
+  .ddg-table th, .ddg-table td { vertical-align: top; }
+  .ddg-table thead th{white-space:nowrap;}
+  /* Grey-out empty enrichment cells */
+  .enrich-empty { background-color:#f1f3f5; color:#6c757d; }
+  .enrich-empty .form-control { background: transparent; color: inherit; }
+  .enrich-field-empty { background-color:#f1f3f5 !important; color:#6c757d !important; border-color:#e9ecef !important; }
+  .enrich-empty-row td { background-color:#f1f3f5; color:#6c757d; }
+  .enrich-empty-row td .form-control { background: transparent; color: inherit; }
+
+
+
+  /* Hide Watchlist column from comparison tables */
+  .table-compare th:last-child,
+  .table-compare td:last-child { display: none !important; }
+
+  /* Issued date cells: show a truly blank white field until a date exists or is entered */
+  .chaser-issued { background:#fff; }
+  .chaser-issued::-webkit-datetime-edit { color: transparent; }
+  .chaser-issued:focus::-webkit-datetime-edit,
+  .chaser-issued.has-value::-webkit-datetime-edit { color: inherit; }
+  .chaser-issued::-webkit-calendar-picker-indicator { opacity: 1; }
+  .chaser-issued:placeholder-shown { color: transparent; }
+
+  /* Date input placeholder overlay */
+  .date-shell { position: relative; }
+  .date-shell .date-placeholder {
+    position: absolute; left: .75rem; top: 50%; transform: translateY(-50%);
+    pointer-events: none; color: #adb5bd; font-size: .95rem;
+  }
+  .date-shell input[type="date"].has-value + .date-placeholder,
+  .date-shell input[type="date"]:focus + .date-placeholder { display: none; }
+  .date-shell input[disabled] { background-color:#f8f9fa; cursor:not-allowed; }
+
+  .chaser-issued::-webkit-datetime-edit,
+  .chaser-issued::-webkit-datetime-edit-fields-wrapper,
+  .chaser-issued::-webkit-datetime-edit-day-field,
+  .chaser-issued::-webkit-datetime-edit-month-field,
+  .chaser-issued::-webkit-datetime-edit-year-field,
+  .chaser-issued::-webkit-datetime-edit-text {
+    color: transparent;
+  }
+  .chaser-issued.has-value::-webkit-datetime-edit,
+  .chaser-issued.has-value::-webkit-datetime-edit-fields-wrapper,
+  .chaser-issued.has-value::-webkit-datetime-edit-day-field,
+  .chaser-issued.has-value::-webkit-datetime-edit-month-field,
+  .chaser-issued.has-value::-webkit-datetime-edit-year-field,
+  .chaser-issued.has-value::-webkit-datetime-edit-text {
+    color: inherit;
+  }
+  .chaser-issued { caret-color: transparent; }
+  .chaser-issued.has-value { caret-color: auto; }
+
+  .date-shell input[type="date"].date-empty {
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+  }
+  .date-shell input[type="date"].date-empty::-webkit-datetime-edit,
+  .date-shell input[type="date"].date-empty::-webkit-datetime-edit-fields-wrapper,
+  .date-shell input[type="date"].date-empty::-webkit-datetime-edit-day-field,
+  .date-shell input[type="date"].date-empty::-webkit-datetime-edit-month-field,
+  .date-shell input[type="date"].date-empty::-webkit-datetime-edit-year-field,
+  .date-shell input[type="date"].date-empty::-webkit-datetime-edit-text {
+    color: transparent !important;
+  }
+
+  /* Equal-spread chaser table columns */
+  .chaser-table { table-layout: fixed; width: 100%; }
+  .chaser-table th, .chaser-table td { width: 33.333%; }
+
+  /* Ensure the date shell and input fill the cell and fit DD/MM/YYYY */
+  .chaser-table .date-shell { width: 100%; display: block; }
+  .chaser-table .date-shell input[type="date"] { width: 100%; min-width: 11ch; }
+  .chaser-table .date-shell .date-placeholder {
+    left: .75rem; right: .75rem; max-width: calc(100% - 1.5rem);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .chaser-table .chaser-issued,
+  .chaser-table input.form-control,
+  .chaser-table .form-control-plaintext {
+    min-height: 40px;
+  }
+
+  /* Narrow date input shell for single DD/MM/YYYY fields */
+  .date-narrow { max-width: 180px; }
+  .date-narrow input[type="date"] { width: 100%; }
+
+
+.ddg-section-wrap{white-space:normal; line-height:1.15;}
+
+</style>
+
+<div class="container my-4">
+  <div class="case-header mb-3">
+    <h1 class="h3 mb-0">Review Panel - Entity</h1>
+  </div>
+
+  {% set status_cls =
+    'success' if 'completed' in (status or '')|lower else
+    'warning' if 'pending' in (status or '')|lower or 'awaiting' in (status or '')|lower else
+    'danger'  if 'rework' in (status or '')|lower or 'referred' in (status or '')|lower else
+    'secondary' %}
+
+  <div class="row g-4">
+    <!-- MAIN -->
+    <div class="col-md-8 col-lg-8 case-main order-md-1 order-lg-1">
+
+
+        <div class="card shadow-sm card-compact mb-4">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+  <h2 class="h6 mb-0">Case Summary</h2>
+  <div class="d-flex flex-column align-items-end gap-2"><a id="exportPdfBtn" href="#" class="btn btn-sm btn-outline-primary">
+    <i class="bi bi-file-earmark-pdf"></i> Export PDF
+  </a>
+</div>
+</div>
+            <dl class="row meta mb-0">
+              <dt class="col-5">Task ID</dt><dd class="col-7">{{ task_id }}</dd>
+              <dt class="col-5">Task Type</dt><dd class="col-7">{{ record_type or '—' }}</dd>
+              <dt class="col-5">Status</dt>
+              <dd class="col-7"><span class="badge badge-tight text-bg-{{ status_cls }}">{{ status or '—' }}</span></dd>
+              <dt class="col-5">Assigned To</dt>
+              <dd class="col-7">
+                {{ header_assigned_name or 'Unassigned' }}
+                <span class="text-body-tertiary">({{ header_assigned_role }})</span>
+              </dd>
+              <dt class="col-5">Current Risk Rating</dt><dd class="col-7">{{ review.get('currentriskrating') or '—' }}</dd>
+            </dl>
+          </div>
+        </div>
+
+
+<div class="card shadow-sm card-compact mb-4">
+  <div class="card-header d-flex align-items-center justify-content-between section-hdr">
+    <div class="title">Customer Details</div>
+    <button class="btn btn-sm btn-outline-secondary" type="button"
+            data-bs-toggle="collapse" data-bs-target="#customerDetailsPanel"
+            aria-expanded="true" aria-controls="outreachPanel">Toggle</button>
+  </div>
+  <div id="customerDetailsPanel" class="collapse">
+    <div class="card-body">
+<div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead class="table-light small">
+                <tr>
+                  <th style="width:40%">Field</th>
+                  <th style="width:20%">Source</th>
+                  <th>Entry</th>
+                </tr>
+              </thead>
+              <tbody>
+      {% set fields = [
+        'Entity type',
+        'Entity name',
+        'Entity trading name',
+        'Entity registration number',
+        'Entity incorporation date',
+        'Entity status (active/dissolved etc)',
+        'Entity primary address line1',
+        'Entity primary address line2',
+        'Entity primary city',
+        'Entity primary postcode',
+        'Entity primary country',
+        'Entity primary phone',
+        'Entity primary email',
+        'Existing SIC codes',
+        'Existing accounts balance',
+        'Expected annual revenue',
+        'Expected money into account',
+        'Expected revenue sources',
+        'Expected transaction jurisdictions',
+        'Linked party full name 1',
+        'Linked party role 1',
+        'Linked party DoB 1',
+        'Linked party nationality 1',
+        'Linked party country of residence 1',
+        'Linked party correspondence address 1',
+        'Linked party appointed on 1'
+      ] %}
+      {% set originals_only = [
+  'Entity primary phone',
+  'Entity primary email',
+  'Existing accounts balance',
+  'Expected annual revenue',
+  'Expected money into account',
+  'Expected revenue sources',
+  'Expected transaction jurisdictions'
+] %}
+{% for label in fields %}
+        {% set slug = (label|lower).replace(' ', '_').replace('&','and').replace('/','_').replace('(','').replace(')','').replace(',','') %}
+        {% set has_enrichment = (label not in originals_only) %}
+        {# Compute enrichment value up-front and treat common empties as blank #}
+        {% set _raw_enrich = review.get('cd_' ~ slug ~ '_enrichment') %}
+        {% set _enrich_val = '' %}
+        {% if _raw_enrich is not none %}
+          {% set _tmp = (_raw_enrich|string).strip() %}
+          {% if _tmp|lower not in ['none','null','n/a','na'] and _tmp not in ['','-','—'] %}
+            {% set _enrich_val = _tmp %}
+          {% endif %}
+        {% endif %}
+        {% set show_enrichment = has_enrichment and (_enrich_val|trim) %}
+<tr>
+  <td {% if show_enrichment %}rowspan="2"{% endif %}>{{ label }}</td>
+          <td>Original</td>
+          <td>
+            <input type="text" class="form-control form-control-sm"
+                   name="cd_{{ slug }}_original"
+                   {% set _val = review.get('cd_' ~ slug ~ '_original') %}
+                   value="{% if _val in [None,'None','none','NULL','null','N/A','n/a','NA','','-','—'] %}-{% else %}{{ _val }}{% endif %}">
+          </td>
+        </tr>
+        {% if show_enrichment %}
+<tr>
+          <td>Enrichment</td>
+          <td>
+            <input type="text" class="form-control form-control-sm"
+                   name="cd_{{ slug }}_enrichment"
+                   value="{{ _enrich_val }}">
+          </td>
+        </tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
+            </table>
+          </div>
+    </div>
+  </div>
+      </div>
+
+      <!-- === Due Diligence - Review (enabled by default, no enable switch, no Save button) === -->
+      <div class="card shadow-sm card-compact mb-4">
+        <div class="card-header d-flex align-items-center justify-content-between section-hdr">
+  <div class="title">Due Diligence - Review</div>
+  <div class="d-flex align-items-center gap-2">
+    <button class="btn btn-sm btn-outline-secondary" type="button"
+            data-bs-toggle="collapse" data-bs-target="#ddgPanel"
+            aria-expanded="true" aria-controls="outreachPanel">Toggle</button>
+    
+  </div>
+</div>
+        <div id="ddgPanel" class="collapse">
+          <div class="card-body">
+            <form id="ddgForm" method="post">
+              {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
+              <input type="hidden" name="primary_rationale" value="{{ review.get('l1_primary_rationale') or '' }}"/>
+              <input type="hidden" name="rationale" value="{{ review.get('l1_rationale') or '' }}"/>
+
+              <!-- Table 1: Section / Rationale / Outreach Req. / Section Complete -->
+              <div class="table-responsive mb-4">
+                <table class="table table-sm align-middle ddg-table">
+<colgroup>
+  <col style="width:10%">
+  <col style="width:66%">
+  <col style="width:12%">
+  <col style="width:12%">
+</colgroup>
+
+                  <thead class="table-light small">
+                    <tr>
+                      <th style="width: 20%">Section</th>
+                      <th>Rationale</th>
+                      <th style="width: 16%">Outreach Req.</th>
+                      <th style="width: 16%">Section Complete</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ddgTableBody">
+                    {% set ddg_rows = [
+                      ('ID&V', 'idv'),
+                      ('NoB', 'nob'),
+                      ('Expected Income', 'income'),
+                      ('Structure', 'structure'),
+                      ('TA', 'ta'),
+                      ('SoF', 'sof'),
+                      ('SoW', 'sow')
+                    ] %}
+                    {% for label, key in ddg_rows %}
+                      {% set rat_val = review.get(key ~ '_rationale') or '' %}
+                      {% set ver_val = review.get('ddg_' ~ key ~ '_verified') in [1,'1','true','True','on', True] %}
+                      {% set cer_val = review.get(key ~ '_outreach_required') in [1,'1','true','True','on', True] %}
+                      {% set ok_val  = review.get(key ~ '_section_completed') in [1,'1','true','True','on', True] %}
+                      <tr>
+                        <td>
+  {% if key == 'income' %}
+    <div class="form-control-plaintext ddg-section-wrap">Expected<br>Income</div>
+    <input type="hidden" name="ddg_{{ key }}_section" value="{{ label }}">
+  {% else %}
+    <input type="text" class="form-control-plaintext" name="ddg_{{ key }}_section"
+           value="{{ label }}" readonly>
+  {% endif %}
+</td>
+                        <td>
+                          <textarea class="form-control ddg-input" name="ddg_{{ key }}_rationale"
+                                    rows="2" placeholder="Add rationale for {{ label }}…">{{ rat_val }}</textarea>
+                        </td>
+                        <td class="text-center">
+                          <input class="form-check-input ddg-input" type="checkbox"
+                                 name="ddg_{{ key }}_outreach_required" {% if cer_val %}checked{% endif %} value="1"><input type="hidden" name="ddg_{{ key }}_outreach_required" value="0">
+                        </td>
+                        <td class="text-center">
+                          <input class="form-check-input ddg-input" type="checkbox"
+                                 name="ddg_{{ key }}_section_completed" {% if ok_val %}checked{% endif %} value="1"><input type="hidden" name="ddg_{{ key }}_section_completed" value="0">
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Table 2: FinCrime Concern / Rationale / Date Raised -->
+              <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                  <thead class="table-light small">
+                    <tr>
+                      <th style="width: 25%">FinCrime Concern</th>
+                      <th>Rationale</th>
+                      <th style="width: 20%">Date Raised</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% set concerns = [('SAR','sar'),('DAML','daml')] %}
+                    {% for label, key in concerns %}
+                      {% set rat_val = review.get('concern_' ~ key ~ '_rationale') or '' %}
+                      {% set date_val = review.get('concern_' ~ key ~ '_date') or '' %}
+                      <tr>
+                        <td>
+                          <input type="text" class="form-control-plaintext" value="{{ label }}" readonly>
+                        </td>
+                        <td>
+                          <textarea class="form-control ddg-input" name="concern_{{ key }}_rationale"
+                                    rows="2" placeholder="Add rationale for {{ label }}…">{{ rat_val }}</textarea>
+                        </td>
+                        <td>
+                          <div class="date-shell"><input type="date" class="form-control ddg-input ddg-date date-empty" name="concern_{{ key }}_date" value="{{ date_val }}"><span class="date-placeholder">DD/MM/YYYY</span></div>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+
+
+              <!-- No explicit Save button per requirements -->
+            <div class="d-flex justify-content-end mt-3" id="ddg-save-cta" style="gap:.5rem;">
+  <button class="btn btn-sm btn-primary" id="ddg-save-btn" name="action" type="submit" value="save_progress">
+    <i class="bi bi-save"></i> Save Section
+  </button>
+</div>
+</div>
+  </div>
+</div>
+      <!-- === /Due Diligence - Review === -->
+
+      {# --- Outreach Section (unchanged aside from autosubmit behaviour retained) --- #}
+      {% set outreach1 = review.get('OutreachDate1') or review.get('outreach_date1') or review.get('Outreach_Date1') %}
+      {% set ntc_due = review.get('NTCDueDate') %}
+      {% set ntc_issued = review.get('NTCIssuedDate') or review.get('NTC_IssuedDate') or review.get('NTCIssued') %}
+      {% set c1_due = review.get('Chaser1DueDate') %}
+      {% set c1_issued  = review.get('Chaser1IssuedDate') or review.get('Chaser1DateIssued') or review.get('Chaser1Issued') %}
+      {% set c2_due = review.get('Chaser2DueDate') %}
+      {% set c2_issued  = review.get('Chaser2IssuedDate') or review.get('Chaser2DateIssued') or review.get('Chaser2Issued') %}
+      {% set c3_due = review.get('Chaser3DueDate') %}
+      {% set c3_issued  = review.get('Chaser3IssuedDate') or review.get('Chaser3DateIssued') or review.get('Chaser3Issued') %}
+
+
+      <!-- === Screening (new section) === -->
+      <div class="card shadow-sm card-compact mb-4">
+        <div class="card-header d-flex align-items-center justify-content-between section-hdr">
+          <div class="title">Screening</div>
+          <button class="btn btn-sm btn-outline-secondary" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#screeningPanel"
+                  aria-expanded="true" aria-controls="outreachPanel">Toggle</button>
+        </div>
+        <div id="screeningPanel" class="collapse">
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm align-middle">
+                <thead class="table-light small">
+                  <tr>
+                    <th style="width: 30%">Screening Type</th>
+                    <th>Outcome</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Sanctions</td>
+                    <td><input type="text" class="form-control form-control-sm" name="sanctionsscreeningoutcome" form="reviewForm" value="{{ review.get('sanctionscreeningoutcome') or '' }}"></td>
+                  </tr>
+                  <tr>
+                    <td>PEPs &amp; RCAs</td>
+                    <td><input type="text" class="form-control form-control-sm" name="RCPEPscreeningoutcome" form="reviewForm" value="{{ review.get('RCPEPscreeningoutcome') or '' }}"></td>
+                  </tr>
+                  <tr>
+                    <td>Adverse Media</td>
+                    <td><input type="text" class="form-control form-control-sm" name="AMscreeningoutcome" form="reviewForm" value="{{ review.get('AMscreeningoutcome') or '' }}"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- === /Screening === -->
+<div class="card shadow-sm card-compact mb-4">
+        <div class="card-header d-flex align-items-center justify-content-between section-hdr">
+          <div class="title">Outreach</div>
+          <button class="btn btn-sm btn-outline-secondary" data-bs-target="#outreachPanel" data-bs-toggle="collapse"
+                  type="button" aria-controls="outreachPanel" aria-expanded="true">Toggle</button>
+        </div>
+        <div class="collapse" id="outreachPanel">
+          <div class="card-body">
+
+            {% if not outreach1 %}
+              <!-- Outreach Date 1 autosubmits on change; no Save button -->
+              <form id="outreachForm" method="post" action="/api/outreach/{{ task_id }}/date1">
+                <input type="hidden" name="return_to" value="{{ url_for('reviewer_panel', task_id=task_id) }}"/>
+{% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
+                <input type="hidden" name="action" value="save_outreach_date1"/>
+                <!-- keep these to satisfy any backend validation expecting decision fields -->
+                <input type="hidden" name="primary_rationale" value="{{ review.get('l1_primary_rationale') or 'Outreach update' }}"/>
+                <input type="hidden" name="rationale" value="{{ review.get('l1_rationale') or 'Outreach update' }}"/>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Outreach Date 1</label>
+                  <input class="form-control" id="outreach_date1_field" name="outreach_date1" type="date" required value="{{ outreach1|default('', true) }}" onchange="this.form.submit()">
+                </div>
+              </form>
+
+
+<div class="mb-3">
+  <form method="post" action="/api/outreach/{{ task_id }}/complete">
+    <input type="hidden" name="return_to" value="{{ url_for('reviewer_panel', task_id=task_id) }}"/>
+    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
+    <input type="hidden" name="outreach_complete" value="0">
+    <div class="form-check mt-3">
+      <input class="form-check-input" type="checkbox" id="outreach_complete" name="outreach_complete" value="1"
+             {% if review.get('outreach_complete') in [1,'1',True,'true','True','on'] %}checked{% endif %}
+             onchange="this.form.submit()">
+      <label class="form-check-label fw-semibold" for="outreach_complete">Outreach Complete</label>
+    </div>
+  </form>
+</div>
+
+              </div>
+
+            {% else %}
+              <div class="mb-3">
+                <div class="small text-muted">First outreach recorded: {{ outreach1 }}</div>
+              </div>
+              <!-- Chaser Issued dates autosubmit on change; no Save button -->
+              <form id="chaserForm" method="post" action="/api/outreach/{{ task_id }}/chasers">
+                <input type="hidden" name="return_to" value="{{ url_for('reviewer_panel', task_id=task_id) }}"/>
+{% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
+                <input type="hidden" name="action" value="save_outreach_chasers"/>
+                <input type="hidden" name="primary_rationale" value="{{ review.get('l1_primary_rationale') or 'Outreach update' }}"/>
+                <input type="hidden" name="rationale" value="{{ review.get('l1_rationale') or 'Outreach update' }}"/>
+
+                <div class="table-responsive">
+                  <table class="table table-sm align-middle chaser-table">
+                    <colgroup>
+                      <col style="width:33.333%">
+                      <col style="width:33.333%">
+                      <col style="width:33.333%">
+                    </colgroup>
+                    <thead class="table-light small">
+                      <tr><th>Chaser Cycle</th><th>Due</th><th>Issued</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="text-truncate">1</td>
+                        <td><span class="form-control-plaintext">{{ c1_due or "—" }}</span></td>
+                        <td>
+                          {% if c1_issued and c1_issued not in ['—','N/A','None','', 'NA', '0/0/0000', '0000-00-00'] and c1_issued != c1_due and c1_issued != outreach1 %}
+                            <input class="form-control" type="text" value="{{ c1_issued }}" readonly>
+                          {% else %}
+                            <div class="date-shell">
+                              <input class="form-control ddg-date chaser-issued date-empty" name="chaser1_issued" type="date" onchange="this.form.submit()">
+                              <span class="date-placeholder">DD/MM/YYYY</span>
+                            </div>
+                          {% endif %}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="text-truncate">2</td>
+                        <td><span class="form-control-plaintext">{{ c2_due or "—" }}</span></td>
+                        <td>
+                          {% if c2_issued and c2_issued not in ['—','N/A','None','', 'NA', '0/0/0000', '0000-00-00'] and c2_issued != c2_due and c2_issued != outreach1 %}
+                            <input class="form-control" type="text" value="{{ c2_issued }}" readonly>
+                          {% else %}
+                            {% set _can_c2 = c1_issued and c1_issued not in ['—','N/A','None','', 'NA', '0/0/0000', '0000-00-00'] %}
+                            <div class="date-shell">
+                              <input class="form-control ddg-date chaser-issued date-empty" name="chaser2_issued" type="date" {% if not _can_c2 %}disabled{% endif %} onchange="this.form.submit()">
+                              <span class="date-placeholder">DD/MM/YYYY</span>
+                            </div>
+                          {% endif %}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="text-truncate">3</td>
+                        <td><span class="form-control-plaintext">{{ c3_due or "—" }}</span></td>
+                        <td>
+                          {% if c3_issued and c3_issued not in ['—','N/A','None','', 'NA', '0/0/0000', '0000-00-00'] and c3_issued != c3_due and c3_issued != outreach1 %}
+                            <input class="form-control" type="text" value="{{ c3_issued }}" readonly>
+                          {% else %}
+                            {% set _can_c3 = c2_issued and c2_issued not in ['—','N/A','None','', 'NA', '0/0/0000', '0000-00-00'] %}
+                            <div class="date-shell">
+                              <input class="form-control ddg-date chaser-issued date-empty" name="chaser3_issued" type="date" {% if not _can_c3 %}disabled{% endif %} onchange="this.form.submit()">
+                              <span class="date-placeholder">DD/MM/YYYY</span>
+                            </div>
+                          {% endif %}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="text-truncate">NTC</td>
+                        <td><span class="form-control-plaintext">{{ ntc_due or "—" }}</span></td>
+                        <td>
+                          {% if ntc_issued and ntc_issued not in ['—','N/A','None','', 'NA', '0/0/0000', '0000-00-00'] and ntc_issued != ntc_due and ntc_issued != outreach1 %}
+                            <input class="form-control" type="text" value="{{ ntc_issued }}" readonly>
+                          {% else %}
+                            {% set _can_ntc = c3_issued and c3_issued not in ['—','N/A','None','', 'NA', '0/0/0000', '0000-00-00'] %}
+                            <div class="date-shell">
+                              <input class="form-control ddg-date chaser-issued date-empty" name="ntc_issued" type="date" {% if not _can_ntc %}disabled{% endif %} onchange="this.form.submit()">
+                              <span class="date-placeholder">DD/MM/YYYY</span>
+                            </div>
+                          {% endif %}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table></div>
+              </form>
+
+
+<div class="mb-3">
+  <form method="post" action="/api/outreach/{{ task_id }}/complete">
+    <input type="hidden" name="return_to" value="{{ url_for('reviewer_panel', task_id=task_id) }}"/>
+    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
+    <input type="hidden" name="outreach_complete" value="0">
+    <div class="form-check mt-3">
+      <input class="form-check-input" type="checkbox" id="outreach_complete" name="outreach_complete" value="1"
+             {% if review.get('outreach_complete') in [1,'1',True,'true','True','on'] %}checked{% endif %}
+             onchange="this.form.submit()">
+      <label class="form-check-label fw-semibold" for="outreach_complete">Outreach Complete</label>
+    </div>
+  </form>
+</div>
+
+              </div>
+
+            {% endif %}
+          </div>
+        </div>
+      {# --- Decision (single level) --- #}
+        {% set lv = 1 %}
+        {% set panel_id = 'decLvl1' %}
+        {% set is_current = (level == 1) %}
+        {% set assigned_reviewer = review.get('l1_assigned_to') %}
+        {% set has_outcome = review.get('l1_outcome') %}
+
+        {% set rw_req  = (review.get('l1_qc_rework_required') | int) == 1 %}
+        {% set rw_done = (review.get('l1_qc_rework_completed') | int) == 1 %}
+        {% set rework_open = rw_req and not rw_done %}
+
+        {% set l1_complete_date = review.get('l1_complete_date') or review.get('l1_date_completed') %}
+        {% set is_editable = True %}
+
+        {% set _as = (assignments_summary | selectattr('level','equalto', 1) | list | first) %}
+        {% set rb_name = _as.review.completed_by_name if _as and _as.review else None %}
+        {% set rb_date = _as.review.completed_on       if _as and _as.review else None %}
+
+        {% if is_current %}
+        <form id="reviewForm" method="POST">
+          <input type="hidden" name="rca_decision" value="">
+          {% if csrf_token is defined %}<input name="csrf_token" type="hidden" value="{{ csrf_token() }}"/>{% endif %}
+        {% endif %}
+
+        <div class="card shadow-sm card-compact mb-4">
+          <div class="card-header d-flex align-items-center justify-content-between section-hdr">
+            <div class="title">
+              Decision
+              {% if has_outcome and not is_current %}<span class="badge text-bg-success ms-2">Completed</span>{% endif %}
+              {% if rework_open and is_current and (assigned_reviewer|string) == (user_id|string) %}
+                <span class="badge text-bg-danger ms-2">Rework Required</span>
+              {% endif %}
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" data-bs-target="#{{ panel_id }}" data-bs-toggle="collapse"
+                    type="button" aria-controls="outreachPanel" aria-expanded="false">Toggle</button>
+          </div>
+          <div class="collapse" id="{{ panel_id }}">
+            <div class="card-body">
+              {% if rework_open and is_current and (assigned_reviewer|string) == (user_id|string) %}
+                <div class="alert alert-info d-flex align-items-center" role="alert">
+                  <i class="bi bi-arrow-repeat me-2"></i>
+                  QC requested rework — fields are unlocked so you can update your decision/rationale.
+                  When you resubmit, the case will return to the same QC to mark the rework as completed.
+                </div>
+              {% endif %}
+
+              <!-- Outcome -->
+              <div class="mb-3">
+                <label class="form-label">Outcome</label>
+                {% if is_editable %}
+                  <select class="form-select" id="outcome" name="outcome">
+                    <option value="">Select…</option>
+                    {% for o in outcomes %}
+  {% set _opt = o['name'] if (o is mapping and 'name' in o) else o %}
+  <option value="{{ _opt }}" {{ 'selected' if (review.get('l1_outcome') or '') == _opt else '' }}>{{ _opt }}</option>
+{% endfor %}
+                  </select>
+                {% else %}
+                  <input class="form-control" readonly value="{{ review.get('l1_outcome') or '—' }}">
+                {% endif %}
+              </div>
+
+              <!-- Financial Crime Reason (conditional) -->
+              <div class="mb-3" id="fc-reason-wrap" style="display:none;">
+                <label class="form-label">Financial Crime Reason</label>
+                <select class="form-select" id="financial_crime_reason" name="financial_crime_reason"><option value="">Select…</option>{% set _fcr = review.get("financial_crime_reason") or review.get("fincrime_reason") or "" %}<option value="Money Laundering" {{ "selected" if _fcr=="Money Laundering" else "" }}>Money Laundering</option><option value="Tax Evasion" {{ "selected" if _fcr=="Tax Evasion" else "" }}>Tax Evasion</option><option value="Phoenixing" {{ "selected" if _fcr=="Phoenixing" else "" }}>Phoenixing</option></select>
+              </div>
+
+              
+<script>
+/* Local, robust, button-only composer + autosave. Called inline via onclick */
+function createAndSaveCaseSummary(btn) {
+  try {
+    // Compose
+    var text = computeCaseSummaryV2();
+    var ta = document.querySelector('textarea#case_summary, textarea[name="case_summary"]');
+    if (ta) {
+      if (ta.value !== text) {
+        ta.value = text;
+        try { ta.dispatchEvent(new Event('input', { bubbles: true })); } catch(e){}
+        try { ta.dispatchEvent(new Event('change', { bubbles: true })); } catch(e){}
+      }
+    }
+
+    // If nothing to save, still provide feedback
+    if (!text || !text.trim()) {
+      flipBtn(btn, 'danger', '<i class="bi bi-exclamation-triangle"></i> No Content');
+      setTimeout(function(){ resetBtn(btn); }, 1800);
+      return false;
+    }
+
+    // Autosave
+    var taskId = (btn && btn.dataset && btn.dataset.taskId) ? btn.dataset.taskId : '';
+    var csrf = (document.querySelector('input[name="csrf_token"]') || {}).value || '';
+    if (!taskId) {
+      // Try to recover from the DOM if missing
+      var taskTextEl = (function(){
+  try {
+    var dts = document.querySelectorAll('dt.col-5');
+    for (var i = 0; i < dts.length; i++) {
+      var label = (dts[i].textContent || '').trim();
+      if (label === 'Task ID') {
+        var dd = dts[i].nextElementSibling;
+        if (dd && dd.matches('dd.col-7')) return dd;
+      }
+    }
+  } catch(e) {}
+  return null;
+})();
+if (taskTextEl && taskTextEl.textContent) taskId = taskTextEl.textContent.trim();
+    }
+
+    if (!taskId) {
+      // Save cannot proceed, but at least signal composed
+      flipBtn(btn, 'success', '<i class="bi bi-check2-circle"></i> Summary Created');
+      setTimeout(function(){ resetBtn(btn); }, 1400);
+      return false;
+    }
+
+    fetch('/reviews/' + encodeURIComponent(taskId) + '/autosave_case_summary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+      body: 'csrf_token=' + encodeURIComponent(csrf) + '&case_summary=' + encodeURIComponent(text)
+    }).then(function(r){ return r.json().catch(function(){ return {}; }); })
+      .then(function(data){
+        if (data && data.ok) {
+          flipBtn(btn, 'success', '<i class="bi bi-check2-circle"></i> Summary Saved');
+          setTimeout(function(){ resetBtn(btn); }, 1400);
+        } else {
+          flipBtn(btn, 'success', '<i class="bi bi-check2-circle"></i> Summary Created');
+          setTimeout(function(){ resetBtn(btn); }, 1400);
+        }
+      }).catch(function(err){
+        console.warn('Autosave error', err);
+        flipBtn(btn, 'success', '<i class="bi bi-check2-circle"></i> Summary Created');
+        setTimeout(function(){ resetBtn(btn); }, 1400);
+      });
+  } catch (e) {
+    console.warn('CreateCaseSummary error:', e);
+    flipBtn(btn, 'danger', '<i class="bi bi-exclamation-triangle"></i> Error');
+    setTimeout(function(){ resetBtn(btn); }, 1800);
+  }
+  return false;
+}
+
+function flipBtn(btn, kind, html) {
+  if (!btn) return;
+  btn.classList.remove('btn-outline-secondary','btn-success','btn-danger');
+  if (kind === 'success') btn.classList.add('btn-success');
+  else if (kind === 'danger') btn.classList.add('btn-danger');
+  else btn.classList.add('btn-outline-secondary');
+  btn.innerHTML = html;
+}
+function resetBtn(btn) {
+  if (!btn) return;
+  btn.classList.remove('btn-success','btn-danger');
+  btn.classList.add('btn-outline-secondary');
+  btn.innerHTML = '<i class="bi bi-magic"></i> Create Case Summary';
+}
+
+function computeCaseSummaryV2() {
+  function valOf(el) {
+    if (!el) return '';
+    var v = (el.value !== undefined) ? el.value : el.textContent;
+    return (v || '').toString().trim();
+  }
+  var parts = [];
+
+  try {
+    // DDG section rationales
+    var rows = document.querySelectorAll('#ddgTableBody tr');
+    rows.forEach(function(row){
+      var sectionInput = row.querySelector('input[name$="_section"], input.section-label, input[readonly]');
+      var rationaleArea = row.querySelector('textarea[name$="_rationale"]');
+      var section = valOf(sectionInput);
+      var rationale = valOf(rationaleArea);
+      if (rationale) parts.push(section ? (section + ': ' + rationale) : rationale);
+    });
+  } catch(_e) {}
+
+  try {
+    // FinCrime concern rationales
+    document.querySelectorAll('textarea[name^="concern_"][name$="_rationale"]').forEach(function(area){
+      var row = area.closest('tr');
+      var label = '';
+      if (row) {
+        var firstCell = row.querySelector('td:first-child');
+        if (firstCell) {
+          var ro = firstCell.querySelector('input[readonly], input.form-control-plaintext');
+          label = valOf(ro) || valOf(firstCell);
+        }
+      }
+      var rationale = valOf(area);
+      if (rationale) parts.push(label ? (label + ': ' + rationale) : rationale);
+    });
+  } catch(_e) {}
+
+  // Optional primary/overall rationale if present on page
+  try {
+    var prim = document.querySelector('input[name="primary_rationale"], textarea[name="primary_rationale"]');
+    var over = document.querySelector('input[name="rationale"], textarea[name="rationale"]');
+    var p = valOf(prim), o = valOf(over);
+    if (p) parts.unshift('Primary Rationale: ' + p);
+    if (o) parts.push('Overall Rationale: ' + o);
+  } catch(_e) {}
+
+  
+  // Decision outcome and rationale (explicit)
+  try {
+    var outcomeEl = document.getElementById('outcome') || document.querySelector('select[name="outcome"]');
+    var outcome = outcomeEl ? (outcomeEl.value || '').trim() : '';
+    var decisionTa = document.getElementById('rationale') || document.querySelector('textarea[name="rationale"], input[name="rationale"]');
+    var decisionRat = decisionTa ? (decisionTa.value || decisionTa.textContent || '').trim() : '';
+
+    // Remove previously-added generic "Overall Rationale" if present to avoid duplication
+    for (var i = parts.length - 1; i >= 0; i--) {
+      if (typeof parts[i] === 'string' && parts[i].indexOf('Overall Rationale:') === 0) {
+        parts.splice(i, 1);
+      }
+    }
+
+    if (outcome) parts.unshift('Decision Outcome: ' + outcome);
+    if (decisionRat) parts.splice(1, 0, 'Decision Rationale: ' + decisionRat); // place just under outcome
+  } catch(_e) {}
+
+  return parts.filter(Boolean).join('\n\n');
+}
+</script>
+
+              <!-- Decision Rationale -->
+              <div class="mb-3">
+                <label class="form-label">Rationale</label>
+                {% if is_editable %}
+                  <textarea class="form-control" id="rationale" name="rationale" rows="4">{{ review.get('l1_rationale') or '' }}</textarea>
+                {% else %}
+                  <textarea class="form-control" rows="4" readonly>{{ review.get('l1_rationale') or '—' }}</textarea>
+                {% endif %}
+              </div>{% if is_editable %}
+                <!-- SME Query (only when referring) -->
+                <div class="mb-3" id="smeQueryGroup" style="display:none;">
+                  <label for="sme_query" class="form-label fw-semibold">SME Query</label>
+                  <textarea name="sme_query" id="sme_query" rows="4" class="form-control">{{ review.get('l1_sme_query') or '' }}</textarea>
+                </div>
+
+<!-- Case Summary -->
+<div class="mb-3">
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <label class="form-label mb-0">Case Summary</label>
+    <button type="button" class="btn btn-sm btn-outline-secondary" id="createCaseSummaryBtn"
+            data-task-id="{{ task_id }}" onclick="return createAndSaveCaseSummary(this);">
+      <i class="bi bi-magic"></i> Create Case Summary
+    </button>
+  </div>
+  {% if is_editable %}
+    <textarea class="form-control" id="case_summary" name="case_summary" rows="4">{{ review.get('case_summary') or '' }}</textarea>
+  {% else %}
+    <textarea class="form-control" rows="4" readonly>{{ review.get('case_summary') or '—' }}</textarea>
+  {% endif %}
+</div>
+
+
+              {% endif %}
+
+              {% if has_outcome and (rb_name or rb_date) %}
+                <div class="small text-muted">
+                  Reviewed by {{ rb_name or '—' }} · {{ rb_date or '—' }}
+                </div>
+              {% endif %}
+            </div>
+
+            {% if is_editable %}
+              <div class="action-bar mt-2 py-2">
+                <div class="d-flex flex-wrap gap-2 justify-content-end px-3">
+                  <button class="btn btn-sm btn-primary" id="save-progress-btn" name="action" type="submit" value="save_progress" formnovalidate>
+                    <i class="bi bi-save"></i> Save Section
+                  </button>
+                  <button class="btn btn-success" id="submit-btn" name="action" type="submit" value="submit">
+                    <i class="bi bi-check2-circle"></i> Submit
+                  </button>
+                  <button class="btn btn-warning" id="refer-sme-btn" name="action" type="submit" value="refer_sme" formnovalidate>
+                    <i class="bi bi-person-gear"></i> Refer for Technical Guidance
+                  </button>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if is_current %}
+        </form>
+        {% endif %}
+      </div>
+
+    </div>
+
+    </div>
+
+        </div>
+    <!-- SIDEBAR -->
+    <div class="col-md-4 col-lg-4 order-md-2 order-lg-2">
+      <aside class="sticky-side">{# --- SME Advice (collapsible) --- #}
+        {% set _sme_mode = sme_mode or false %}
+        {% set active_lvl = (sme_level or level) if _sme_mode else level %}
+
+        {% set read_query    = (review.get('l' ~ active_lvl ~ '_sme_query') or '')|trim %}
+        {% set read_advice   = (review.get('l' ~ active_lvl ~ '_sme_response') or '')|trim %}
+        {% set read_return   = review.get('l' ~ active_lvl ~ '_sme_returned_date') %}
+        {% set read_selected = review.get('l' ~ active_lvl ~ '_sme_selected_date') %}
+        {% set was_referred  = review.get('l' ~ active_lvl ~ '_referred_to_sme') %}
+
+        {% set _lvl_summary = (assignments_summary | selectattr('level', 'equalto', active_lvl) | list | first) %}
+        {% set sme_name = _lvl_summary.sme.assigned_to_name if _lvl_summary and _lvl_summary.sme else None %}
+
+        {% set show_readonly = (not _sme_mode) and (was_referred or read_query or read_advice or read_return or read_selected) %}
+
+        {% if _sme_mode %}
+          <div class="card shadow-sm card-compact mb-4">
+            <div class="card-header d-flex align-items-center justify-content-between">
+              <h2 class="h6 mb-0">SME Advice <span class="text-body-secondary">(Level {{ active_lvl }})</span></h2>
+              <button class="btn btn-sm btn-outline-secondary" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#smeAdviceBox"
+                      aria-expanded="true" aria-controls="outreachPanel">Toggle</button>
+            </div>
+            <div class="card-body collapse show" id="smeAdviceBox">
+              <div class="d-flex justify-content-between small mb-2">
+                <span class="text-muted">SME Reviewer</span>
+                <span class="fw-semibold">{{ sme_name or '—' }}</span>
+              </div>
+
+              <form method="post">
+                {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+                <div class="mb-3">
+                  <label class="form-label text-muted">Reviewer’s SME Context</label>
+                  <textarea class="form-control" rows="3" readonly>{{ read_query or '—' }}</textarea>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Your Advice</label>
+                  <textarea name="sme_advice" class="form-control" rows="6"
+                            placeholder="Provide clear, actionable guidance the reviewer can act on…">{{ read_advice or '' }}</textarea>
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-primary" type="submit">Submit Advice</button>
+                  <a class="btn btn-outline-secondary" href="{{ url_for('sme_queue') }}">Back to SME Queue</a>
+                </div>
+              </form>
+            </div>
+          </div>
+
+        {% elif show_readonly %}
+          <div class="card shadow-sm card-compact mb-4">
+            <div class="card-header d-flex align-items-center justify-content-between">
+              <h2 class="h6 mb-0">SME Advice <span class="text-body-secondary">(Level {{ active_lvl }})</span></h2>
+              <button class="btn btn-sm btn-outline-secondary" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#smeAdviceBox"
+                      aria-expanded="true" aria-controls="outreachPanel">Toggle</button>
+            </div>
+            <div class="card-body collapse show" id="smeAdviceBox">
+              <div class="d-flex justify-content-between small mb-2">
+                <span class="text-muted">SME Reviewer</span>
+                <span class="fw-semibold">{{ sme_name or '—' }}</span>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label text-muted">Your SME Query</label>
+                <textarea class="form-control" rows="3" readonly>{{ read_query or '—' }}</textarea>
+              </div>
+
+              <div class="mb-1">
+                <label class="form-label fw-semibold">Advice</label>
+                <textarea class="form-control" rows="6" readonly>{{ read_advice or 'Awaiting SME response.' }}</textarea>
+              </div>
+
+              <div class="small text-muted">
+                {% if read_advice %}
+                  Returned {{ read_return or '—' }}
+                {% elif read_selected %}
+                  Referred {{ read_selected }}
+                {% else %}
+                  SME not engaged yet.
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+        {# --- QC Assessment (collapsible) --- #}
+        {% set _qc_mode = qc_mode or false %}
+        {% set qc_lvl   = qc_level or level %}
+        {% set qc_read  = qc_readonly if qc_readonly is not none else (not _qc_mode) %}
+        {% set qc_out   = qc_outcome or '' %}
+        {% set qc_rat   = qc_rationale or '' %}
+        {% set qc_ref   = qc_referred or false %}
+        {% set qc_ret   = qc_returned_at or None %}
+        {% set qc_name  = qc_assigned_name or '' %}
+        {% set _qrw_req = (review.get('l' ~ qc_lvl ~ '_qc_rework_required')|int) == 1 %}
+        {% set _qrw_done= (review.get('l' ~ qc_lvl ~ '_qc_rework_completed')|int) == 1 %}
+
+        {% set show_qc_panel = _qc_mode or qc_out or qc_rat or qc_ref or qc_ret or qc_name %}
+        {% if show_qc_panel %}
+          <div class="card shadow-sm card-compact mb-4">
+            <div class="card-header d-flex align-items-center justify-content-between">
+              <h2 class="h6 mb-0">QC Assessment <span class="text-body-secondary">(Level {{ qc_lvl }})</span></h2>
+              <button class="btn btn-sm btn-outline-secondary" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#qcPanel"
+                      aria-expanded="true" aria-controls="outreachPanel">Toggle</button>
+            </div>
+
+            <div class="card-body collapse show" id="qcPanel">
+              <div class="d-flex justify-content-between small mb-3">
+                <span class="text-muted">QC Reviewer</span>
+                <span class="fw-semibold">{{ qc_name or '—' }}</span>
+              </div>
+
+              {% if not qc_read and _qc_mode %}
+                <form method="post" id="qcForm">
+                  {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endif %}
+
+                  <div class="mb-3">
+                    <label class="form-label">QC Outcome</label>
+                    <select name="qc_outcome" id="qc_outcome" class="form-select">
+                      <option value="">Select…</option>
+                      <option value="Pass" {{ 'selected' if qc_out == 'Pass' }}>Pass</option>
+                      <option value="Pass With Feedback" {{ 'selected' if qc_out == 'Pass With Feedback' }}>Pass With Feedback</option>
+                      <option value="Fail" {{ 'selected' if qc_out == 'Fail' }}>Fail</option>
+                    </select>
+                  </div>
+
+                  <div class="mb-3">
+                    <label class="form-label">QC Rationale / Feedback</label>
+                    <textarea name="qc_rationale" rows="5" class="form-control" placeholder="Explain your decision…">{{ qc_rat }}</textarea>
+                  </div>
+
+                  <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="qc_rework_required"
+                           name="qc_rework_required" value="yes" {% if _qrw_req %}checked{% endif %}>
+                    <label class="form-check-label" for="qc_rework_required">Rework Required</label>
+                  </div>
+
+                  {% if _qrw_req and not _qrw_done %}
+                    <div class="alert alert-info py-2">
+                      Reviewer has resubmitted their rework. Tick below and press <em>Confirm Rework</em> to keep the original QC outcome and move the case on.
+                    </div>
+                    <div class="form-check mb-3">
+                      <input class="form-check-input" type="checkbox" id="qc_rework_completed"
+                             name="qc_rework_completed" value="yes">
+                      <label class="form-check-label" for="qc_rework_completed">Rework is completed to an acceptable standard</label>
+                    </div>
+                  {% endif %}
+
+                  <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-primary" type="submit" name="action" value="qc_submit">
+                      <i class="bi bi-shield-check"></i> Submit QC
+                    </button>
+                    <button class="btn btn-warning" type="submit" name="action" value="qc_refer">
+                      <i class="bi bi-person-gear"></i> Refer for Technical Guidance
+                    </button>
+                    {% if _qrw_req and not _qrw_done %}
+                      <button class="btn btn-success" type="submit" name="action" value="qc_confirm_rework">
+                        <i class="bi bi-check2-circle"></i> Confirm Rework
+                      </button>
+                    {% endif %}
+                  </div>
+                </form>
+
+
+<div class="mb-3">
+  <form method="post" action="/api/outreach/{{ task_id }}/complete">
+    <input type="hidden" name="return_to" value="{{ url_for('reviewer_panel', task_id=task_id) }}"/>
+    {% if csrf_token is defined %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>{% endif %}
+    <input type="hidden" name="outreach_complete" value="0">
+    <div class="form-check mt-3">
+      <input class="form-check-input" type="checkbox" id="outreach_complete" name="outreach_complete" value="1"
+             {% if review.get('outreach_complete') in [1,'1',True,'true','True','on'] %}checked{% endif %}
+             onchange="this.form.submit()">
+      <label class="form-check-label fw-semibold" for="outreach_complete">Outreach Complete</label>
+    </div>
+  </form>
+</div>
+
+              </div>
+
+            {% else %}
+                <div class="mb-3">
+                  <label class="form-label">QC Outcome</label>
+                  <input class="form-control" readonly value="{{ qc_out or '—' }}">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">QC Rationale / Feedback</label>
+                  <textarea class="form-control" rows="5" readonly>{{ qc_rat or '—' }}</textarea>
+                </div>
+                <div class="small text-muted">
+                  {% if qc_ref and not qc_ret %}Referred for technical guidance.
+                  {% elif qc_ret %}Returned {{ qc_ret }}
+                  {% else %}—{% endif %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+
+      </aside>
+    </div>
+  </div>
+</div>
+
+
+<!-- External libs for client-side PDF generation -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" referrerpolicy="no-referrer"></script>
+
+<!-- External libs for client-side PDF generation -->
+
+<!-- Client-side PDF export: one page per section, no blanks, protect 'Linked party 1', Decision→Case Summary only, scrub code/tokens -->
+
+<!-- Client-side PDF export: one page per section (auto-scaled), scrub internals, Decision→Case Summary only -->
+
+<!-- Client-side PDF export: one page per section (auto-scaled), align at top, exclude Case Summary card & Outreach, Decision→Case Summary only -->
+
+
+
+<script>
+// Fallback: define a robust composeCaseSummary if not already exposed
+if (typeof window.composeCaseSummary !== 'function') {
+  window.composeCaseSummary = function() {
+    try {
+      function valOf(el) {
+        if (!el) return "";
+        var v = (el.value !== undefined) ? el.value : el.textContent;
+        return (v || "").toString().trim();
+      }
+      var parts = [];
+
+      // DDG section rationales
+      document.querySelectorAll('#ddgTableBody tr').forEach(function(row){
+        var sectionInput = row.querySelector('input[name$="_section"], input.section-label, input[readonly]');
+        var rationaleArea = row.querySelector('textarea[name$="_rationale"]');
+        var section = valOf(sectionInput);
+        var rationale = valOf(rationaleArea);
+        if (rationale) parts.push(section ? (section + ": " + rationale) : rationale);
+      });
+
+      // FinCrime concerns rationales (e.g., concern_*_rationale)
+      document.querySelectorAll('textarea[name^="concern_"][name$="_rationale"]').forEach(function(area){
+        var row = area.closest('tr');
+        var label = "";
+        if (row) {
+          var firstCell = row.querySelector('td:first-child');
+          if (firstCell) {
+            var ro = firstCell.querySelector('input[readonly], input.form-control-plaintext');
+            label = valOf(ro) || valOf(firstCell);
+          }
+        }
+        var rationale = valOf(area);
+        if (rationale) parts.push(label ? (label + ": " + rationale) : rationale);
+      });
+
+      // Primary/Overall rationale if present
+      var prim = document.querySelector('input[name="primary_rationale"], textarea[name="primary_rationale"]');
+      var over = document.querySelector('input[name="rationale"], textarea[name="rationale"]');
+      var p = valOf(prim), o = valOf(over);
+      if (p) parts.unshift("Primary Rationale: " + p);
+      if (o) parts.push("Overall Rationale: " + o);
+
+      // Write to Case Summary textarea
+      var ta = document.querySelector('textarea#case_summary, textarea[name="case_summary"]');
+      if (ta) {
+        var text = parts.filter(Boolean).join("\n\n");
+        if (ta.value !== text) {
+          ta.value = text;
+          try { ta.dispatchEvent(new Event('input', { bubbles: true })); } catch(e){}
+          try { ta.dispatchEvent(new Event('change', { bubbles: true })); } catch(e){}
+        }
+      } else {
+        console.warn('Case Summary textarea not found while composing.');
+      }
+    } catch (e) {
+      console.warn('composeCaseSummary fallback failed:', e);
+    }
+  };
+}
+</script>
+
+<script>
+(function(){
+  var btn = document.getElementById('exportPdfBtn');
+  if (!btn) return;
+  btn.addEventListener('click', async function(e){
+    e.preventDefault();
+    try {
+      btn.classList.add('disabled');
+      var originalHTML = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Building PDF…';
+
+      // Ensure the libs exist
+      if (!(window.html2canvas && window.jspdf && window.jspdf.jsPDF)) {
+        alert('PDF libraries not loaded. Please check your network/content security policy.');
+        btn.classList.remove('disabled'); btn.innerHTML = originalHTML;
+        return;
+      }
+
+      // Expand collapsible panels temporarily
+      var collapses = Array.prototype.slice.call(document.querySelectorAll('.collapse'));
+      var restore = [];
+      collapses.forEach(function(el){
+        var isShown = el.classList.contains('show');
+        restore.push({el: el, shown: isShown});
+        if (!isShown) {
+          el.classList.add('show');
+          el.style.height = 'auto';
+        }
+      });
+
+      // Gather the cards in the main column to export
+      var container = document.querySelector('.case-main');
+      var cards = container ? Array.prototype.slice.call(container.querySelectorAll('.card')) : [];
+
+      // Fallback if no cards found: export the container
+      if (!cards.length && container) cards = [container];
+
+      // Create PDF doc (A4 portrait)
+      var pdf = new window.jspdf.jsPDF({unit:'pt', format:'a4', orientation:'p'});
+      var pageW = pdf.internal.pageSize.getWidth();
+      var pageH = pdf.internal.pageSize.getHeight();
+      var margin = 24;
+
+      // Header
+      function addHeader(pageNum){
+        var ts = new Date().toLocaleString();
+        pdf.setFontSize(10);
+        pdf.setTextColor(120);
+        pdf.text('Review Export • ' + ts + (pageNum ? (' • Page ' + pageNum) : ''), margin, margin);
+        pdf.setDrawColor(220); pdf.line(margin, margin+6, pageW - margin, margin+6);
+      }
+
+      let first = true;
+      let pageNum = 1;
+
+      for (let i=0;i<cards.length;i++) {
+        var card = cards[i];
+        // Skip if explicitly marked to exclude
+        if (card.matches('[data-pdf-exclude="1"]')) continue;
+
+        // Render to canvas
+        var canvas = await window.html2canvas(card, {scale: 2, useCORS: true, backgroundColor: '#ffffff', windowWidth: document.documentElement.scrollWidth});
+        var imgData = canvas.toDataURL('image/jpeg', 0.92);
+
+        // Compute scaled height to fit width (A4)
+        var imgW = pageW - margin*2;
+        var ratio = imgW / canvas.width;
+        var imgH = canvas.height * ratio;
+
+        // Add new page if not the first
+        if (!first) pdf.addPage();
+        first = false;
+
+        addHeader(pageNum++);
+        pdf.addImage(imgData, 'JPEG', margin, margin+12, imgW, imgH, undefined, 'FAST');
+      }
+
+      // Restore collapses
+      restore.forEach(function(r){
+        if (!r.shown) { r.el.classList.remove('show'); r.el.style.height = ''; }
+      });
+
+      // Build filename from Task ID if present
+      var taskId = (document.querySelector('dd.col-7') || {}).textContent || 'review';
+      taskId = (taskId || 'review').toString().trim().replace(/\s+/g,'_').replace(/[^\w\-]+/g,'_');
+      pdf.save(taskId + '_export.pdf');
+
+      btn.classList.remove('disabled'); btn.innerHTML = originalHTML;
+    } catch (err) {
+      console.error('PDF export failed:', err);
+      alert('Sorry, the PDF could not be created. Check console for details.');
+      btn.classList.remove('disabled'); btn.innerHTML = 'Export PDF';
+    }
+  }, false);
+})();
+</script>
+
+{% endblock %}
+
+<script>
+(function(){
+  var btn  = document.getElementById('refer-sme-btn');
+  var form = document.getElementById('reviewForm');
+  var group = document.getElementById('smeQueryGroup');
+  var ta    = document.getElementById('sme_query');
+
+  if (!btn) return;
+
+  // If the main form isn't present on this view, create a tiny fallback POST form.
+  if (!form) {
+    form = document.createElement('form');
+    form.method = 'POST';
+    form.id = 'reviewForm';
+
+    // Reuse any CSRF token already on the page
+    var csrfSrc = document.querySelector('input[name="csrf_token"]');
+    if (csrfSrc && csrfSrc.value) {
+      var csrf = document.createElement('input');
+      csrf.type = 'hidden'; csrf.name = 'csrf_token'; csrf.value = csrfSrc.value;
+      form.appendChild(csrf);
+    }
+    document.body.appendChild(form);
+  }
+
+  // Ensure the refer button submits to the correct form even if it's outside it
+  try { btn.setAttribute('form', 'reviewForm'); } catch(e) {}
+
+  function disableCompletionFieldsForSME(){
+    try{
+      var selectors = [
+        'input[name="InitialReviewCompleteDate"]',
+        'input[name$="_section_completed"]',
+        'input[name^="concern_"][name$="_date"]',
+        'input[name$="_qc_check_date"]',
+        'input[name$="_date"]',
+        'input[name="FinalDecisionDate"]',
+        'input[name="case_closed_date"]'
+      ];
+      selectors.forEach(function(sel){
+        document.querySelectorAll(sel).forEach(function(el){ el.setAttribute('disabled','disabled'); });
+      });
+    } catch(e) { console.warn('disable fields failed', e); }
+  }
+
+  function restoreDisabled(){
+    try{
+      document.querySelectorAll('[disabled][data-smelock!="1"]').forEach(function(el){ el.removeAttribute('disabled'); });
+    } catch(e) {}
+  }
+
+  btn.addEventListener('click', function(e){
+    // First click arms the button and reveals the query field
+    if (!btn.dataset.armed) {
+      e.preventDefault();
+      if (group) group.style.display = '';
+      if (ta) { ta.focus(); try { ta.scrollIntoView({behavior:'smooth', block:'center'}); } catch(_e){} }
+      btn.dataset.armed = '1';
+      btn.classList.remove('btn-warning'); btn.classList.add('btn-danger');
+      btn.innerHTML = '<i class="bi bi-send"></i> Send to SME';
+      return false;
+    }
+
+    // Second click: ensure payload + action, then allow native submit
+    // Ensure we submit as refer_sme regardless of which submit handler the backend checks
+    var existingAction = form.querySelector('input[name="action"][value="refer_sme"]');
+    if (!existingAction) {
+      var hid = document.createElement('input');
+      hid.type = 'hidden'; hid.name = 'action'; hid.value = 'refer_sme';
+      form.appendChild(hid);
+    }
+
+    // Ensure SME query is included even if the textarea isn't inside the form
+    if (ta) {
+      var existingQuery = form.querySelector('input[name="sme_query"], textarea[name="sme_query"]');
+      if (!existingQuery) {
+        var q = document.createElement('input');
+        q.type = 'hidden'; q.name = 'sme_query'; q.value = ta.value || '';
+        form.appendChild(q);
+      } else {
+        existingQuery.value = ta.value || existingQuery.value;
+      }
+    }
+
+    disableCompletionFieldsForSME();
+// Submit using this button as submitter to skip HTML5 validation
+try { btn.setAttribute('formnovalidate',''); } catch(_) {}
+try { btn.formNoValidate = true; } catch(_) {}
+try {
+  if (typeof form.requestSubmit === 'function') { e.preventDefault(); form.requestSubmit(btn); }
+  else { /* let native submit occur */ }
+} catch(_) {}
+return true;
+}, false);
+})();
+</script>
+{% if is_editable %}
+                  <textarea class="form-control" id="case_summary" name="case_summary" rows="4" rows="4">{{ review.get('case_summary') or '' }}</textarea>
+                {% else %}
+                  <textarea class="form-control" rows="4" readonly>{{ review.get('case_summary') or '—' }}</textarea>
+                {% endif %}
+              </div>

@@ -1,0 +1,77 @@
+<div class="comparison-table mt-4">
+  {# heading removed — parent already shows it #}
+
+  <table class="table table-striped table-compare align-middle">
+    <thead class="table-light">
+      <tr>
+        <th style="width:22%">Field</th>
+        <th style="width:39%">Customer</th>
+        <th style="width:39%">Watchlist</th>
+      </tr>
+    </thead>
+    <tbody>
+      {# ---- Build Full Name (customer + watchlist) ---- #}
+      {% set cust_full_name = (
+          review.full_name
+          or ((review.first_name or '') ~
+              (' ' ~ review.middle_name if review.middle_name) ~
+              (' ' ~ review.last_name   if review.last_name))
+        )|trim %}
+
+      {% set wl_full_name = (
+          watchlist_fields_dict.get('full_name')
+          or watchlist_fields_dict.get('name')
+        ) %}
+      {% if not wl_full_name %}
+        {% set wl_full_name = (
+            (watchlist_fields_dict.get('first_name') or '') ~
+            (' ' ~ watchlist_fields_dict.get('middle_name') if watchlist_fields_dict.get('middle_name')) ~
+            (' ' ~ watchlist_fields_dict.get('last_name')  if watchlist_fields_dict.get('last_name'))
+          )|trim %}
+      {% endif %}
+
+      {# label, key-for-watchlist-dict (special token for full name), customer-value #}
+      {% set rows = [
+        ('Full Name',        '__full_name__',    cust_full_name),
+        ('Date of Birth',    'dob',              review.dob),
+        ('Gender',           'gender',           review.customer_gender),
+        ('Nationalities',    'nationalities',    review.customer_nationalities),
+        ('Address',          'address',          review.address),
+        ('Contact Numbers',  'contact_numbers',  review.customer_contact_numbers),
+        ('Email Address',    'email_address',    review.customer_email_address),
+        ('ID Number',        'id_number',        review.id_number),
+        ('Document Type',    'document_type',    review.document_type)
+      ] %}
+
+      {% for label, key, cust_val in rows %}
+        {% if key == '__full_name__' %}
+          {% set wl_val = wl_full_name %}
+        {% else %}
+          {% set wl_val = watchlist_fields_dict.get(key) %}
+        {% endif %}
+
+        {% set c = (cust_val|string).strip() %}
+        {% set w = (wl_val|string).strip() %}
+
+        {# compute row style (no separate status column) #}
+        {% if c and w and c|lower == w|lower %}
+          {% set row_cls = 'table-success-subtle' %}
+        {% elif c or w %}
+          {% set row_cls = 'table-warning-subtle' %}
+        {% else %}
+          {% set row_cls = '' %}
+        {% endif %}
+
+        <tr class="{{ row_cls }}">
+          <td class="fw-semibold">{{ label }}</td>
+          <td>
+            <div class="value-box"><div class="text-wrap">{{ c or '—' }}</div></div>
+          </td>
+          <td>
+            <div class="value-box"><div class="text-wrap">{{ w or '—' }}</div></div>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

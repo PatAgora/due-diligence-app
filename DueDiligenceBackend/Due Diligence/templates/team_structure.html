@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  .org-wrap{
+    background: #f7f8fb;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 1px 0 rgba(16,24,40,.04) inset, 0 1px 2px rgba(16,24,40,.06);
+  }
+  .org-header{
+    display:flex; align-items:center; gap:.75rem; margin-bottom: .75rem;
+  }
+  .org-header h1{
+    font-size: 1.25rem; font-weight: 800; margin:0;
+  }
+  .org-legend{ margin-left:auto; display:flex; gap:.5rem; align-items:center; }
+  .pill{
+    font-size:.75rem; padding:.25rem .5rem; border-radius:999px; border:1px solid #e5e7eb; background:#fff;
+  }
+  .org-canvas{
+    position:relative; overflow:auto; height:70vh;
+    background: linear-gradient(180deg,#fff, #fbfcff);
+    border: 1px solid #eef0f4; border-radius: 12px;
+  }
+  .org-grid{
+    min-width: 720px;
+    display:grid;
+    grid-template-columns: repeat(3, minmax(240px, 1fr));
+    gap: 24px;
+    padding: 24px;
+    position:relative;
+  }
+  .org-col h2{
+    font-size:.9rem; font-weight:700; color:#64748b; letter-spacing:.3px;
+    text-transform: uppercase; margin:0 0 .5rem 2px;
+  }
+  .stack{ display:flex; flex-wrap:wrap; gap:12px; align-items:flex-start; }
+
+  .card{
+    position:relative;
+    width: 220px;
+    border: 1px solid #e6e9ef;
+    border-radius: 14px;
+    background:#fff;
+    box-shadow: 0 1px 2px rgba(16,24,40,.06);
+    padding: 12px;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .card:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16,24,40,.08);
+  }
+  .row1{ display:flex; align-items:center; gap:10px; }
+  .avatar{
+    width:38px; height:38px; border-radius:10px;
+    display:grid; place-items:center; font-weight:800;
+    background:linear-gradient(135deg,#e0e7ff,#f0f9ff);
+    color:#334155;
+    border:1px solid #e5e7eb;
+  }
+  .name{ font-weight:700; line-height:1.15; }
+  .role{
+    font-size:.8rem; color:#64748b; margin-top:2px;
+  }
+  .badge{
+    display:inline-block; font-size:.7rem; font-weight:600;
+    border:1px solid #e5e7eb; color:#0f172a; background:#f8fafc;
+    padding:.15rem .45rem; border-radius:999px; margin-top:8px;
+  }
+
+  /* connector layer (SVG absolute) */
+  .links{
+    position:absolute; inset:0; pointer-events:none;
+  }
+
+  /* small helper */
+  .muted{ color:#94a3b8; }
+</style>
+
+<div class="org-wrap">
+  <div class="org-header">
+    <h1>Team Structure</h1>
+    <div class="org-legend">
+      <span class="pill">Team Leads</span>
+      <span class="pill">Reviewers</span>
+      <span class="pill">Levels 1–3</span>
+    </div>
+  </div>
+
+  <div class="org-canvas" id="org-canvas">
+    <!-- SVG connectors go on top of grid -->
+    <svg class="links" id="linkLayer"></svg>
+
+    <div class="org-grid" id="org-grid">
+      <!-- Level 1 -->
+      <section class="org-col" data-level="1">
+        <h2>Level 1</h2>
+        <div class="stack">
+          {% for n in (nodes_by_level.get(1) or []) %}
+          <article class="card" data-id="{{ n.id }}" data-level="{{ n.level|default(1) }}">
+            <div class="row1">
+              <div class="avatar">{{ (n.name.split()[:2] | map('first') | join('')).upper() }}</div>
+              <div>
+                <div class="name">{{ n.name }}</div>
+                <div class="role">{{ n.role }}</div>
+              </div>
+            </div>
+            <div class="badge">Level {{ n.level or 1 }}</div>
+          </article>
+          {% else %}
+            <div class="muted">No team members at Level 1.</div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <!-- Level 2 -->
+      <section class="org-col" data-level="2">
+        <h2>Level 2</h2>
+        <div class="stack">
+          {% for n in (nodes_by_level.get(2) or []) %}
+          <article class="card" data-id="{{ n.id }}" data-level="{{ n.level|default(2) }}">
+            <div class="row1">
+              <div class="avatar">{{ (n.name.split()[:2] | map('first') | join('')).upper() }}</div>
+              <div>
+                <div class="name">{{ n.name }}</div>
+                <div class="role">{{ n.role }}</div>
+              </div>
+            </div>
+            <div class="badge">Level {{ n.level or 2 }}</div>
+          </article>
+          {% else %}
+            <div class="muted">No team members at Level 2.</div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <!-- Level 3 -->
+      <section class="org-col" data-level="3">
+        <h2>Level 3</h2>
+        <div class="stack">
+          {% for n in (nodes_by_level.get(3) or []) %}
+          <article class="card" data-id="{{ n.id }}" data-level="{{ n.level|default(3) }}">
+            <div class="row1">
+              <div class="avatar">{{ (n.name.split()[:2] | map('first') | join('')).upper() }}</div>
+              <div>
+                <div class="name">{{ n.name }}</div>
+                <div class="role">{{ n.role }}</div>
+              </div>
+            </div>
+            <div class="badge">Level {{ n.level or 3 }}</div>
+          </article>
+          {% else %}
+            <div class="muted">No team members at Level 3.</div>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+/**
+ * OPTIONAL connectors:
+ * Provide `parent_map` from Flask context, e.g. { child_id: parent_id }
+ * We'll try to draw a soft curve from parent card center to child card center.
+ */
+(function(){
+  const parentMap = {{ (parent_map or {}) | tojson }};
+  if (!parentMap || Object.keys(parentMap).length === 0) return;
+
+  const grid = document.getElementById('org-grid');
+  const svg  = document.getElementById('linkLayer');
+  const canvas = document.getElementById('org-canvas');
+
+  function cardCenter(el){
+    const a = el.getBoundingClientRect();
+    const b = grid.getBoundingClientRect();
+    const x = a.left - b.left + a.width/2 + grid.scrollLeft;
+    const y = a.top  - b.top  + a.height/2 + grid.scrollTop;
+    return {x,y};
+  }
+
+  function draw(){
+    // size svg to grid
+    const g = grid.getBoundingClientRect();
+    svg.setAttribute('width', g.width);
+    svg.setAttribute('height', g.height);
+    svg.setAttribute('viewBox', `0 0 ${g.width} ${g.height}`);
+    svg.innerHTML = '';
+
+    for (const [child, parent] of Object.entries(parentMap)){
+      const pe = grid.querySelector(`.card[data-id="${parent}"]`);
+      const ce = grid.querySelector(`.card[data-id="${child}"]`);
+      if (!pe || !ce) continue;
+      const p = cardCenter(pe), c = cardCenter(ce);
+
+      const dx = Math.abs(c.x - p.x);
+      const mx = (p.x + c.x)/2;
+      const c1 = `${p.x + dx*0.3},${p.y}`;
+      const c2 = `${c.x - dx*0.3},${c.y}`;
+      const d  = `M ${p.x},${p.y} C ${c1} ${c2} ${c.x},${c.y}`;
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill','none');
+      path.setAttribute('stroke','#c7d2fe');   // soft indigo
+      path.setAttribute('stroke-width','2');
+      path.setAttribute('opacity','0.9');
+      svg.appendChild(path);
+    }
+  }
+
+  const ro = new ResizeObserver(draw);
+  ro.observe(grid);
+  window.addEventListener('load', draw);
+  window.addEventListener('resize', draw);
+  canvas.addEventListener('scroll', draw, { passive:true });
+})();
+</script>
+{% endblock %}

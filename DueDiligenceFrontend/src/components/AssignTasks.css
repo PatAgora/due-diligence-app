@@ -1,0 +1,38 @@
+.task-card,
+.reviewer-card {
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.task-card:hover,
+.reviewer-card:hover {
+  background-color: #f7f7f7;
+}
+
+.task-card.active,
+.reviewer-card.active {
+  background-color: #e3f2fd !important;
+  border-color: #2196f3 !important;
+}
+
+.task-list,
+.reviewer-list {
+  max-height: 450px;
+  overflow-y: auto;
+}
+
+.task-list::-webkit-scrollbar,
+.reviewer-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.task-list::-webkit-scrollbar-thumb,
+.reviewer-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.task-list::-webkit-scrollbar-thumb:hover,
+.reviewer-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

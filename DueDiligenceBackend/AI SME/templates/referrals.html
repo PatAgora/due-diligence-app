@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SME Referrals – Scrutinise Bot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <style>
+    /* Enhanced styling that aligns with modern interface design */
+    :root {
+      --brand-dark: #1a1a1a;
+      --brand-orange: #ff6b35;
+      --brand-orange-light: #ff8659;
+      --text-primary: #1a1a1a;
+      --text-secondary: #666666;
+      --text-muted: #999999;
+      --bg-primary: #ffffff;
+      --bg-card: #ffffff;
+      --bg-section: #f8f9fa;
+      --border-color: #e5e7eb;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+
+    /* Header styling matching other pages */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: var(--brand-dark);
+      border-bottom: 3px solid var(--brand-orange);
+      padding: 1rem 2rem;
+      box-shadow: var(--shadow-md);
+    }
+
+    .topbar .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .brand-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+      color: white;
+      line-height: 1.2;
+    }
+
+    .brand-subtitle {
+      font-size: 0.875rem;
+      font-weight: 400;
+      margin: 0;
+      color: var(--brand-orange-light);
+      line-height: 1.2;
+    }
+
+    /* Brain icon matching other pages */
+    .ai-brain-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--brand-orange);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse-brain 3s infinite;
+    }
+
+    .ai-brain-icon i {
+      font-size: 20px;
+      color: white;
+    }
+
+    @keyframes pulse-brain {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.7); }
+      50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 107, 53, 0); }
+    }
+
+    .topbar .health {
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      background: var(--bg-section);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+
+    .topbar .health.ok {
+      background: #dcfce7;
+      color: #166534;
+      border-color: #bbf7d0;
+    }
+
+    .topbar .health.err {
+      background: #fef2f2;
+      color: #dc2626;
+      border-color: #fecaca;
+    }
+
+    /* Main content */
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    section {
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-md);
+      padding: 2rem;
+    }
+
+    h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0 0 1.5rem 0;
+      color: var(--text-primary);
+    }
+
+    /* Enhanced toolbar */
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      padding: 1.5rem;
+      background: var(--bg-section);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-color);
+    }
+
+    .toolbar input[type="text"] {
+      padding: 10px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: white;
+      color: var(--text-primary);
+      min-width: 250px;
+      transition: all 0.2s ease;
+    }
+
+    .toolbar input[type="text"]:focus {
+      outline: none;
+      border-color: var(--brand-orange);
+      box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+    }
+
+    .toolbar select {
+      padding: 10px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: white;
+      color: var(--text-primary);
+      min-width: 140px;
+    }
+
+    .toolbar .spacer { flex: 1; }
+
+    /* Enhanced buttons */
+    .btn-sm {
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--brand-orange);
+      color: white;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary:hover {
+      background: var(--brand-orange-light);
+      transform: translateY(-1px);
+    }
+
+    .btn-ghost {
+      background: white;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg-section);
+      color: var(--text-primary);
+    }
+
+    /* Enhanced data table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      background: white;
+    }
+
+    .data-table th {
+      background: var(--brand-dark);
+      color: white;
+      padding: 16px 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.875rem;
+      border: none;
+    }
+
+    .data-table td {
+      padding: 16px 12px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+      font-size: 0.9rem;
+    }
+
+    .data-table tr:hover {
+      background: var(--bg-section);
+    }
+
+    /* Enhanced badges */
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .badge.open {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fbbf24;
+    }
+
+    .badge.closed {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #22c55e;
+    }
+
+    /* Row actions */
+    .row-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .row-actions .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+
+    /* Enhanced SME answer input */
+    .sme-answer-container {
+      position: relative;
+      margin-bottom: 8px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .sme-answer {
+      width: 100%;
+      min-height: 100px;
+      max-height: 250px;
+      resize: vertical;
+      padding: 12px;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      font-family: var(--font-family);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      background: #fafbfc;
+      color: var(--text-primary);
+      transition: all 0.3s ease;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+      box-sizing: border-box;
+    }
+
+    .sme-answer:focus {
+      outline: none;
+      border-color: var(--brand-orange);
+      background: white;
+      box-shadow: 
+        0 0 0 3px rgba(255, 107, 53, 0.1),
+        inset 0 1px 3px rgba(0,0,0,0.05);
+      transform: translateY(-1px);
+    }
+
+    .sme-answer:not(:placeholder-shown) {
+      background: white;
+      border-color: #10b981;
+    }
+
+    .sme-answer::placeholder {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* Character counter */
+    .char-counter {
+      position: absolute;
+      bottom: 8px;
+      right: 12px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: rgba(255,255,255,0.9);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: ui-monospace, monospace;
+    }
+
+    /* Auto-save indicator */
+    .save-indicator {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      font-size: 0.75rem;
+      padding: 4px 8px;
+      border-radius: 12px;
+      opacity: 0;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    .save-indicator.typing {
+      background: #fef3c7;
+      color: #92400e;
+      opacity: 1;
+    }
+
+    .save-indicator.saved {
+      background: #dcfce7;
+      color: #166534;
+      opacity: 1;
+    }
+
+    /* Monospace styling */
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      background: var(--bg-section);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    /* Loading states */
+    .muted {
+      color: var(--text-muted);
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* Success feedback */
+    .btn-success {
+      background: #22c55e !important;
+      color: white !important;
+    }
+
+    /* Column width adjustments */
+    .data-table th:nth-child(6),
+    .data-table td:nth-child(6) {
+      min-width: 250px;
+      max-width: 300px;
+    }
+
+    .data-table th:nth-child(7),
+    .data-table td:nth-child(7) {
+      min-width: 120px;
+      width: 140px;
+    }
+
+    .data-table th:nth-child(8),
+    .data-table td:nth-child(8) {
+      min-width: 350px;
+      width: 400px;
+    }
+
+    /* Referred To dropdown styling */
+    .referred-to-select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.875rem;
+      background: white;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .referred-to-select:focus {
+      outline: none;
+      border-color: var(--brand-orange);
+      box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+    }
+
+    .referred-to-select:hover {
+      border-color: var(--text-secondary);
+    }
+
+    .referred-to-select.changed {
+      border-color: #f59e0b;
+      background: #fffbeb;
+    }
+
+    /* Responsive */
+    @media (max-width: 1400px) {
+      .data-table th:nth-child(8),
+      .data-table td:nth-child(8) {
+        width: 320px;
+        min-width: 300px;
+      }
+
+      .sme-answer-container {
+        max-width: 300px;
+      }
+    }
+
+    @media (max-width: 1200px) {
+      .data-table th:nth-child(6),
+      .data-table td:nth-child(6) {
+        min-width: 200px;
+        max-width: 250px;
+      }
+
+      .data-table th:nth-child(8),
+      .data-table td:nth-child(8) {
+        width: 280px;
+        min-width: 260px;
+      }
+
+      .sme-answer-container {
+        max-width: 260px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .topbar {
+        padding: 1rem;
+      }
+
+      main {
+        padding: 1rem;
+      }
+
+      section {
+        padding: 1rem;
+      }
+
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .data-table {
+        font-size: 0.8rem;
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: 8px 6px;
+      }
+
+      .sme-answer {
+        font-size: 0.8rem;
+        padding: 8px;
+      }
+    }
+
+    #table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 100%;
+    }
+
+    /* Ensure table fits viewport */
+    .data-table {
+      table-layout: fixed;
+      max-width: 1300px;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="ai-brain-icon">
+        <i class="fas fa-brain"></i>
+      </div>
+      <div class="brand-text">
+        <h1 class="brand-title">Scrutinise</h1>
+        <p class="brand-subtitle">Your SME</p>
+      </div>
+    </div>
+    <div class="health" id="health">Checking backend…</div>
+  </header>
+
+  <main>
+    <section>
+      <h2>SME Referrals</h2>
+      
+      <div class="toolbar">
+        <input id="q" type="text" placeholder="Search question / SME answer…" />
+        <select id="status">
+          <option value="">All statuses</option>
+          <option value="open">Open</option>
+          <option value="closed">Closed</option>
+        </select>
+        <div class="spacer"></div>
+
+        <a id="export-csv" href="/admin/referrals/export?fmt=csv" target="_blank">
+          <button type="button" class="btn-sm btn-ghost">
+            <i class="fas fa-file-csv"></i>
+            Export Referrals (CSV)
+          </button>
+        </a>
+
+        <a href="/admin/resolutions/export?fmt=csv" target="_blank">
+          <button type="button" class="btn-sm btn-ghost">
+            <i class="fas fa-file-csv"></i>
+            Export Resolutions (CSV)
+          </button>
+        </a>
+
+        <a href="/admin">
+          <button type="button" class="btn-sm btn-ghost">Back to admin</button>
+        </a>
+      </div>
+
+      <div id="table-wrap" class="muted">Loading…</div>
+    </section>
+  </main>
+
+  <script>
+    // Health badge
+    async function checkHealth() {
+      const el = document.getElementById('health');
+      try { await fetch('/health'); el.textContent = 'Ready'; el.classList.add('ok'); el.classList.remove('err'); }
+      catch { el.textContent = 'Backend unreachable'; el.classList.add('err'); el.classList.remove('ok'); }
+    }
+    checkHealth();
+
+    const wrap = document.getElementById('table-wrap');
+    const q = document.getElementById('q');
+    const statusSel = document.getElementById('status');
+    const exportCsv = document.getElementById('export-csv');
+
+    let all = [];
+
+    function fmt(ts) {
+      if (!ts) return '—';
+      const d = new Date(ts);
+      if (isNaN(d.getTime())) return ts;
+      return d.toLocaleString();
+    }
+
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function badge(status) {
+      const s = (status || 'open').toLowerCase();
+      const cls = s === 'closed' ? 'closed' : 'open';
+      return `<span class="badge ${cls}">${s}</span>`;
+    }
+
+    function rowHtml(r) {
+      const isClosed = (r.status || 'open').toLowerCase() === 'closed';
+      const next = isClosed ? 'open' : 'closed';
+      const answer = r.answer || '';
+      const referredTo = r.referred_to || 'SME';
+      
+      return `<tr data-id="${esc(r.id)}">
+        <td class="mono">${esc(fmt(r.ts))}</td>
+        <td class="mono">${esc(fmt(r.last_ts || r.ts))}</td>
+        <td>${badge(r.status)}</td>
+        <td class="mono">${esc(fmt(r.closed_ts))}</td>
+        <td class="mono">${esc(r.count || 1)}</td>
+        <td>${esc(r.question)}</td>
+        <td>
+          <select class="referred-to-select" data-original="${esc(referredTo)}">
+            <option value="SME" ${referredTo === 'SME' ? 'selected' : ''}>SME</option>
+            <option value="2LoD" ${referredTo === '2LoD' ? 'selected' : ''}>2LoD</option>
+            <option value="Head of Fin Crime" ${referredTo === 'Head of Fin Crime' ? 'selected' : ''}>Head of Fin Crime</option>
+          </select>
+        </td>
+        <td>
+          <div class="sme-answer-container">
+            <textarea class="sme-answer" placeholder="💡 Enter your SME response to help users with this question…
+            
+Tip: Be specific and reference relevant policies or procedures where possible.">${esc(answer)}</textarea>
+            <div class="char-counter">0 chars</div>
+            <div class="save-indicator">💾 Typing...</div>
+          </div>
+          <div class="row-actions">
+            <button class="btn-sm btn-ghost toggle" data-next="${next}">
+              <i class="fas fa-${isClosed ? 'unlock' : 'lock'}"></i>
+              ${isClosed ? 'Reopen' : 'Close'}
+            </button>
+            <button class="btn-sm btn-ghost save">
+              <i class="fas fa-save"></i>
+              Save
+            </button>
+            <button class="btn-sm btn-primary learn">
+              <i class="fas fa-graduation-cap"></i>
+              Save &amp; Learn
+            </button>
+          </div>
+        </td>
+      </tr>`;
+    }
+
+    function render(rows) {
+      if (!rows.length) { wrap.textContent = 'No referrals found.'; return; }
+      const header = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Logged</th>
+              <th>Last seen</th>
+              <th>Status</th>
+              <th>Closed</th>
+              <th>Count</th>
+              <th>Question</th>
+              <th>Referred To</th>
+              <th>SME Answer (Editable)</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      const body = rows.map(rowHtml).join('');
+      const footer = `</tbody></table>`;
+      wrap.innerHTML = header + body + footer;
+
+      wireRowActions();
+      setupTextareaEnhancements();
+      setupReferredToDropdowns();
+    }
+
+    function setupTextareaEnhancements() {
+      // Enhanced textarea functionality
+      wrap.querySelectorAll('.sme-answer').forEach(textarea => {
+        const container = textarea.closest('.sme-answer-container');
+        const charCounter = container.querySelector('.char-counter');
+        const saveIndicator = container.querySelector('.save-indicator');
+        let typingTimer;
+
+        // Auto-resize functionality
+        function autoResize() {
+          textarea.style.height = 'auto';
+          textarea.style.height = Math.min(textarea.scrollHeight, 300) + 'px';
+        }
+
+        // Update character counter
+        function updateCharCounter() {
+          const count = textarea.value.length;
+          charCounter.textContent = `${count} chars`;
+          
+          if (count > 500) {
+            charCounter.style.color = '#dc2626';
+          } else if (count > 300) {
+            charCounter.style.color = '#f59e0b';
+          } else {
+            charCounter.style.color = 'var(--text-muted)';
+          }
+        }
+
+        // Typing indicator
+        function showTypingIndicator() {
+          saveIndicator.textContent = '✏️ Typing...';
+          saveIndicator.className = 'save-indicator typing';
+          
+          clearTimeout(typingTimer);
+          typingTimer = setTimeout(() => {
+            saveIndicator.style.opacity = '0';
+          }, 2000);
+        }
+
+        // Event listeners
+        textarea.addEventListener('input', () => {
+          autoResize();
+          updateCharCounter();
+          showTypingIndicator();
+        });
+
+        textarea.addEventListener('focus', () => {
+          container.style.transform = 'scale(1.01)';
+        });
+
+        textarea.addEventListener('blur', () => {
+          container.style.transform = 'scale(1)';
+        });
+
+        // Initial setup
+        autoResize();
+        updateCharCounter();
+      });
+    }
+
+    function setupReferredToDropdowns() {
+      // Enhanced dropdown functionality for "Referred To" field
+      wrap.querySelectorAll('.referred-to-select').forEach(select => {
+        const originalValue = select.getAttribute('data-original');
+
+        select.addEventListener('change', async () => {
+          const tr = select.closest('tr');
+          const id = tr?.getAttribute('data-id');
+          const newReferredTo = select.value;
+          
+          if (!id) return;
+
+          // Visual feedback for unsaved change
+          if (newReferredTo !== originalValue) {
+            select.classList.add('changed');
+          } else {
+            select.classList.remove('changed');
+          }
+
+          // Auto-save the referred_to field
+          try {
+            const fd = new FormData();
+            fd.append('id', id);
+            fd.append('referred_to', newReferredTo);
+            const res = await fetch('/admin/referrals/update', { method: 'POST', body: fd });
+            const data = await res.json();
+            
+            if (data?.status === 'ok') {
+              select.classList.remove('changed');
+              select.setAttribute('data-original', newReferredTo);
+              
+              // Show subtle success feedback
+              const originalBg = select.style.background;
+              select.style.background = '#dcfce7';
+              select.style.borderColor = '#22c55e';
+              setTimeout(() => {
+                select.style.background = 'white';
+                select.style.borderColor = 'var(--border-color)';
+              }, 1000);
+            } else {
+              // Revert on error
+              select.value = originalValue;
+              select.classList.remove('changed');
+              alert(data?.message || 'Failed to update referral assignment.');
+            }
+          } catch {
+            // Revert on error
+            select.value = originalValue;
+            select.classList.remove('changed');
+            alert('Failed to update referral assignment.');
+          }
+        });
+      });
+    }
+
+    function wireRowActions() {
+      // Close/Reopen
+      wrap.querySelectorAll('button.toggle').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const tr = btn.closest('tr');
+          const id = tr?.getAttribute('data-id');
+          const newStatus = btn.getAttribute('data-next');
+          if (!id || !newStatus) return;
+          try {
+            const fd = new FormData();
+            fd.append('id', id);
+            fd.append('status', newStatus);
+            const res = await fetch('/admin/referrals/update', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data?.status === 'ok') {
+              await load(); // refresh list
+            } else {
+              alert(data?.message || 'Failed to update referral.');
+            }
+          } catch {
+            alert('Failed to update referral.');
+          }
+        });
+      });
+
+      // Save
+      wrap.querySelectorAll('button.save').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const tr = btn.closest('tr');
+          const id = tr?.getAttribute('data-id');
+          const answerEl = tr.querySelector('textarea.sme-answer');
+          if (!id || !answerEl) return;
+          const edited = answerEl.value.trim();
+          try {
+            const fd = new FormData();
+            fd.append('id', id);
+            fd.append('answer', edited);
+            
+            // Also save referred_to if changed
+            const referredToSelect = tr.querySelector('.referred-to-select');
+            if (referredToSelect) {
+              fd.append('referred_to', referredToSelect.value);
+            }
+            
+            const res = await fetch('/admin/referrals/update', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data?.status === 'ok') {
+              // Update save indicator
+              const container = answerEl.closest('.sme-answer-container');
+              const saveIndicator = container.querySelector('.save-indicator');
+              saveIndicator.textContent = '✅ Saved';
+              saveIndicator.className = 'save-indicator saved';
+              setTimeout(() => { saveIndicator.style.opacity = '0'; }, 2000);
+
+              // Update button
+              btn.innerHTML = '<i class="fas fa-check"></i> Saved';
+              btn.classList.add('btn-success');
+              setTimeout(() => { 
+                btn.innerHTML = '<i class="fas fa-save"></i> Save'; 
+                btn.classList.remove('btn-success'); 
+              }, 1500);
+            } else {
+              alert(data?.message || 'Failed to save answer.');
+            }
+          } catch {
+            alert('Failed to save answer.');
+          }
+        });
+      });
+
+      // Save & learn
+      wrap.querySelectorAll('button.learn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const tr = btn.closest('tr');
+          const id = tr?.getAttribute('data-id');
+          if (!id) return;
+
+          const row = all.find(x => x.id === id);
+          const answerEl = tr.querySelector('textarea.sme-answer');
+          if (!row || !answerEl) return;
+
+          const question = row.question || '';
+          const answer = answerEl.value.trim();
+          if (!answer) {
+            alert('Please enter an SME response before saving.');
+            return;
+          }
+
+          try {
+            // 1) Save the edited answer back to the referral
+            {
+              const fd = new FormData();
+              fd.append('id', id);
+              fd.append('answer', answer);
+              
+              // Also save referred_to if changed
+              const referredToSelect = tr.querySelector('.referred-to-select');
+              if (referredToSelect) {
+                fd.append('referred_to', referredToSelect.value);
+              }
+              
+              await fetch('/admin/referrals/update', { method: 'POST', body: fd });
+            }
+
+            // 2) Add to resolutions
+            {
+              const fd2 = new FormData();
+              fd2.append('question', question);
+              fd2.append('answer', answer);
+              fd2.append('approved_by', 'SME');
+              fd2.append('ticket_id', id);
+              const res2 = await fetch('/admin/resolutions', { method: 'POST', body: fd2 });
+              const data2 = await res2.json();
+              if (data2?.status === 'ok') {
+                // Update save indicator
+                const container = answerEl.closest('.sme-answer-container');
+                const saveIndicator = container.querySelector('.save-indicator');
+                saveIndicator.textContent = '🎓 Learned!';
+                saveIndicator.className = 'save-indicator saved';
+                setTimeout(() => { saveIndicator.style.opacity = '0'; }, 3000);
+
+                // Update button
+                btn.innerHTML = '<i class="fas fa-graduation-cap"></i> Learned!';
+                btn.classList.add('btn-success');
+                setTimeout(() => { 
+                  btn.innerHTML = '<i class="fas fa-graduation-cap"></i> Save & Learn';
+                  btn.classList.remove('btn-success'); 
+                }, 2000);
+              } else {
+                alert(data2?.error || data2?.message || 'Failed to learn resolution.');
+              }
+            }
+          } catch {
+            alert('Failed to save & learn.');
+          }
+        });
+      });
+    }
+
+    function applyFilter() {
+      const term = (q.value || '').toLowerCase().trim();
+      const s = (statusSel.value || '').toLowerCase().trim();
+
+      let rows = all.slice();
+      if (s) rows = rows.filter(r => (r.status || 'open').toLowerCase() === s);
+      if (term) {
+        rows = rows.filter(r =>
+          (r.question||'').toLowerCase().includes(term) ||
+          (r.answer||'').toLowerCase().includes(term) ||
+          (r.id||'').toLowerCase().includes(term)
+        );
+      }
+      render(rows);
+
+      // update referrals export links with current status filter
+      const qs = s ? `&status=${encodeURIComponent(s)}` : '';
+      exportCsv.href = `/admin/referrals/export?fmt=csv${qs}`;
+    }
+
+    q.addEventListener('input', applyFilter);
+    statusSel.addEventListener('change', applyFilter);
+
+    async function load() {
+      try {
+        const s = statusSel.value ? `?status=${encodeURIComponent(statusSel.value)}` : '';
+        const res = await fetch(`/admin/referrals/data${s}`);
+        const data = await res.json();
+        all = Array.isArray(data.data) ? data.data : [];
+        applyFilter(); // render with current filters
+      } catch {
+        wrap.textContent = 'Failed to load referrals.';
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

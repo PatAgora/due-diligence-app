@@ -1,0 +1,53 @@
+<div class="comparison-table mt-4">
+  <h3 class="mb-3">Payment Information</h3>
+  <table class="table table-bordered">
+    <thead class="table-light">
+      <tr>
+        <th>Field</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Payment Reference</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.payment_reference or '—' }}</textarea></td>
+      </tr>
+      <tr>
+        <td>Payment Date</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.payment_date or '—' }}</textarea></td>
+      </tr>
+      <tr>
+        <td>Amount</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.payment_amount or '—' }}</textarea></td>
+      </tr>
+      <tr>
+        <td>Currency</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.payment_currency or '—' }}</textarea></td>
+      </tr>
+      <tr>
+        <td>Payer Name</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.payer_name or '—' }}</textarea></td>
+      </tr>
+      <tr>
+        <td>Payer Country</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.payer_country or '—' }}</textarea></td>
+      </tr>
+      <tr>
+        <td>Beneficiary Name</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.beneficiary_name or '—' }}</textarea></td>
+      </tr>
+      <tr>
+        <td>Beneficiary Country</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.beneficiary_country or '—' }}</textarea></td>
+      </tr>
+      <tr>
+        <td>Payment Purpose</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.payment_purpose or '—' }}</textarea></td>
+      </tr>
+      <tr>
+        <td>Payment Channel</td>
+        <td><textarea class="form-control w-100" readonly rows="2">{{ review.payment_channel or '—' }}</textarea></td>
+      </tr>
+    </tbody>
+  </table>
+</div>

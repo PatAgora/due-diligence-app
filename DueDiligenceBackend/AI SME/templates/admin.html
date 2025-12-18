@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin – Scrutinise Bot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <style>
+    /* Enhanced styling additions that work with existing CSS */
+    :root {
+      --brand-dark: #1a1a1a;
+      --brand-orange: #ff6b35;
+      --brand-orange-light: #ff8659;
+      --text-primary: #1a1a1a;
+      --text-secondary: #666666;
+      --text-muted: #999999;
+      --bg-primary: #ffffff;
+      --bg-card: #ffffff;
+      --bg-section: #f8f9fa;
+      --border-color: #e5e7eb;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+
+    /* Header styling matching index page */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: var(--brand-dark);
+      border-bottom: 3px solid var(--brand-orange);
+      padding: 1rem 2rem;
+      box-shadow: var(--shadow-md);
+    }
+
+    .topbar .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    /* Replace img logo with brain icon to match index page */
+    .topbar .logo {
+      width: 40px;
+      height: 40px;
+      background: var(--brand-orange);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .topbar .logo::after {
+      content: '\f5dc'; /* Font Awesome brain icon unicode */
+      font-family: 'Font Awesome 5 Free';
+      font-weight: 900;
+      font-size: 1.5rem;
+      color: white;
+      animation: brainPulse 2s infinite ease-in-out;
+    }
+
+    @keyframes brainPulse {
+      0%, 100% { opacity: 0.9; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+
+    /* Brand text styling to match index page */
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-left: 0.75rem;
+    }
+
+    .brand-title {
+      color: white;
+      font-weight: 700;
+      font-size: 1.5rem;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+
+    .brand-subtitle {
+      color: var(--brand-orange);
+      font-weight: 600;
+      font-size: 0.875rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      line-height: 1;
+      margin-top: -2px;
+    }
+
+    .nav-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: transparent;
+      color: #ccc;
+      text-decoration: none;
+      border: 1px solid #444;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .logout-btn:hover {
+      background: var(--brand-orange);
+      color: white;
+      border-color: var(--brand-orange);
+      transform: translateY(-1px);
+    }
+
+    .health {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: #2d2d2d;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .health::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #999;
+      animation: statusPulse 2s infinite;
+    }
+
+    .health.ok { color: #22c55e; }
+    .health.ok::before { background: #22c55e; }
+    .health.err { color: #ef4444; }
+    .health.err::before { background: #ef4444; }
+
+    @keyframes statusPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Main content styling */
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+      display: grid;
+      gap: 2rem;
+    }
+
+    /* Section styling */
+    section {
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-color);
+      padding: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    section h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    section h2::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: var(--brand-orange);
+      border-radius: 2px;
+    }
+
+    .muted, small {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    /* Enhanced form styling */
+    form {
+      display: grid;
+      gap: 1.5rem;
+      max-width: 600px;
+    }
+
+    input[type="file"] {
+      padding: 1rem;
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-lg);
+      background: var(--bg-section);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    input[type="file"]:hover {
+      border-color: var(--brand-orange);
+      background: rgba(255,107,53,0.05);
+    }
+
+    input[type="text"], input[type="number"] {
+      padding: 1rem 1.25rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      background: var(--bg-section);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    input[type="text"]:focus, input[type="number"]:focus {
+      outline: none;
+      border-color: var(--brand-orange);
+      box-shadow: 0 0 0 3px rgba(255,107,53,0.1);
+    }
+
+    input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Button styling */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.875rem 1.75rem;
+      border: none;
+      border-radius: var(--radius-lg);
+      font-weight: 600;
+      font-family: inherit;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--brand-orange);
+      color: white;
+      box-shadow: 0 4px 12px rgba(255,107,53,0.25);
+    }
+
+    .btn-primary:hover {
+      background: var(--brand-orange-light);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255,107,53,0.35);
+    }
+
+    .btn-ghost {
+      background: var(--bg-section);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-ghost:hover {
+      background: var(--brand-orange);
+      color: white;
+      border-color: var(--brand-orange);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255,107,53,0.25);
+    }
+
+    /* Enhanced upload section */
+    .uploader {
+      background: linear-gradient(135deg, var(--bg-section) 0%, var(--bg-card) 100%);
+    }
+
+    /* Enhanced settings section */
+    .settings {
+      background: linear-gradient(135deg, #f1f5f9 0%, var(--bg-card) 100%);
+    }
+
+    /* Enhanced navigation section */
+    .navigation {
+      background: linear-gradient(135deg, rgba(255,107,53,0.02) 0%, var(--bg-card) 100%);
+    }
+
+    .nav-buttons {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+
+    .nav-tile {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      text-decoration: none;
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .nav-tile:hover {
+      background: var(--brand-orange);
+      color: white;
+      border-color: var(--brand-orange);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255,107,53,0.25);
+    }
+
+    .nav-tile i {
+      font-size: 1.5rem;
+      color: var(--brand-orange);
+      width: 40px;
+      text-align: center;
+    }
+
+    .nav-tile:hover i {
+      color: white;
+    }
+
+    .nav-tile-content {
+      flex: 1;
+    }
+
+    .nav-tile-title {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .nav-tile-desc {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .nav-tile:hover .nav-tile-desc {
+      color: rgba(255,255,255,0.8);
+    }
+
+    /* Stats grid for dashboard metrics */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--bg-section);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .stat-card .stat-number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--brand-orange);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-card .stat-label {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .action-links {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    /* Result message styling */
+    .result-message {
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-lg);
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .result-message.success {
+      background: rgba(34,197,94,0.1);
+      color: #22c55e;
+      border: 1px solid rgba(34,197,94,0.2);
+    }
+
+    .result-message.error {
+      background: rgba(239,68,68,0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+
+    .result-message.loading {
+      background: rgba(255,107,53,0.1);
+      color: var(--brand-orange);
+      border: 1px solid rgba(255,107,53,0.2);
+    }
+
+    /* Button sizing */
+    .btn-sm {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+
+    .field {
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .field label {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Enhanced document list */
+    .doc-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem;
+      background: var(--bg-section);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      margin-bottom: 1rem;
+      transition: all 0.2s ease;
+    }
+
+    .doc-item:hover {
+      background: rgba(255,107,53,0.02);
+      border-color: rgba(255,107,53,0.3);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .doc-info {
+      flex: 1;
+    }
+
+    .doc-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .doc-meta {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+      transform: translateY(-1px);
+    }
+
+    /* Result messages */
+    .result-success {
+      background: rgba(34,197,94,0.1);
+      color: #22c55e;
+      border: 1px solid rgba(34,197,94,0.2);
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-lg);
+      font-weight: 500;
+      margin-top: 1rem;
+    }
+
+    .result-error {
+      background: rgba(239,68,68,0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239,68,68,0.2);
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-lg);
+      font-weight: 500;
+      margin-top: 1rem;
+    }
+
+    /* Enhanced checkbox styling */
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--brand-orange);
+      cursor: pointer;
+    }
+
+    label {
+      cursor: pointer;
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .topbar {
+        padding: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+
+      main {
+        padding: 1rem 0.5rem;
+        gap: 1.5rem;
+      }
+
+      section {
+        padding: 1.5rem;
+      }
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      form {
+        max-width: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      main {
+        padding: 0.5rem;
+      }
+
+      section {
+        padding: 1rem;
+      }
+
+      section h2 {
+        font-size: 1.25rem;
+      }
+
+      .topbar .brand::after {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div class="brand-text">
+        <div class="brand-title">Scrutinise</div>
+        <div class="brand-subtitle">Your SME</div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="health" id="health">Checking backend…</div>
+      <a href="/logout" class="logout-btn">
+        <i class="fas fa-sign-out-alt"></i>
+        Logout
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <!-- Uploader -->
+    <section class="uploader">
+      <h2>Upload guidance documents</h2>
+      <form id="upload-form">
+        <input type="file" id="file" name="file" accept=".pdf,.txt,.md,.docx,.csv" required />
+        <input type="text" id="title" name="title" placeholder="Optional title" />
+        <button type="submit" class="btn btn-primary">Upload</button>
+      </form>
+      <div id="upload-result" class="muted"></div>
+    </section>
+
+    <!-- Stored docs -->
+    <section class="docs">
+      <h2>
+        Stored documents
+        <small id="docs-count" class="muted" style="margin-left:6px;"></small>
+      </h2>
+
+      <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+        <a href="/admin/docs/export?fmt=json" target="_blank">
+          <button type="button" class="btn btn-ghost">Export JSON</button>
+        </a>
+        <a href="/admin/docs/export?fmt=csv" target="_blank">
+          <button type="button" class="btn btn-ghost">Export CSV</button>
+        </a>
+      </div>
+
+      <div id="docs-list" class="muted">Loading…</div>
+    </section>
+
+    <!-- Bot & UI settings -->
+    <section class="settings">
+      <h2>Settings</h2>
+
+      <!-- Global (per-browser) toggle for showing sources -->
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <input type="checkbox" id="show-sources-toggle" />
+        Show guidance sources under answers (for all users on this browser)
+      </label>
+      <div id="settings-result" class="muted" style="margin-bottom:16px;"></div>
+
+      <!-- Server-side config (affects everyone) -->
+      <form id="config-form" style="display:grid; gap:12px; max-width:520px;">
+        <div class="field" style="display:grid; gap:6px;">
+          <label for="bot-name">Bot name (shown in chat)</label>
+          <input id="bot-name" name="bot_name" type="text" placeholder="Assistant" />
+        </div>
+
+        <div class="field" style="display:grid; gap:6px;">
+          <label for="auto-yes-ms">Auto-Yes timer (milliseconds)</label>
+          <input id="auto-yes-ms" name="auto_yes_ms" type="number" min="5000" max="300000" step="1000" placeholder="30000" />
+          <small class="muted">If the user doesn't pick Yes/No within this time, the answer is auto-counted as "Yes".</small>
+        </div>
+
+        <div>
+          <button type="submit" class="btn btn-primary">Save settings</button>
+          <span id="config-result" class="muted" style="margin-left:8px;"></span>
+        </div>
+      </form>
+    </section>
+
+    <!-- SME Referrals -->
+    <section class="docs">
+      <h2><i class="fas fa-flag"></i>SME Referrals</h2>
+      <p class="muted" style="margin-bottom:1.5rem;">View and triage referrals raised from the chatbot interface.</p>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-number" id="referrals-count">-</div><div class="stat-label">Total Referrals</div></div>
+        <div class="stat-card"><div class="stat-number" id="pending-referrals">-</div><div class="stat-label">Pending Review</div></div>
+      </div>
+      <div class="action-links">
+        <a href="/admin/referrals"><button type="button" class="btn btn-primary"><i class="fas fa-external-link-alt"></i>Open Referrals Dashboard</button></a>
+      </div>
+    </section>
+
+    <!-- Feedback -->
+    <section class="docs">
+      <h2><i class="fas fa-chart-line"></i>Feedback Analytics</h2>
+      <p class="muted" style="margin-bottom:1.5rem;">View Yes/No response patterns, trends, and export raw feedback data.</p>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-number" id="total-responses">-</div><div class="stat-label">Total Responses</div></div>
+        <div class="stat-card"><div class="stat-number" id="yes-percentage">-</div><div class="stat-label">Yes Rate</div></div>
+      </div>
+      <div class="action-links">
+        <a href="/admin/feedback"><button type="button" class="btn btn-primary"><i class="fas fa-analytics"></i>Open Feedback Dashboard</button></a>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/js/admin.js?v=align-endpoints-2" defer></script>
+  <script>
+    // --- helpers ---
+    function fmtDate(iso){ if(!iso) return '—'; const d=new Date(iso); if(Number.isNaN(d.getTime())) return '—'; const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), da=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${da}`; }
+    function shortHash(v){ if(!v||typeof v!=='string') return '—'; return v.length>=8? v.slice(0,8)+'…': v; }
+
+    // Health
+    async function checkHealth() {
+      const el = document.getElementById('health');
+      try { await (await fetch('/health')).json(); el.textContent='Ready'; el.classList.add('ok'); el.classList.remove('err'); }
+      catch { el.textContent='Backend unreachable'; el.classList.add('err'); el.classList.remove('ok'); }
+    }
+    checkHealth();
+
+    // Upload -> POST /upload
+    (function() {
+      const form = document.getElementById('upload-form');
+      const result = document.getElementById('upload-result');
+      const fileInput = document.getElementById('file');
+
+      if (form && result) {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          result.textContent = 'Uploading document...';
+          result.className = 'result-message loading';
+          result.style.display = 'block';
+
+          const formData = new FormData(form);
+          try {
+            const response = await fetch('/upload', { method: 'POST', body: formData });
+            const data = await response.json().catch(()=>({}));
+            if (response.ok && (data.status === 'ok' || data.message)) {
+              result.textContent = data.message || 'Document uploaded successfully';
+              result.className = 'result-message success';
+              form.reset();
+              loadDocuments(); // refresh
+            } else {
+              throw new Error(data.message || 'Upload failed');
+            }
+          } catch (error) {
+            result.textContent = error.message || 'Failed to upload document';
+            result.className = 'result-message error';
+          }
+        });
+      }
+
+      if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const titleInput = document.getElementById('title');
+            if (titleInput && !titleInput.value) titleInput.value = file.name.replace(/\.[^/.]+$/, "");
+          }
+        });
+      }
+    })();
+
+    // Enhanced show sources toggle
+    (function wireSourcesToggle(){
+      const key = 'show_sources';
+      const toggle = document.getElementById('show-sources-toggle');
+      const out = document.getElementById('settings-result');
+      if (!toggle) return;
+
+      // Initialize
+      const saved = localStorage.getItem(key);
+      toggle.checked = saved === '1';
+
+      toggle.addEventListener('change', () => {
+        localStorage.setItem(key, toggle.checked ? '1' : '0');
+        out.textContent = toggle.checked
+          ? 'Sources will be shown under answers in this browser.'
+          : 'Sources will not be shown under answers in this browser.';
+        out.className = 'result-success';
+        setTimeout(() => {
+          out.textContent = '';
+          out.className = 'muted';
+        }, 3000);
+      });
+    })();
+
+    // Enhanced server config
+    (async function wireConfigForm(){
+      const form = document.getElementById('config-form');
+      const nameEl = document.getElementById('bot-name');
+      const msEl = document.getElementById('auto-yes-ms');
+      const out = document.getElementById('config-result');
+      if (!form) return;
+
+      // Load current config
+      try {
+        const res = await fetch('/config');
+        const json = await res.json();
+        const cfg = json?.data || {};
+        if (nameEl) nameEl.value = cfg.bot_name || 'Assistant';
+        if (msEl) msEl.value = (cfg.auto_yes_ms != null ? cfg.auto_yes_ms : 30000);
+      } catch (e) {
+        console.warn('Failed to load config:', e);
+      }
+
+      // Save config with enhanced feedback
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        out.textContent = 'Saving…';
+        out.className = 'muted';
+
+        const fd = new FormData();
+        if (nameEl && nameEl.value.trim().length) fd.append('bot_name', nameEl.value.trim());
+        if (msEl && msEl.value) fd.append('auto_yes_ms', msEl.value);
+
+        try {
+          const res = await fetch('/admin/config', { method: 'POST', body: fd });
+          const data = await res.json();
+          if (data?.status === 'ok') {
+            out.textContent = 'Settings saved successfully!';
+            out.className = 'result-success';
+          } else {
+            out.textContent = data?.message || 'Failed to save settings.';
+            out.className = 'result-error';
+          }
+        } catch (err) {
+          out.textContent = 'Failed to save settings.';
+          out.className = 'result-error';
+        }
+        setTimeout(() => {
+          out.textContent = '';
+          out.className = 'muted';
+        }, 4000);
+      });
+    })();
+
+    // Documents -> GET /admin/docs (fallback to export json)
+    async function loadDocuments() {
+      const listEl = document.getElementById('docs-list');
+      const countEl = document.getElementById('docs-count');
+      if (!listEl) return;
+
+      try {
+        const res = await fetch('/admin/docs', { headers: { 'Accept': 'application/json' } });
+        const json = await res.json().catch(()=>({}));
+        let rows = extractRows(json);
+        if (!rows.length) {
+          const exp = await fetch('/admin/docs/export?fmt=json', { headers: { 'Accept': 'application/json' } });
+          const expJson = await exp.json().catch(()=>({}));
+          rows = extractRows(expJson);
+        }
+
+        const docs = rows.map(coerceDoc).filter(Boolean);
+        if (countEl) countEl.textContent = `${docs.length} guidance doc${docs.length!==1?'s':''}`;
+
+        if (!docs.length) {
+          listEl.innerHTML = `
+            <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+              <i class="fas fa-folder-open" style="font-size: 3rem; margin-bottom: 1rem; color: var(--text-muted);"></i>
+              <p>No documents uploaded yet</p>
+              <small>Upload your first guidance document above to get started</small>
+            </div>`;
+          return;
+        }
+
+        listEl.innerHTML = docs.map(doc => `
+          <div class="doc-item">
+            <div class="doc-info">
+              <div class="doc-title">${doc.title || doc.filename || 'Untitled'}</div>
+              <div class="doc-meta">
+                <i class="fas fa-calendar"></i> Uploaded: ${fmtDate(doc.uploaded_at)}
+                ${doc.pieces ? ` • <i class="fas fa-puzzle-piece"></i> ${doc.pieces} pieces` : ''}
+                ${doc.sha256 ? ` • <i class="fas fa-fingerprint"></i> ${shortHash(doc.sha256)}` : ''}
+              </div>
+            </div>
+            <div class="doc-actions">
+              <button onclick="deleteDocument('${doc.id}', '${(doc.title || doc.filename || 'Untitled').replace(/'/g, "\\'")}')" class="btn btn-danger btn-sm">
+                <i class="fas fa-trash"></i> Delete
+              </button>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        listEl.innerHTML = `
+          <div class="result-message error">
+            <i class="fas fa-exclamation-triangle"></i>
+            Failed to load documents: ${error.message}
+          </div>`;
+      }
+    }
+
+    // Normalise document rows
+    function coerceDoc(raw){
+      if(!raw||typeof raw!=='object') return null;
+      return {
+        id: raw.id ?? raw.doc_id ?? raw.uuid ?? raw.sha ?? '',
+        title: raw.title ?? raw.name ?? '',
+        filename: raw.filename ?? raw.original_name ?? raw.file_name ?? '',
+        uploaded_at: raw.uploaded_at ?? raw.created_at ?? raw.inserted_at ?? '',
+        pieces: raw.pieces ?? raw.chunk_count ?? raw.chunks ?? raw.num_chunks ?? null,
+        sha256: raw.sha256 ?? raw.sha ?? null,
+      };
+    }
+    function extractRows(json){
+      if(Array.isArray(json)) return json;
+      if(Array.isArray(json?.data)) return json.data;
+      if(Array.isArray(json?.docs)) return json.docs;
+      if(Array.isArray(json?.data?.docs)) return json.data.docs;
+      if(Array.isArray(json?.rows)) return json.rows;
+      if(Array.isArray(json?.result)) return json.result;
+      return [];
+    }
+
+    // Delete -> POST /delete
+    async function deleteDocument(docId, docTitle) {
+      if (!docId) return;
+      if (!confirm(`Are you sure you want to delete "${docTitle}"?`)) return;
+
+      try {
+        const fd = new FormData();
+        fd.append('doc_id', docId);
+        const response = await fetch('/delete', { method: 'POST', body: fd });
+        const payload = await response.json().catch(()=>({}));
+        if (response.ok && payload?.status === 'ok') {
+          loadDocuments();
+          showNotification('Document deleted successfully', 'success');
+        } else {
+          throw new Error(payload?.message || 'Delete failed');
+        }
+      } catch (error) {
+        showNotification('Failed to delete document', 'error');
+      }
+    }
+
+    // --- SME Referral stats ---
+    async function loadReferralStats() {
+      const totalEl = document.getElementById('referrals-count');
+      const pendingEl = document.getElementById('pending-referrals');
+      try {
+        const res = await fetch('/admin/referrals/data', { headers: { 'Accept': 'application/json' } });
+        const json = await res.json().catch(() => ({}));
+        let items = Array.isArray(json?.data) ? json.data : [];
+
+        if (!items.length) {
+          const exp = await fetch('/admin/referrals/export?fmt=json', { headers: { 'Accept': 'application/json' } });
+          const expJson = await exp.json().catch(() => ({}));
+          items = Array.isArray(expJson?.data) ? expJson.data : [];
+        }
+
+        const total = items.length;
+        const open = items.reduce((acc, r) => acc + (((r?.status || 'open') === 'open') ? 1 : 0), 0);
+
+        if (totalEl)  totalEl.textContent  = String(total);
+        if (pendingEl) pendingEl.textContent = String(open);
+      } catch (e) {
+        console.error('Failed to load referral stats', e);
+      }
+    }
+
+    // --- Feedback stats ---
+    async function loadFeedbackStats() {
+      const totalEl = document.getElementById('total-responses');
+      const yesEl = document.getElementById('yes-percentage');
+      try {
+        const res = await fetch('/admin/feedback/data', { headers: { 'Accept': 'application/json' } });
+        const json = await res.json().catch(() => ({}));
+        const t = json?.totals || {};
+        const yes = Number(t.yes || 0);
+        const no  = Number(t.no  || 0);
+        const total = yes + no;
+        const ratePct = Math.round((typeof t.rate === 'number' ? t.rate : (total ? yes/total : 0)) * 100);
+
+        if (totalEl) totalEl.textContent = String(total);
+        if (yesEl) yesEl.textContent = `${isFinite(ratePct) ? ratePct : 0}%`;
+      } catch (e) {
+        console.error('Failed to load feedback stats', e);
+      }
+    }
+
+    // Toast notifications
+    function showNotification(message, type = 'info') {
+      const n = document.createElement('div');
+      n.style.cssText = `
+        position:fixed;top:20px;right:20px;z-index:1000;
+        padding:0.75rem 1rem;border-radius:8px;color:#fff;font-weight:600;
+        background:${type==='success' ? '#22c55e' : type==='error' ? '#ef4444' : '#ff6b35'};
+        transform:translateX(120%);transition:transform .25s ease;
+        box-shadow:0 6px 20px rgba(0,0,0,.2);
+      `;
+      n.textContent = message;
+      document.body.appendChild(n);
+      requestAnimationFrame(() => { n.style.transform = 'translateX(0)'; });
+      setTimeout(() => { n.style.transform = 'translateX(120%)'; setTimeout(()=>n.remove(), 300); }, 3000);
+    }
+
+    // Initial loads
+    loadDocuments();
+    loadReferralStats();
+    loadFeedbackStats();
+  </script>
+</body>
+</html>

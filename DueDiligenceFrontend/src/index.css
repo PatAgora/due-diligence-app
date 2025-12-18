@@ -1,0 +1,258 @@
+:root {
+  --sidebar-w: 240px;
+  --sidebar-bg: #0b1320;
+  --sidebar-link: #c7cfdb;
+  --sidebar-link-active: #ffffff;
+  --page-bg: #f9fafb;
+  --brand-orange: #f59e0b;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--page-bg);
+}
+
+#root {
+  height: 100%;
+}
+
+.scrutinise-brand {
+  display: inline-block;
+  position: relative;
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: #ffffff !important;
+  letter-spacing: 0.2px;
+}
+
+.scrutinise-brand .underbar {
+  display: block;
+  height: 6px;
+  width: 100%;
+  background: #ff8a33;
+  border-radius: 2px;
+  margin-top: 6px;
+}
+
+.sidebar-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-w);
+  background: #0b1320;
+  color: #eef2f7;
+  display: flex;
+  flex-direction: column;
+  z-index: 1040;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-brand {
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 16px 18px;
+  margin: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.brand-orange {
+  color: var(--brand-orange);
+}
+
+.sidebar-content {
+  padding: 8px 12px 16px;
+  overflow-y: auto;
+}
+
+.sidebar-content .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--sidebar-link);
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-decoration: none;
+  text-align: left;
+  margin-bottom: 0.25rem;
+}
+
+.sidebar-content .nav-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--sidebar-link-active);
+}
+
+.sidebar-content .nav-link.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--sidebar-link-active);
+}
+
+/* Accordion button styling to match nav-link */
+.sidebar-content .accordion-button {
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--sidebar-link);
+  background: transparent !important;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none !important;
+  box-shadow: none !important;
+  text-align: left;
+  justify-content: flex-start;
+  margin-bottom: 0.25rem;
+  padding: 10px 12px !important;
+  width: 100%;
+}
+
+.sidebar-content .accordion-button:not(.collapsed) {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: var(--sidebar-link-active);
+}
+
+.sidebar-content .accordion-button:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--sidebar-link-active);
+}
+
+.sidebar-content .accordion-button:focus {
+  box-shadow: none !important;
+  border-color: transparent !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.sidebar-content .accordion-button::after {
+  filter: brightness(0) invert(1);
+  opacity: 0.7;
+  margin-left: auto;
+}
+
+.sidebar-content .accordion-item {
+  margin-bottom: 0;
+}
+
+.sidebar-content .accordion-header {
+  margin-bottom: 0;
+}
+
+/* Consistent spacing for nested nav links */
+.sidebar-content .accordion-body {
+  padding: 0.25rem 0 0.5rem 0 !important;
+}
+
+.sidebar-content .accordion-body .nav-link {
+  font-size: 0.95rem;
+  padding: 10px 12px 10px 2.5rem;
+  text-align: left;
+  margin-bottom: 0.25rem;
+}
+
+.content-wrap {
+  min-height: 100%;
+  margin-left: var(--sidebar-w);
+  margin-top: 60px; /* Space for top navbar */
+  padding: 10px 10px 10px 0;
+}
+
+/* Remove all left padding when content-wrap contains my-tasks-container or is a dashboard */
+.content-wrap:has(.my-tasks-container),
+.content-wrap.no-left-padding {
+  padding-left: 0 !important;
+  padding-right: 10px !important;
+}
+
+.my-tasks-container {
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Override Bootstrap container-fluid padding for my-tasks and dashboards */
+.content-wrap.no-left-padding .container-fluid,
+.content-wrap:has(.my-tasks-container) .container-fluid {
+  padding-left: 0 !important;
+  --bs-gutter-x: 0 !important;
+}
+
+/* Override Bootstrap px-* classes on dashboards - remove left padding only */
+.content-wrap.no-left-padding [class*="px-1"],
+.content-wrap.no-left-padding [class*="px-2"],
+.content-wrap.no-left-padding [class*="px-3"],
+.content-wrap.no-left-padding [class*="px-4"],
+.content-wrap.no-left-padding [class*="px-5"] {
+  padding-left: 0 !important;
+}
+
+@media (max-width: 992px) {
+  .sidebar-nav {
+    position: static;
+    width: 100%;
+    height: auto;
+    box-shadow: none;
+  }
+  .content-wrap {
+    margin-left: 0;
+  }
+}
+
+.soft-card {
+  border: 1px solid #eef1f5;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06);
+}
+
+/* Dashboard KPI Cards - Consistent left alignment and spacing */
+.card .kpi,
+.card-body.kpi {
+  text-align: left !important;
+}
+
+.card .kpi h6,
+.card-body.kpi h6 {
+  margin-bottom: 0.5rem !important;
+  text-align: left !important;
+}
+
+.card .kpi .num,
+.card-body.kpi .num,
+.card .display-6 {
+  margin-bottom: 0.5rem !important;
+  text-align: left !important;
+}
+
+.card .kpi small,
+.card-body.kpi small {
+  display: block;
+  margin-top: 0;
+  text-align: left !important;
+}
+
+/* Table header background color override - all tables */
+.table thead th {
+  background-color: #f8f9fa !important;
+  color: #495057;
+  font-weight: 600;
+  border-color: #dee2e6;
+}
+
+/* Override for table-light specifically */
+.table-light thead th,
+.table thead.table-light th {
+  background-color: #f8f9fa !important;
+  color: #495057;
+}
+
+/* Keep dark theme for table-dark */
+.table-dark thead th,
+.table thead.table-dark th {
+  background-color: #212529 !important;
+  color: #ffffff;
+  border-color: #373b3e;
+}

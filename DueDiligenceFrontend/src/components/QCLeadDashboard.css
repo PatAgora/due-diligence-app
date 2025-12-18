@@ -1,0 +1,19 @@
+.hm-zero {
+  color: #6c757d;
+  opacity: 0.75;
+}
+
+.cell-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.cell-link:hover {
+  text-decoration: underline;
+}
+
+.card-title {
+  font-weight: 600;
+}
+

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-4">
+  <h2 class="fw-bold mb-3">Team Cases</h2>
+  <p class="text-muted">
+    Status: {{ status_key or 'All' }}{% if age_bucket %} • Age: {{ age_bucket }}{% endif %}
+  </p>
+
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead class="table-light">
+        <tr>
+          <th>Task</th>
+          <th>Customer</th>
+          <th>Status</th>
+          <th>Updated</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in cases %}
+        <tr>
+          <td>
+            <a class="cell-link"
+               href="{{ c.review_url or url_for('review', task_id=c.task_id, next=request.full_path) }}">
+              {{ c.task_id }}
+            </a>
+          </td>
+          <td>{{ c.customer_id }}</td>
+          <td>{{ c.status }}</td>
+          <td>{{ c.updated_at or '—' }}</td>
+          <td>
+            <a class="btn btn-sm btn-outline-primary"
+               href="{{ c.review_url or url_for('review', task_id=c.task_id, next=request.full_path) }}">
+              Review
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+        {% if not cases %}
+          <tr><td colspan="5" class="text-center text-muted">No cases found.</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

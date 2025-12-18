@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="fw-bold mb-0">
+      QC WIP – Level {{ level|default('') }}
+      {% if bucket %}<small class="text-muted fs-5">• {{ bucket|replace('_',' ')|title }}</small>{% endif %}
+    </h1>
+    <div class="d-flex gap-2">
+      {% if bucket == 'awaiting_assignment' %}
+        <a href="{{ url_for('qc_assign_tasks') }}" class="btn btn-sm btn-primary">
+          <i class="bi bi-diagram-3"></i> Allocate QC
+        </a>
+      {% else %}
+        <a href="{{ url_for('qc_reassign_tasks') }}" class="btn btn-sm btn-warning">
+          <i class="bi bi-arrow-left-right"></i> Reassign QC
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if reviewer_name %}
+    <div class="alert alert-light border shadow-sm mb-3">
+      <strong>Reviewer:</strong> {{ reviewer_name }}
+    </div>
+  {% endif %}
+
+  <div class="card shadow-sm p-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="mb-0">Cases <small class="text-muted">({{ cases|length if cases is defined else 0 }})</small></h5>
+      <a href="{{ url_for('qc_lead_dashboard', date_range=selected_date|default('this_week')) }}" class="btn btn-sm btn-outline-secondary">Back to Dashboard</a>
+    </div>
+
+    <div class="table-responsive" style="max-height:70vh; overflow:auto;">
+      <table class="table table-striped table-sm align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="min-width:110px;">Task</th>
+            <th>Customer</th>
+            <th>Watchlist</th>
+            <th class="text-end" style="width:90px;">Score</th>
+            <th style="width:160px;">Current QC</th>
+            <th style="width:150px;">QC Start</th>
+            <th style="width:150px;">QC End</th>
+            <th style="width:140px;">Rework</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if cases %}
+            {% for c in cases %}
+            <tr>
+              <td>
+                <a href="{{ url_for('reviewer_panel', task_id=c.task_id) if c.task_id is defined else '#' }}">
+                  {{ c.task_id or c.id }}
+                </a>
+              </td>
+              <td>{{ c.customer_name or c.customer_id or '—' }}</td>
+              <td>{{ c.watchlist_name or c.watchlist_id or '—' }}</td>
+              <td class="text-end">{{ "%.2f"|format(c.match_score) if c.match_score is defined and c.match_score is not none else '—' }}</td>
+              <td>{{ c.current_qc or c.reviewer_name or '—' }}</td>
+              <td>{{ c['l' ~ level ~ '_qc_start_time'] if c['l' ~ level ~ '_qc_start_time'] is defined else (c.qc_start_time or '—') }}</td>
+              <td>{{ c['l' ~ level ~ '_qc_end_time'] if c['l' ~ level ~ '_qc_end_time'] is defined else (c.qc_end_time or '—') }}</td>
+              <td>
+                {% set rw_req  = c['l' ~ level ~ '_qc_rework_required'] if c['l' ~ level ~ '_qc_rework_required'] is defined else c.qc_rework_required %}
+                {% set rw_comp = c['l' ~ level ~ '_qc_rework_completed'] if c['l' ~ level ~ '_qc_rework_completed'] is defined else c.qc_rework_completed %}
+                {% if rw_req %}
+                  <span class="badge text-bg-danger">Required</span>
+                  {% if rw_comp %}<span class="badge text-bg-success">Completed</span>{% endif %}
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td>{{ c.status or '—' }}</td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="9" class="text-center text-muted py-4">No cases found in this bucket.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

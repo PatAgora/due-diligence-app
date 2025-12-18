@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-4">
+  <h1 class="fw-bold mb-2">SME Dashboard</h1>
+
+  {# Date filter — same semantics as other dashboards #}
+  {% set _sel = selected_date or 'wtd' %}
+  <form class="d-flex gap-2 align-items-center mb-4" method="get">
+    <select name="date_range" class="form-select form-select-sm" style="max-width: 180px;">
+      <option value="wtd"   {{ 'selected' if _sel=='wtd' }}>Current Week</option>
+      <option value="prevw" {{ 'selected' if _sel=='prevw' }}>Previous Week</option>
+      <option value="30d"   {{ 'selected' if _sel=='30d' }}>Last 30 Days</option>
+      <option value="all"   {{ 'selected' if _sel=='all' }}>All Time</option>
+    </select>
+    <button class="btn btn-primary btn-sm" type="submit">Apply</button>
+  </form>
+
+  <style>
+    .cell-link { color: inherit; text-decoration: none; }
+    .cell-link:hover { text-decoration: underline; }
+    .kpi h6{ margin:0; color:#6c757d; text-transform:uppercase; letter-spacing:.04em; font-size:.8rem;}
+    .kpi .num{ font-weight:700; font-size:2.25rem; line-height:1; }
+    .note { font-size:.85rem; color:#6c757d; }
+    .table-equal th, .table-equal td { padding:.75rem 1rem; vertical-align:middle; }
+    .badge-pill { padding: .5rem .75rem; border-radius: 999px; }
+
+    /* align the matrix columns nicely & keep it airy */
+    .matrix-table td.count-col { width: 90px; text-align: center; font-weight:600; }
+    .matrix-table td.bucket-col { width: 120px; text-align: center; }
+    .matrix-table td.pct-col   { width: 80px; text-align: right; color:#6c757d; }
+  </style>
+
+  {# KPI tiles #}
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-6 col-lg-3">
+      <a class="card shadow-sm h-100 cell-link" href="{{ url_for('sme_queue', status='open') }}">
+        <div class="card-body kpi">
+          <h6>SME Queue (Live)</h6>
+          <div class="num">{{ open_queue|default(0) }}</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+      <a class="card shadow-sm h-100 cell-link" href="{{ url_for('sme_queue', status='referrals', date_range=_sel) }}">
+        <div class="card-body kpi">
+          <h6>New Referrals</h6>
+          <div class="num">{{ total_new_referrals|default(0) }}</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+      <a class="card shadow-sm h-100 cell-link" href="{{ url_for('sme_queue', status='returned', date_range=_sel) }}">
+        <div class="card-body kpi">
+          <h6>Returned to Reviewer</h6>
+          <div class="num">{{ total_returned|default(0) }}</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body kpi">
+          <h6>Avg TAT (days)</h6>
+          <div class="num">{{ (avg_tat|default(0.0))|round(1) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Charts row: SME Output by Day + Case Stage & Age Profile #}
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body d-flex flex-column">
+          <h5 class="card-title">SME Output (Returns per Day)</h5>
+          <div class="flex-grow-1 d-flex align-items-center" style="min-height:260px;">
+            <canvas id="smeDailyChart" class="w-100"></canvas>
+          </div>
+          <div class="note mt-2">Counts reflect cases returned from SME within the selected period.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card h-100 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <h5 class="card-title mb-0">Case stage &amp; age profile</h5>
+            <span class="note">Live snapshot (open rows) + recent returns</span>
+          </div>
+
+          <div class="table-responsive mt-3">
+            <table class="table table-striped align-middle matrix-table">
+              <thead class="table-light">
+                <tr>
+                  <th>Status</th>
+                  <th class="count-col">Count</th>
+                  <th class="bucket-col text-center">1–2 days</th>
+                  <th class="bucket-col text-center">3–5 days</th>
+                  <th class="bucket-col text-center">5 days+</th>
+                  <th class="pct-col">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in sme_matrix %}
+                {% set status_key = row.status %}
+                {% set link_status = 'open' if status_key in ['Awaiting SME Assignment','In SME Review'] else 'returned' %}
+                <tr>
+                  <td class="fw-semibold">
+                    <a class="cell-link" href="{{ url_for('sme_queue', status=link_status, date_range=_sel) }}">{{ row.status }}</a>
+                  </td>
+                  <td class="count-col">
+                    <a class="cell-link" href="{{ url_for('sme_queue', status=link_status, date_range=_sel) }}">{{ row.count }}</a>
+                  </td>
+                  <td class="bucket-col">
+                    <a class="cell-link" href="{{ url_for('sme_queue', status=link_status, age_bucket='1–2 days', date_range=_sel) }}">
+                      <span class="badge badge-pill bg-success">{{ row.a12 }}</span>
+                    </a>
+                  </td>
+                  <td class="bucket-col">
+                    <a class="cell-link" href="{{ url_for('sme_queue', status=link_status, age_bucket='3–5 days', date_range=_sel) }}">
+                      <span class="badge badge-pill bg-warning text-dark">{{ row.a35 }}</span>
+                    </a>
+                  </td>
+                  <td class="bucket-col">
+                    <a class="cell-link" href="{{ url_for('sme_queue', status=link_status, age_bucket='5 days+', date_range=_sel) }}">
+                      <span class="badge badge-pill bg-danger">{{ row.a5p }}</span>
+                    </a>
+                  </td>
+                  <td class="pct-col">{{ row.pct }}%</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                <tr class="table-light">
+                  <th class="text-end">Total</th>
+                  <th class="count-col">{{ matrix_totals.count }}</th>
+                  <th class="bucket-col text-center">{{ matrix_totals.a12 }}</th>
+                  <th class="bucket-col text-center">{{ matrix_totals.a35 }}</th>
+                  <th class="bucket-col text-center">{{ matrix_totals.a5p }}</th>
+                  <th class="pct-col">100%</th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div class="note mt-2">
+            Colours indicate age: <span class="badge bg-success">1–2</span>,
+            <span class="badge bg-warning text-dark">3–5</span>,
+            <span class="badge bg-danger">5+</span> days.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const dctx = document.getElementById('smeDailyChart');
+  if (dctx) {
+    new Chart(dctx, {
+      type: 'bar',
+      data: {
+        labels: {{ daily_labels|tojson }},
+        datasets: [{ label: 'Returned', data: {{ daily_counts|tojson }} }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { x: { grid:{display:false} }, y: { beginAtZero:true, precision:0 } },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

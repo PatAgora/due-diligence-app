@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scrutinise AI — Sign in</title>
+
+  <link rel="icon" href="{{ url_for('static', path='images/smeai.png') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', path='css/style2.css') }}">
+</head>
+<body>
+  <div class="login-container">
+    <!-- Background Elements -->
+    <div class="background-grid"></div>
+    <div class="background-gradient"></div>
+
+    <!-- Main Content -->
+    <div class="login-content">
+      <!-- Left Side - AI Branding -->
+      <div class="branding-section">
+        <div class="ai-avatar-container">
+          <div class="ai-avatar" id="aiAvatar">
+            <div class="neural-pathways">
+              <div class="neural-node"></div>
+              <div class="neural-node"></div>
+              <div class="neural-node"></div>
+              <div class="neural-node"></div>
+              <div class="neural-node"></div>
+              <div class="neural-node"></div>
+            </div>
+          </div>
+          <div class="pulse-effect"></div>
+        </div>
+
+        <div class="brand-content">
+          <h1 class="brand-title">
+            <span class="scrutinise">Scrutinise</span>
+            <span class="sme">SME</span>
+          </h1>
+          <p class="brand-subtitle">Financial Crime Subject Matter Expert</p>
+
+          <div class="features-list">
+            <div class="feature-item"><i class="fas fa-shield-alt"></i><span>Advanced AI Detection</span></div>
+            <div class="feature-item"><i class="fas fa-search"></i><span>Real-time Monitoring</span></div>
+            <div class="feature-item"><i class="fas fa-chart-line"></i><span>Risk Analytics</span></div>
+            <div class="feature-item"><i class="fas fa-lock"></i><span>Secure Compliance</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Side - Login Form -->
+      <div class="login-section">
+        <div class="login-card">
+          <div class="card-header">
+            <div class="logo-small"><i class="fas fa-brain"></i><span>Scrutinise</span></div>
+            <h2>Welcome Back</h2>
+            <p>Sign in to access your AI-powered financial crime analysis platform</p>
+          </div>
+
+          <form class="login-form" id="loginForm" method="post" action="{{ request.url_for('login_post') }}">
+            <div class="form-group">
+              <label for="email">Email Address</label>
+              <div class="input-wrapper">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="email" name="email" placeholder="Enter your email" autocomplete="username" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="password">Password</label>
+              <div class="input-wrapper">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password" required>
+                <button type="button" class="password-toggle" id="passwordToggle"><i class="fas fa-eye"></i></button>
+              </div>
+            </div>
+
+            <div class="form-options">
+              <label class="checkbox-wrapper">
+                <input type="checkbox" id="remember">
+                <span class="checkmark"></span>
+                <span class="checkbox-text">Remember me</span>
+              </label>
+            </div>
+
+            <button type="submit" class="login-btn">
+              <span class="btn-text">Sign In</span>
+              <i class="fas fa-arrow-right btn-icon"></i>
+            </button>
+          </form>
+
+          <div>
+            <div class="copyright">© {{ now().year }} Scrutinise</div>
+          </div>
+        </div>
+
+        <!-- Security Info -->
+        <div class="security-info">
+          <div class="security-item"><i class="fas fa-certificate"></i><span>ISO 27001 Certified</span></div>
+          <div class="security-item"><i class="fas fa-user-shield"></i><span>Enterprise Security</span></div>
+          <div class="security-item"><i class="fas fa-globe-americas"></i><span>Global Compliance</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <p>Authenticating...</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', path='js/script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">QC Review – Level {{ level }}</h2>
+
+  <!-- Task Summary -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Task ID: {{ task.task_id }}</h5>
+      <p><strong>Customer ID:</strong> {{ task.customer_id }}</p>
+      <p><strong>Initial Reviewer:</strong> {{ reviewer_name or '—' }}</p>
+      <p><strong>Review Outcome:</strong> {{ task["l" ~ level ~ "_outcome"] or '—' }}</p>
+    </div>
+  </div>
+
+  <!-- Referral Details (if any) -->
+  {% if task.referred_to_sme or task.sme_feedback %}
+  <div class="card border-warning mb-4">
+    <div class="card-header bg-warning text-dark">
+      Referral Details
+    </div>
+    <div class="card-body">
+      {% if task.referred_to_sme %}
+        <p><strong>Referred to SME:</strong> Yes</p>
+        <p><strong>Referral Date:</strong> {{ task.referral_date or '—' }}</p>
+      {% endif %}
+      {% if task.sme_feedback %}
+        <p><strong>SME Response:</strong></p>
+        <div class="border p-2 bg-light">
+          {{ task.sme_feedback }}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- QC Review Form -->
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- QC Outcome -->
+    <div class="mb-3">
+      <label for="qc_outcome" class="form-label">QC Decision</label>
+      <select class="form-select" id="qc_outcome" name="qc_outcome" required>
+        <option value="">-- Select Outcome --</option>
+        <option value="Agree" {% if task["l" ~ level ~ "_qc_outcome"] == 'Agree' %}selected{% endif %}>Agree</option>
+        <option value="Disagree - Upgrade" {% if task["l" ~ level ~ "_qc_outcome"] == 'Disagree - Upgrade' %}selected{% endif %}>Disagree - Upgrade</option>
+        <option value="Disagree - Downgrade" {% if task["l" ~ level ~ "_qc_outcome"] == 'Disagree - Downgrade' %}selected{% endif %}>Disagree - Downgrade</option>
+      </select>
+    </div>
+
+    <!-- QC Rationale -->
+    <div class="mb-3">
+      <label for="qc_rationale" class="form-label">QC Rationale</label>
+      <textarea class="form-control" id="qc_rationale" name="qc_rationale" rows="4" required>{{ task["l" ~ level ~ "_qc_rationale"] or '' }}</textarea>
+    </div>
+
+    <!-- Scorecard -->
+    <hr>
+    <h5 class="mb-3">QC Scorecard</h5>
+
+    <div class="mb-3">
+      <label for="qc_scorecard_outcome" class="form-label">Final Assessment</label>
+      <select class="form-select" id="qc_scorecard_outcome" name="qc_scorecard_outcome" required>
+        <option value="">-- Select --</option>
+        <option value="Pass" {% if task["l" ~ level ~ "_qc_scorecard_outcome"] == 'Pass' %}selected{% endif %}>Pass</option>
+        <option value="Pass with Feedback" {% if task["l" ~ level ~ "_qc_scorecard_outcome"] == 'Pass with Feedback' %}selected{% endif %}>Pass with Feedback</option>
+        <option value="Fail" {% if task["l" ~ level ~ "_qc_scorecard_outcome"] == 'Fail' %}selected{% endif %}>Fail</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="qc_feedback" class="form-label">QC Feedback for Reviewer</label>
+      <textarea class="form-control" id="qc_feedback" name="qc_feedback" rows="3">{{ task["l" ~ level ~ "_qc_feedback"] or '' }}</textarea>
+    </div>
+
+    <!-- Rework Flags -->
+    <div class="form-check mb-2">
+      <input class="form-check-input" type="checkbox" id="rework_required" name="rework_required" {% if task["l" ~ level ~ "_rework_required"] %}checked{% endif %}>
+      <label class="form-check-label" for="rework_required">
+        Rework Required
+      </label>
+    </div>
+
+    {% if task["l" ~ level ~ "_rework_required"] %}
+    <div class="form-check mb-4">
+      <input class="form-check-input" type="checkbox" id="rework_approved" name="rework_approved" {% if task["l" ~ level ~ "_rework_approved"] %}checked{% endif %}>
+      <label class="form-check-label" for="rework_approved">
+        Approve Completed Rework
+      </label>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="mt-4">
+      <button type="submit" class="btn btn-success">Submit QC Review</button>
+      <a href="{{ url_for('qc_dashboard') }}" class="btn btn-secondary ms-2">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<style>
+  .card-title { font-size: 1.25rem; font-weight: 600; }
+</style>
+{% endblock %}

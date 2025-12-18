@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Reviewer Accreditation – Level {{ level }}</h2>
+  <a href="{{ url_for('download_accreditation_log', level=level) }}" class="btn btn-outline-secondary btn-sm">
+    📤 Export Audit Log
+  </a>
+</div>
+
+<div class="table-responsive mb-5">
+  <table class="table table-bordered table-striped table-sm align-middle">
+    <thead class="table-dark">
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Team Lead</th>
+        <th>Accredited?</th>
+        <th>Comment / Reason</th>
+        <th>Action</th>
+        <th>History</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in reviewers %}
+      <tr>
+        <form method="POST">
+          <td>{{ r.name }}</td>
+          <td>{{ r.email }}</td>
+          <td>
+            {% if r.role.startswith('reviewer_') %}
+              Reviewer (Level {{ r.role.split('_')[1] }})
+            {% elif r.role.startswith('team_lead_') %}
+              Team Lead (Level {{ r.role.split('_')[2] }})
+            {% elif r.role.startswith('qc_lead_') %}
+              QC Lead (Level {{ r.role.split('_')[2] }})
+            {% elif r.role == 'qc' %}
+              Quality Control
+            {% elif r.role == 'qa' %}
+              Quality Assurance
+            {% elif r.role == 'sme' %}
+              Subject Matter Expert
+            {% elif r.role == 'admin' %}
+              Admin
+            {% elif r.role == 'operations_manager' %}
+              Operations Manager
+            {% else %}
+              {{ r.role|title }}
+            {% endif %}
+          </td>
+          <td>{{ r.team_lead or '-' }}</td>
+          <td class="text-center">
+            <input type="checkbox" name="is_accredited" value="1" {% if r.is_accredited %}checked{% endif %}>
+            {% if r.recently_changed %}
+              <span class="text-success ms-1" title="Updated in last 7 days">&#x1F7E2;</span>
+            {% endif %}
+          </td>
+          <td>
+            <input type="text" class="form-control form-control-sm" name="comment" value="{{ r.comment or '' }}">
+          </td>
+          <td>
+            <input type="hidden" name="reviewer_id" value="{{ r.id }}">
+            <input type="hidden" name="level" value="{{ level }}">
+            <button type="submit" class="btn btn-success btn-sm">Save</button>
+          </td>
+          <td>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#history-{{ r.id }}">
+              View History
+            </button>
+          </td>
+        </form>
+      </tr>
+      <tr class="collapse" id="history-{{ r.id }}">
+        <td colspan="8">
+          {% if r.history %}
+            <ul class="mb-0 small">
+              {% for h in r.history %}
+                <li><strong>{{ h.timestamp }}</strong> — 
+                  {% if h.is_accredited %}Accredited{% else %}Revoked{% endif %} by 
+                  {{ h.accredited_by }}{% if h.comment %}: “{{ h.comment }}”{% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted small mb-0">No history available.</p>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<h4 class="mb-3">Recent Accreditation Changes</h4>
+<div class="table-responsive">
+  <table class="table table-bordered table-striped table-sm">
+    <thead class="table-light">
+      <tr>
+        <th>Reviewer</th>
+        <th>Email</th>
+        <th>Action</th>
+        <th>Comment</th>
+        <th>Changed By</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td>{{ log.name }}</td>
+        <td>{{ log.email }}</td>
+        <td>
+          {% if log.is_accredited %}
+            <span class="text-success">Accredited</span>
+          {% else %}
+            <span class="text-danger">Revoked</span>
+          {% endif %}
+        </td>
+        <td>{{ log.comment or '' }}</td>
+        <td>User ID: {{ log.accredited_by }}</td>
+        <td>{{ log.timestamp }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<style>
+  td input[type="text"] {
+    min-width: 200px;
+  }
+  .btn-outline-secondary:focus {
+    box-shadow: none;
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,1 @@
+sudo systemctl restart sme-bot && sudo systemctl restart nginx && sudo systemctl status sme-bot --no-pager

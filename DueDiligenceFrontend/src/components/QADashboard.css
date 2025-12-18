@@ -1,0 +1,21 @@
+.qa-dashboard {
+  padding: 1rem 0;
+}
+
+.qa-dashboard .table-responsive {
+  margin-top: 1rem;
+}
+
+.qa-dashboard .table td {
+  padding: 0.75rem;
+  vertical-align: middle;
+}
+
+.qa-dashboard .table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.qa-dashboard .table tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+}
+

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4">Create New User</h2>
+
+  <form method="POST" action="{{ url_for('create_user') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="mb-3">
+      <label for="name" class="form-label">Full Name</label>
+      <input type="text" name="name" class="form-control" placeholder="Optional name">
+    </div>
+
+    <div class="mb-3">
+      <label for="email" class="form-label">Email Address</label>
+      <input type="email" name="email" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+      <label for="role" class="form-label">Role</label>
+      <select name="role" class="form-select" required>
+        <option value="">Select Role</option>
+
+        <optgroup label="Team Leads">
+          <option value="team_lead_1">Team Lead (Level 1)</option>
+          <option value="team_lead_2">Team Lead (Level 2)</option>
+          <option value="team_lead_3">Team Lead (Level 3)</option>
+          <option value="qc_1">QC Team Lead (Level 1)</option>
+          <option value="qc_2">QC Team Lead (Level 2)</option>
+          <option value="qc_3">QC Team Lead (Level 3)</option>
+          <option value="qa_1">QA Team Lead (Level 1)</option>
+          <option value="qa_2">QA Team Lead (Level 2)</option>
+          <option value="qa_3">QA Team Lead (Level 3)</option>
+        </optgroup>
+
+        <optgroup label="QC Reviewers">
+          <option value="qc_review_1">QC Reviewer (Level 1)</option>
+          <option value="qc_review_2">QC Reviewer (Level 2)</option>
+          <option value="qc_review_3">QC Reviewer (Level 3)</option>
+        </optgroup>
+
+        <optgroup label="Reviewers">
+          <option value="reviewer_1">Reviewer (Level 1)</option>
+          <option value="reviewer_2">Reviewer (Level 2)</option>
+          <option value="reviewer_3">Reviewer (Level 3)</option>
+        </optgroup>
+
+        <optgroup label="Other Roles">
+          <option value="qa">QA Reviewer (Legacy)</option>
+          <option value="qc">QC Reviewer (Legacy)</option>
+          <option value="sme">Subject Matter Expert (SME)</option>
+          <option value="operations_manager">Operations Manager</option>
+          <option value="admin">Admin</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="team_lead" class="form-label">Team Lead (if applicable)</label>
+      <select name="team_lead" class="form-select">
+        <option value="">-- None --</option>
+        {% for lead in leads %}
+        <option value="{{ lead.name }}">{{ lead.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="password" class="form-label">Initial Password</label>
+      <input type="text" name="password" class="form-control" required value="password123">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create User</button>
+  </form>
+</div>
+{% endblock %}

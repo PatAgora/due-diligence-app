@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block nav_actions %}
+  <li class="nav-item"><a href="{{ url_for('assign_tasks') }}" class="nav-link">Assign Tasks</a></li>
+  <li class="nav-item"><a href="{{ url_for('assign_tasks_bulk') }}" class="nav-link">Assign Tasks (Bulk)</a></li>
+  <li class="nav-item"><a href="{{ url_for('reassign_tasks') }}" class="nav-link">Reassign Tasks</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3>Reassign Tasks (Level {{ level }})</h3>
+
+  <form class="row g-3 mb-3" method="get">
+    <div class="col-auto">
+      <label for="from_reviewer" class="form-label">Filter by current reviewer</label>
+      <select id="from_reviewer" name="from_reviewer" class="form-select">
+        <option value="all" {{ 'selected' if from_reviewer=='all' else '' }}>All</option>
+        {% for r in reviewers %}
+          <option value="{{ r.id }}" {{ 'selected' if from_reviewer|int==r.id else '' }}>{{ r.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto align-self-end">
+      <button class="btn btn-outline-secondary">Apply</button>
+    </div>
+  </form>
+
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label for="target_reviewer_id" class="form-label">Reassign to</label>
+        <select id="target_reviewer_id" name="target_reviewer_id" class="form-select" required>
+          <option value="">Select reviewer...</option>
+          {% for r in reviewers %}
+            <option value="{{ r.id }}">{{ r.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-8 text-end">
+        <button class="btn btn-primary" type="submit">Reassign Selected</button>
+      </div>
+    </div>
+
+    <div class="table-responsive mt-3">
+      <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th style="width:40px;"><input type="checkbox" id="ckAll"></th>
+            <th>Task ID</th>
+            <th>Current Reviewer</th>
+            <th>Status</th>
+            <th>Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tasks %}
+          <tr>
+            <td><input type="checkbox" name="task_ids" value="{{ t.id }}"></td>
+            <td>{{ t.task_id }}</td>
+            <td>{{ t.current_reviewer_name }}</td>
+            <td>{{ t.status }}</td>
+            <td>{{ t.updated_at or '—' }}</td>
+          </tr>
+          {% endfor %}
+          {% if not tasks %}
+          <tr><td colspan="5" class="text-center text-muted">No in-progress tasks found for your team.</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </form>
+</div>
+
+{% block scripts %}
+<script>
+  const ckAll = document.getElementById('ckAll');
+  if (ckAll) {
+    ckAll.addEventListener('change', () => {
+      document.querySelectorAll('input[name="task_ids"]').forEach(cb => cb.checked = ckAll.checked);
+    });
+  }
+</script>
+{% endblock %}
+{% endblock %}

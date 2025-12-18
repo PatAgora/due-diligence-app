@@ -1,0 +1,44 @@
+
+{% extends "base.html" %}
+{% block content %}
+<h2>QA Dashboard</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Task ID</th>
+            <th>Status</th>
+            <th>QA Outcome</th>
+            <th>QA Comment</th>
+            <th>Last Updated</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in entries %}
+        <tr>
+            <td>{{ row.task_id }}</td>
+            <td>{{ row.status }}</td>
+            <td>{{ row.qa_outcome or "Pending" }}</td>
+            <td>{{ row.qa_comment or "—" }}</td>
+            <td>{{ row.updated_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<style>
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+    th, td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+    th {
+        background-color: #f9f9f9;
+    }
+</style>
+{% endblock %}

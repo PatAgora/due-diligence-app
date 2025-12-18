@@ -1,0 +1,8 @@
+.admin-user-list .table td {
+  vertical-align: middle;
+}
+
+.admin-user-list .btn-sm {
+  padding: 0.25rem 0.5rem;
+}
+

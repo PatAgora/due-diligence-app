@@ -1,0 +1,702 @@
+/* ===== CSS RESET & BASE STYLES ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* Brand Colors */
+    --primary-black: #1a1a1a;
+    --primary-orange: #ff6b35;
+    --accent-orange: #ff8c42;
+    --light-orange: rgba(255, 107, 53, 0.1);
+    
+    /* Neutral Colors */
+    --white: #ffffff;
+    --off-white: #fafafa;
+    --light-gray: #f5f5f5;
+    --medium-gray: #e0e0e0;
+    --dark-gray: #666666;
+    --text-dark: #2d2d2d;
+    --text-light: #757575;
+    
+    /* Semantic Colors */
+    --success: #10b981;
+    --error: #ef4444;
+    --warning: #f59e0b;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 25px 50px rgba(0, 0, 0, 0.15);
+    
+    /* Animation */
+    --transition-fast: 0.2s ease-in-out;
+    --transition-normal: 0.3s ease-in-out;
+    --transition-slow: 0.5s ease-in-out;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: var(--text-dark);
+    background: var(--white);
+    overflow-x: hidden;
+}
+
+/* ===== LAYOUT CONTAINER ===== */
+.login-container {
+    min-height: 100vh;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--off-white) 0%, var(--white) 100%);
+}
+
+/* ===== BACKGROUND ELEMENTS ===== */
+.background-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(26, 26, 26, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(26, 26, 26, 0.02) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+}
+
+.background-gradient {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+        circle at 20% 80%, 
+        rgba(255, 107, 53, 0.03) 0%, 
+        transparent 50%
+    ),
+    radial-gradient(
+        circle at 80% 20%, 
+        rgba(26, 26, 26, 0.03) 0%, 
+        transparent 50%
+    );
+    pointer-events: none;
+}
+
+/* ===== MAIN CONTENT LAYOUT ===== */
+.login-content {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 600px;
+    background: var(--white);
+    border-radius: 24px;
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    position: relative;
+}
+
+/* ===== LEFT SIDE - BRANDING SECTION ===== */
+.branding-section {
+    background: linear-gradient(135deg, var(--primary-black) 0%, #2d2d2d 100%);
+    padding: 60px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.branding-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,107,53,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    opacity: 0.3;
+}
+
+.ai-avatar-container {
+    position: relative;
+    margin-bottom: 40px;
+    z-index: 2;
+}
+
+.ai-avatar {
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(
+        circle at center, 
+        rgba(255, 107, 53, 0.2) 0%, 
+        rgba(255, 107, 53, 0.05) 70%, 
+        transparent 100%
+    );
+    border: 2px solid var(--primary-orange);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin: 0 auto;
+}
+
+/* Brain Icon */
+.ai-avatar::before {
+    content: '\f5dc'; /* Font Awesome brain icon unicode */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 48px;
+    color: var(--primary-black);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+}
+
+/* Orange accent overlay for brain activity */
+.ai-avatar::after {
+    content: '\f5dc'; /* Same brain icon */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 48px;
+    color: var(--primary-orange);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    z-index: 2;
+    animation: brainGlow 3s ease-in-out infinite;
+}
+
+@keyframes brainGlow {
+    0%, 70%, 100% { opacity: 0; }
+    35% { opacity: 0.6; }
+}
+
+.pulse-effect {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    border: 2px solid var(--primary-orange);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+    opacity: 0.3;
+}
+
+@keyframes pulse {
+    0% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+    50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.1; }
+    100% { transform: translate(-50%, -50%) scale(1.4); opacity: 0; }
+}
+
+.brand-content {
+    z-index: 2;
+    position: relative;
+}
+
+.brand-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    line-height: 1.2;
+}
+
+.scrutinise {
+    color: var(--white);
+}
+
+.sme {
+    color: var(--primary-orange);
+}
+
+.brand-subtitle {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 40px;
+    font-weight: 400;
+}
+
+.features-list {
+    display: grid;
+    gap: 16px;
+    text-align: left;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.feature-item i {
+    color: var(--primary-orange);
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+/* ===== RIGHT SIDE - LOGIN SECTION ===== */
+.login-section {
+    padding: 60px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+}
+
+.login-card {
+    max-width: 400px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.card-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.logo-small {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--primary-black);
+    margin-bottom: 24px;
+}
+
+.logo-small i {
+    color: var(--primary-orange);
+    font-size: 1.3rem;
+}
+
+.card-header h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-black);
+    margin-bottom: 8px;
+}
+
+.card-header p {
+    color: var(--text-light);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* ===== FORM STYLES ===== */
+.login-form {
+    display: grid;
+    gap: 24px;
+}
+
+.form-group {
+    display: grid;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 500;
+    color: var(--text-dark);
+    font-size: 0.9rem;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-wrapper i {
+    position: absolute;
+    left: 16px;
+    color: var(--dark-gray);
+    font-size: 0.9rem;
+    z-index: 2;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 16px 16px 16px 48px;
+    border: 2px solid var(--medium-gray);
+    border-radius: 12px;
+    font-size: 1rem;
+    background: var(--white);
+    transition: all var(--transition-fast);
+    font-family: inherit;
+}
+
+.input-wrapper input:focus {
+    outline: none;
+    border-color: var(--primary-orange);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+}
+
+.input-wrapper input::placeholder {
+    color: var(--dark-gray);
+}
+
+.password-toggle {
+    position: absolute;
+    right: 16px;
+    background: none;
+    border: none;
+    color: var(--dark-gray);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color var(--transition-fast);
+    z-index: 2;
+}
+
+.password-toggle:hover {
+    color: var(--primary-orange);
+}
+
+.form-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 8px 0;
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+
+.checkbox-wrapper input {
+    display: none;
+}
+
+.checkmark {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--medium-gray);
+    border-radius: 4px;
+    position: relative;
+    transition: all var(--transition-fast);
+}
+
+.checkbox-wrapper input:checked + .checkmark {
+    background: var(--primary-orange);
+    border-color: var(--primary-orange);
+}
+
+.checkbox-wrapper input:checked + .checkmark::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--white);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.forgot-password {
+    color: var(--primary-orange);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: opacity var(--transition-fast);
+}
+
+.forgot-password:hover {
+    opacity: 0.8;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, var(--primary-orange) 0%, var(--accent-orange) 100%);
+    color: var(--white);
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all var(--transition-fast);
+    position: relative;
+    overflow: hidden;
+}
+
+.login-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s ease-in-out;
+}
+
+.login-btn:hover::before {
+    left: 100%;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.login-btn:active {
+    transform: translateY(0);
+}
+
+.btn-icon {
+    transition: transform var(--transition-fast);
+}
+
+.login-btn:hover .btn-icon {
+    transform: translateX(4px);
+}
+
+.card-footer {
+    text-align: center;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--medium-gray);
+}
+
+.card-footer p {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.contact-link {
+    color: var(--primary-orange);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.contact-link:hover {
+    text-decoration: underline;
+}
+
+.copyright {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--medium-gray);
+    text-align: center;
+    color: var(--text-light);
+    font-size: 0.8rem;
+}
+
+.security-info {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 32px;
+    padding-top: 24px;
+}
+
+.security-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-light);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.security-item i {
+    color: var(--success);
+    font-size: 0.9rem;
+}
+
+/* ===== LOADING OVERLAY ===== */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-normal);
+}
+
+.loading-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.loading-spinner {
+    text-align: center;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--light-gray);
+    border-top: 4px solid var(--primary-orange);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-spinner p {
+    color: var(--text-dark);
+    font-weight: 500;
+}
+
+/* Simple neural activity dots */
+.ai-avatar .neural-pathways {
+    position: absolute;
+    width: 56px;
+    height: 35px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.ai-avatar .neural-node {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--primary-orange);
+    border-radius: 50%;
+    opacity: 0;
+    animation: brainPulse 2.5s ease-in-out infinite;
+}
+
+/* Simple brain activity pattern */
+.ai-avatar .neural-node:nth-child(1) { top: 30%; left: 25%; animation-delay: 0s; }
+.ai-avatar .neural-node:nth-child(2) { top: 30%; right: 25%; animation-delay: 0.4s; }
+.ai-avatar .neural-node:nth-child(3) { top: 50%; left: 35%; animation-delay: 0.8s; }
+.ai-avatar .neural-node:nth-child(4) { top: 50%; right: 35%; animation-delay: 1.2s; }
+.ai-avatar .neural-node:nth-child(5) { bottom: 30%; left: 30%; animation-delay: 1.6s; }
+.ai-avatar .neural-node:nth-child(6) { bottom: 30%; right: 30%; animation-delay: 2s; }
+
+@keyframes brainPulse {
+    0%, 85%, 100% { opacity: 0; }
+    15%, 70% { opacity: 1; }
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1024px) {
+    .login-content {
+        grid-template-columns: 1fr;
+        max-width: 500px;
+    }
+    
+    .branding-section {
+        padding: 40px 30px;
+    }
+    
+    .brand-title {
+        font-size: 2rem;
+    }
+    
+    .features-list {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .login-container {
+        padding: 20px;
+    }
+    
+    .login-content {
+        border-radius: 16px;
+        margin: 20px 0;
+    }
+    
+    .branding-section {
+        padding: 30px 20px;
+    }
+    
+    .login-section {
+        padding: 40px 20px;
+    }
+    
+    .brand-title {
+        font-size: 1.8rem;
+    }
+    
+    .features-list {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .security-info {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-container {
+        padding: 10px;
+    }
+    
+    .branding-section {
+        padding: 20px 15px;
+    }
+    
+    .login-section {
+        padding: 30px 15px;
+    }
+    
+    .ai-avatar {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .pulse-effect {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .brand-title {
+        font-size: 1.6rem;
+    }
+    
+    .card-header h2 {
+        font-size: 1.6rem;
+    }
+}

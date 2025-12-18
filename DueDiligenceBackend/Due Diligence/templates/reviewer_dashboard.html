@@ -1,0 +1,675 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid px-3 my-3">
+<style>
+.table td.hm-success, .table-striped > tbody > tr > td.hm-success { background-color: rgba(25,135,84,.18) !important; }
+.table td.hm-warning, .table-striped > tbody > tr > td.hm-warning { background-color: rgba(255,193,7,.22) !important; }
+.table td.hm-danger,  .table-striped > tbody > tr > td.hm-danger  { background-color: rgba(220,53,69,.18) !important; }
+.hm-zero { color:#6c757d; opacity:.75; }
+
+  /* === Shared OPS MI styles brought over for visual alignment === */
+  .status-card,.soft-card,.card.soft-eq{border:1px solid #eef1f5;border-radius:16px;background:#fff;box-shadow:0 2px 8px rgba(16,24,40,.06);transition:transform .08s ease, box-shadow .08s ease;}
+  .hover-lift:hover,.status-card:hover,.card.soft-eq:hover{transform:translateY(-2px); box-shadow:4px 6px 16px rgba(16,24,40,.12);}
+  .table-clean> :not(caption)>*>*{background:transparent;border-bottom:1px solid #eef1f5;}
+  .chip{display:inline-block;padding:.1rem .5rem;border-radius:.5rem;font-weight:700;line-height:1.4;}
+  .chip-warn{border:2px solid #f59e0b;color:#b45309;background:transparent;}
+  .chip-danger{border:2px solid #ef4444;color:#991b1b;background:transparent;}
+  .age-cell{font-weight:700;border-radius:12px;display:inline-block;min-width:64px;padding:.35rem .75rem;}
+  .age-green{background:rgba(16,185,129,.15);color:#0f766e}
+  .age-amber{background:rgba(251,191,36,.2);color:#92400e}
+  .age-red{background:rgba(239,68,68,.15);color:#991b1b}
+
+
+/*== OPS MI merge ==*/
+.kpi-card{position:relative;border:1px solid #eef1f5;border-top-width:4px;border-radius:14px;background:#fff;padding:18px;height:100%;box-shadow:0 2px 8px rgba(0,0,0,.04);transition:transform .08s ease, box-shadow .08s ease;}
+    .kpi-card:hover{transform:translateY(-2px); box-shadow:4px 6px 16px rgba(16,24,40,.12);}
+    .kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+    .kpi-icon{display:inline-flex;align-items:center;justify-content:center;height:40px;width:40px;border-radius:999px;background:#f5f7fb;font-size:1.1rem;}
+    .kpi-metric{font-size:2.25rem;line-height:1.1;font-weight:800;color:#0f172a;}
+    .kpi-label{color:#475569;font-weight:600;letter-spacing:.2px;}
+    .kpi-accent-orange{border-top-color:#f59e0b}.kpi-accent-green{border-top-color:#22c55e}.kpi-accent-cyan{border-top-color:#06b6d4}.kpi-accent-amber{border-top-color:#fbbf24}
+    .kpi-icon.orange{color:#b45309;background:#fff7ed}.kpi-icon.green{color:#166534;background:#ecfdf5}.kpi-icon.cyan{color:#155e75;background:#ecfeff}.kpi-icon.amber{color:#92400e;background:#fffbeb}
+    .cell-link{display:block;color:inherit;text-decoration:none}
+    .cell-link:hover{text-decoration:underline}
+    .status-card,.soft-card,.card.soft-eq{border:1px solid #eef1f5;border-radius:16px;background:#fff;box-shadow:0 2px 8px rgba(16,24,40,.06);transition:transform .08s ease, box-shadow .08s ease;}
+    .hover-lift:hover,.status-card:hover,.card.soft-eq:hover{transform:translateY(-2px); box-shadow:4px 6px 16px rgba(16,24,40,.12);}
+    .age-cell{font-weight:700;border-radius:12px;display:inline-block;min-width:64px;padding:.35rem .75rem;}
+    .age-green{background:rgba(16,185,129,.15);color:#0f766e}
+    .age-amber{background:rgba(251,191,36,.2);color:#92400e}
+    .age-red{background:rgba(239,68,68,.15);color:#991b1b}
+    .chip{display:inline-block;padding:.1rem .5rem;border-radius:.5rem;font-weight:700;line-height:1.4;}
+    .chip-warn{border:2px solid #f59e0b;color:#b45309;background:transparent;}
+    .chip-danger{border:2px solid #ef4444;color:#991b1b;background:transparent;}
+    .table-clean> :not(caption)>*>*{background:transparent;border-bottom:1px solid #eef1f5;}
+  
+
+/* ==== OPS MI visual alignment (merged) ==== */
+:root{
+  --card-bg:#fff; --card-br:#eef1f5; --shadow:0 2px 8px rgba(16,24,40,.06); --shadow-h:4px 6px 16px rgba(16,24,40,.12);
+  --muted:#667085; --heading:#101828;
+}
+.status-card{border:1px solid var(--card-br);border-radius:16px;background:var(--card-bg);box-shadow:var(--shadow);transition:transform .1s ease, box-shadow .1s ease;}
+.status-card:hover{transform:translateY(-2px); box-shadow:var(--shadow-h);}
+.hover-lift:hover{transform:translateY(-2px); box-shadow:var(--shadow-h);}
+.tile-title, .card h5, .card h4, .status-card h5{color:var(--heading);font-weight:600;margin:0;}
+.table-clean> :not(caption)>*>*{background:transparent;border-bottom:1px solid #eef1f5;}
+.table-sm td,.table-sm th{padding:.5rem .75rem;}
+.table thead th{font-weight:600;color:#475467;white-space:nowrap;}
+.chip{display:inline-block;padding:.1rem .5rem;border-radius:.5rem;font-weight:700;line-height:1.4;}
+.chip-warn{border:2px solid #f59e0b;color:#b45309;background:transparent;}
+.chip-danger{border:2px solid #ef4444;color:#991b1b;background:transparent;}
+.age-cell{font-weight:700;border-radius:12px;display:inline-block;min-width:64px;padding:.35rem .75rem;}
+.age-green{background:rgba(16,185,129,.15);color:#0f766e}
+.age-amber{background:rgba(251,191,36,.2);color:#92400e}
+.age-red{background:rgba(239,68,68,.15);color:#991b1b}
+/* Normalize common containers to card look */
+.card, .tile, .panel, .box, .kpi, .widget{border:1px solid var(--card-br); border-radius:16px; background:var(--card-bg); box-shadow:var(--shadow);}
+/* Tighten table wrappers */
+.table-responsive{border-radius:12px;}
+
+/* === Case Status & Age Profile (OPS MI look) === */
+.case-age-wrap{border:1px solid #eef1f5;border-radius:20px;background:#fff;box-shadow:0 2px 8px rgba(16,24,40,.06);overflow:hidden;}
+.case-age-head{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #eef1f5;}
+.case-age-title{font-size:1.5rem;font-weight:700;color:#1f2937;margin:0;}
+.case-age .table{margin-bottom:0;}
+.case-age thead th{font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#475467;background:#fff;border-bottom:1px solid #eef1f5;}
+.case-age tbody td{vertical-align:middle;border-color:#eef1f5;background:transparent;}
+.case-age tbody td.status-cell{font-weight:600;color:#1f2937;}
+.case-age tbody td.count-cell{font-weight:800;font-size:1.25rem;color:#0b1323;}
+.case-age tbody td.pct-cell{white-space:nowrap;color:#0b1323;}
+/* Age bucket pills (cols 4,5,6) */
+.case-age tbody td:nth-child(4),
+.case-age tfoot td:nth-child(4){background:rgba(16,185,129,.12);color:#0f766e;font-weight:700;border-radius:14px;}
+.case-age tbody td:nth-child(5),
+.case-age tfoot td:nth-child(5){background:rgba(251,191,36,.18);color:#92400e;font-weight:700;border-radius:14px;}
+.case-age tbody td:nth-child(6),
+.case-age tfoot td:nth-child(6){background:rgba(239,68,68,.12);color:#991b1b;font-weight:700;border-radius:14px;}
+/* Add a bit of padding to bucket cells */
+.case-age tbody td:nth-child(4),
+.case-age tbody td:nth-child(5),
+.case-age tbody td:nth-child(6){padding:.65rem 1rem;}
+/* Round group edges across the bucket trio */
+.case-age tbody tr td:nth-child(4){border-top-left-radius:14px;border-bottom-left-radius:14px;}
+.case-age tbody tr td:nth-child(6){border-top-right-radius:14px;border-bottom-right-radius:14px;}
+/* Live Data badge */
+.badge-live{background:#10b981;color:#fff;border-radius:999px;padding:.35rem .8rem;font-weight:700;font-size:.85rem;}
+
+
+/* === KPI trio squares === */
+.kpi-row{display:flex;gap:16px;flex-wrap:wrap;align-items:stretch;}
+.kpi-row .{flex:1 1 calc((100% - 32px)/3);}
+@media (max-width: 991.98px){ .kpi-row .{flex:1 1 100%;} }
+.{aspect-ratio:1/1;display:flex;flex-direction:column;}
+. > *{flex:0 0 auto;}
+. .card-body,. .p-3,. .p-4{flex:1 1 auto;display:flex;flex-direction:column;}
+
+
+/* Layout alignment with reviewer_panel-7 */
+.case-main   { position: relative; z-index: 1; }
+.sticky-side { position: sticky; top: 84px; z-index: 0; }
+@media (max-width: 991.98px) { .sticky-side { position: static; } }
+
+
+/* === Quality Stats square sizing (match output tile footprint) === */
+.equal-square{aspect-ratio:1/1; display:flex; flex-direction:column;}
+.equal-square .card-body, .equal-square .p-3, .equal-square .p-4{flex:1 1 auto; display:flex; flex-direction:column;}
+@supports not (aspect-ratio: 1/1){
+  /* Fallback: set min-height roughly equal to width using vw for typical 3-across layout */
+  .equal-square{min-height:28vw;}
+}
+
+
+/* === Layout helpers for reviewer tiles === */
+.kpi-quad{display:flex;gap:16px;flex-wrap:wrap;align-items:stretch;}
+.kpi-quad > *{flex:1 1 calc((100% - 48px)/4);}
+@media (max-width: 1199.98px){ .kpi-quad > *{flex:1 1 calc((100% - 32px)/2);} }
+@media (max-width: 767.98px){ .kpi-quad > *{flex:1 1 100%;} }
+
+.trio-row{display:flex;gap:16px;align-items:stretch;flex-wrap:wrap;}
+.trio-row > *{flex:1 1 calc((100% - 32px)/3); min-width:260px;}
+@media (max-width: 1199.98px){ .trio-row > *{flex:1 1 calc((100% - 16px)/2);} }
+@media (max-width: 767.98px){ .trio-row > *{flex:1 1 100%;} }
+
+/* keep cards tidy */
+.trio-row .status-card, .kpi-quad .status-card,
+.trio-row .card, .kpi-quad .card {height:100%;}
+
+
+/* --- Compact KPI tiles --- */
+.kpi-compact .num{font-size:2.2rem; line-height:1; font-weight:700;}
+.kpi-compact h6{font-size:.9rem; margin-bottom:.2rem;}
+.kpi-compact{padding:12px 14px !important; min-height:auto;}
+
+
+/* --- 3-up metrics layout tuning --- */
+.metrics-3up .card-title{font-size:1rem; margin-bottom:.4rem;}
+.metrics-3up .note{font-size:.8rem;}
+.metrics-3up .equal-square{aspect-ratio: 1 / 1;}
+@media (max-width: 1199.98px){
+  .metrics-3up .equal-square{aspect-ratio:auto;}
+}
+
+
+/* --- 3-up metrics layout: compact for sidebar --- */
+.metrics-3up{--bs-gutter-x:.5rem;}
+@media (min-width: 992px){ .metrics-3up > .col{flex:0 0 29.5%; max-width:29.5%;} }
+.metrics-3up .card .card-body{padding:12px 12px !important;}
+.metrics-3up .card-title{font-size:.95rem; margin-bottom:.35rem;}
+.metrics-3up .note{font-size:.75rem;}
+.metrics-3up table{font-size:.9rem;}
+.metrics-3up .badge{font-size:.8rem; padding:.4em .65em;}
+/* Make tiles slightly less tall so width can fit comfortably */
+.metrics-3up .equal-square{aspect-ratio: 5 / 6;}
+@media (max-width: 1199.98px){
+  .metrics-3up .equal-square{aspect-ratio:auto;}
+}
+
+
+/* --- Equal 3-up metric tiles --- */
+.equal-trio > .metric-tile{flex:0 0 33.333%; max-width:33.333%;}
+.equal-trio .card{height:100%;}
+.equal-trio .card-body{display:flex; flex-direction:column; justify-content:space-between; padding:14px;}
+.equal-trio .card-title{font-size:1rem; margin-bottom:.4rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.equal-trio canvas{flex:1 1 auto;}
+.equal-trio table{font-size:.85rem;}
+.equal-trio .badge{font-size:.75rem; padding:.35em .6em;}
+
+
+/* --- 3-up metrics layout: compact & consistent sizes --- */
+.metrics-3up{--bs-gutter-x:.4rem; --bs-gutter-y:.8rem;}
+@media (min-width: 992px){ .metrics-3up > .col{flex:0 0 29.5%; max-width:29.5%;} }
+.metrics-3up .card{min-width:0;} /* allow shrink */
+.metrics-3up .card .card-body{padding:10px 10px !important;}
+.metrics-3up .card-title{font-size:.9rem; margin-bottom:.3rem;}
+.metrics-3up .note{font-size:.72rem;}
+.metrics-3up table{font-size:.85rem;}
+.metrics-3up .badge{font-size:.75rem; padding:.35em .6em;}
+/* keep all three visually same footprint */
+.metrics-3up .equal-square{aspect-ratio: 4 / 5;}
+@media (max-width: 1199.98px){
+  .metrics-3up .equal-square{aspect-ratio:auto;}
+}
+
+
+/* --- 3-up metrics layout: ultra-compact override --- */
+.metrics-3up{--bs-gutter-x:.25rem; --bs-gutter-y:.5rem;}
+@media (min-width: 992px){ .metrics-3up > .col{flex:0 0 29.5%; max-width:29.5%;} }
+.metrics-3up .card{min-width:0;}
+.metrics-3up .card .card-body{padding:8px 10px !important;}
+.metrics-3up .card-title{font-size:.88rem; margin-bottom:.25rem;}
+.metrics-3up .note{font-size:.7rem;}
+.metrics-3up table{font-size:.8rem;}
+.metrics-3up th, .metrics-3up td{padding:.4rem .5rem;}
+.metrics-3up .badge{font-size:.7rem; padding:.3em .55em;}
+.metrics-3up .equal-square{aspect-ratio: 1 / 1;} /* smallest consistent footprint */
+
+
+/* --- Rework equalization tweaks --- */
+.metrics-3up .table-responsive{overflow-x:hidden;}
+.metrics-3up table{table-layout:auto; width:100%;}
+.metrics-3up th, .metrics-3up td{white-space:nowrap;}
+
+
+/* --- Equal spacing for metrics 3-up --- */
+.metrics-3up > .col{padding-left:0!important; padding-right:0!important;}
+.metrics-3up{margin-left:0!important; margin-right:0!important;}
+.metrics-3up .card{margin:0 .25rem;}
+@media (min-width:992px){
+  .metrics-3up > .col{flex:0 0 33.3333%; max-width:33.3333%;}
+}
+
+  /* KPI unifier */
+  .kpi.status-card{min-height:140px;}
+</style>
+
+<h1 class="fw-bold mb-2">Reviewer Dashboard</h1>
+
+{# Date filter #}
+{% set _sel = selected_date or 'all' %}
+<form class="d-flex gap-2 align-items-center mb-4" method="get">
+  <select name="date_range" class="form-select form-select-sm" style="max-width: 180px;">
+    <option value="wtd"   {{ 'selected' if _sel=='wtd'  }}>Current Week</option>
+    <option value="prevw" {{ 'selected' if _sel=='prevw' }}>Previous Week</option>
+    <option value="30d"   {{ 'selected' if _sel=='30d'  }}>Last 30 Days</option>
+    <option value="all"   {{ 'selected' if _sel=='all'  }}>All Time</option>
+  </select>
+  <button class="btn btn-primary btn-sm" type="submit">Apply</button>
+</form>
+
+<style>
+  .cell-link { color: inherit; text-decoration: none; }
+  .cell-link:hover { text-decoration: underline; }
+  .kpi h6{ margin:0; color:#6c757d; text-transform:uppercase; letter-spacing:.04em; font-size:.8rem;}
+  .kpi .num{ font-weight:700; font-size:2.25rem; line-height:1; }
+  .note { font-size: .85rem; color:#6c757d; }
+
+  .rework-card { display:flex; flex-direction:column; min-height: 320px; }
+  .rework-card .table-wrap { flex:1; display:flex; align-items:center; }
+  .rework-card table { margin: 0 auto; }
+
+  .table-tight td, .table-tight th { padding:.65rem .9rem; vertical-align: middle; }
+  .table-summary thead th { background:#f8f9fa; }
+  .pct { white-space: nowrap; }
+
+  .w-status { width: 36%; }
+  .w-count  { width: 12%; }
+  .w-pct    { width: 12%; }
+  .w-age    { width: 13.333%; }
+
+  .rag-green { background:#e8f5e9; }
+  .rag-amber { background:#fff3cd; }
+  .rag-red   { background:#fdecea; }
+  /* KPI unifier */
+  .kpi.status-card{min-height:140px;}
+</style>
+
+{# KPI tiles #}
+<div class="row g-3 mb-4">
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card h-100 hover-lift shadow-sm status-card">
+      <a class="stretched-link" href="{{ url_for('my_tasks', status='wip', date_range='all') }}"></a>
+      <div class="card-body  hover-lift kpi " kpi-compact>
+        <h6>Active WIP</h6>
+        <div class="num">{{ active_wip|default(0) }}</div>
+      </div>
+  </div>
+  </div>
+<div class="col-12 col-md-6 col-lg-3">
+    <div class="card h-100 hover-lift shadow-sm status-card">
+      <a class="stretched-link" href="{{ url_for('my_tasks', status='completed', date_range=_sel) }}"></a>
+      <div class="card-body hover-lift kpi" kpi-compact>
+        <h6>Completed</h6>
+        <div class="num">{{ completed_count|default(0) }}</div>
+      </div>
+  </div>
+  </div>
+<div class="col-12 col-md-6 col-lg-3">
+    <div class="card h-100 hover-lift shadow-sm status-card">
+      <a class="stretched-link" href="{{ url_for('my_tasks', status='qc_checked', date_range=_sel) }}"></a>
+      <div class="card-body hover-lift kpi" kpi-compact>
+        <h6>Total QC Checked</h6>
+        <div class="num">{{ qc_sample|default(0) }}</div>
+      </div>
+  </div>
+  </div>
+<div class="col-12 col-md-6 col-lg-3">
+    <div class="card h-100 hover-lift shadow-sm status-card">
+      <div class="card-body hover-lift kpi" kpi-compact>
+        <h6>QC Pass %</h6>
+        <div class="num">{{ (qc_pass_pct|default(0.0))|round(1) }}%</div>
+        <div class="small text-muted mt-1">{{ qc_pass_cnt|default(0) }}/{{ qc_sample|default(0) }} passed ({{ qc_fail_cnt|default(0) }} fail)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{# Charts row #}
+<div class="row row-cols-1 row-cols-lg-3 g-0 align-items-stretch metrics-3up equal-trio">
+  <!-- Quality Stats (square) -->
+  <div class="col d-flex metric-tile">
+    <div class="card hover-lift shadow-sm status-card flex-fill">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title">Quality Stats</h5>
+        <div class="mb-2 small text-muted">QC Pass %</div>
+        <div style="position:relative; height:230px;">
+          <canvas id="qcPieChart"></canvas>
+        </div>
+        <div class="d-flex align-items-center gap-3 mt-3">
+          <div class="d-flex align-items-center gap-1"><span class="rounded-circle d-inline-block" style="width:12px;height:12px;background:#198754;">&nbsp;</span><span>Pass</span></div>
+          <div class="d-flex align-items-center gap-1"><span class="rounded-circle d-inline-block" style="width:12px;height:12px;background:#dc3545;">&nbsp;</span><span>Fail</span></div>
+          <span class="ms-auto small text-muted">Sample: {{ qc_sample|default(0) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Individual Output -->
+  <div class="col d-flex metric-tile">
+    <div class="card hover-lift shadow-sm status-card flex-fill">
+      <div class="card-body d-flex flex-column">
+        <h5 class="card-title">Individual Output (Completed by Day)</h5>
+        <div class="flex-grow-1 d-flex align-items-center" style="min-height:230px;">
+          <canvas id="dailyOutputChart" class="w-100"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rework Age Profile -->
+  <div class="col d-flex metric-tile">
+    <div class="card h-100 hover-lift shadow-sm status-card equal-square flex-fill">
+      <div class="card-body hover-lift rework-card">
+        <div class="d-flex align-items-center justify-content-between">
+          <h5 class="card-title mb-0">Rework Age Profile</h5>
+          <span class="note">Live (not date-filtered)</span>
+        </div>
+        <div class="table-wrap mt-2">
+          <div class="table-responsive w-100">
+            <table class="align-middle mb-0 table table-clean table-sm table-tight">
+              <thead class="table-light">
+                <tr>
+                  <th>Age Bucket</th>
+                  <th class="text-end">Count</th>
+                </tr>
+              </thead>
+
+<tbody>
+  {% set _buckets_order = ['1–2 days','3–5 days','5 days+'] %}
+  {% for b in _buckets_order %}
+    {% if rework_buckets is mapping %}
+      {% set n = rework_buckets.get(b, 0) %}
+    {% else %}
+      {% set _match = rework_buckets | selectattr('bucket','equalto', b) | list %}
+      {% set n = (_match[0].count if _match|length > 0 else 0) %}
+    {% endif %}
+    {% set chip = 'chip-green' if b.startswith('1') else ('chip-amber' if b.startswith('3') else 'chip-red') %}
+    <tr>
+      <td class="fw-semibold">{{ b }}</td>
+      <td class="text-end">
+        {% if n > 0 %}
+          <a class="cell-link" href="{{ url_for('my_tasks', rework_bucket=b, date_range='all') }}">
+            <span class="chip {{ chip }}">{{ n }}</span>
+          </a>
+        {% else %}
+          <span class="chip {{ chip }}">{{ n }}</span>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+</tbody>
+
+</table>
+          </div>            
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# —— Case Status & Age Profile (individual WIP) —— #}
+<div class="card hover-lift mt-4 shadow-sm status-card">
+  <div class="card-body hover-lift">
+    <div class="d-flex align-items-center justify-content-between">
+      <h5 class="card-title mb-0">Case Status &amp; Age Profile</h5>
+      <span class="note">Live (time since last touched)</span>
+    </div>
+
+    <div class="table-responsive mt-2">
+      <table class="mb-0 table table-clean table-sm table-striped">
+        <thead class="table-light">
+          <tr>
+            <th rowspan="2">Status</th>
+            <th class="text-end" rowspan="2">Count</th>
+            <th class="text-end" rowspan="2">Percent</th>
+            <th class="text-end small text-muted" colspan="3">Time since last touched</th>
+          </tr>
+          <tr>
+            <th class="text-center">1–2 days</th>
+            <th class="text-center">3–5 days</th>
+            <th class="text-center">5 days+</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if age_rows and age_rows|length > 0 %}
+            {% for row in age_rows %}
+              {% set a12 = row.bucket_12 %}
+              {% set a35 = row.bucket_35 %}
+              {% set a5p = row.bucket_5p %}
+              <tr>
+                <td>
+                  {% if row.link %}
+                    <a class="cell-link" href="{{ row.link }}">{{ row.status }}</a>
+                  {% else %}
+                    {{ row.status }}
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  {% if row.link %}
+                    <a class="cell-link" href="{{ row.link }}">{{ row.count }}</a>
+                  {% else %}
+                    {{ row.count }}
+                  {% endif %}
+                </td>
+                <td class="text-end">{{ "%.1f"|format(row.pct) }}%</td>
+                <td class="text-end {{ 'hm-success' if a12 > 0 else 'hm-zero' }}">
+                  <a class="cell-link" href="{{ row.link_12 }}">{{ a12 }}</a>
+                </td>
+                <td class="text-end {{ 'hm-warning' if a35 > 0 else 'hm-zero' }}">
+                  <a class="cell-link" href="{{ row.link_35 }}">{{ a35 }}</a>
+                </td>
+                <td class="text-end {{ 'hm-danger' if a5p > 0 else 'hm-zero' }}">
+                  <a class="cell-link" href="{{ row.link_5p }}">{{ a5p }}</a>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="6" class="text-center text-muted">No WIP for this reviewer.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+        <tfoot>
+          <tr class="table-light fw-semibold">
+            <td class="text-end">Totals</td>
+            <td class="text-end">
+              <a class="cell-link" href="{{ url_for('my_tasks', status='wip', date_range='all') }}">{{ age_totals.count }}</a>
+            </td>
+            <td class="text-end">{{ "%.1f"|format(age_totals.pct) }}%</td>
+            <td class="text-end">
+              <a class="cell-link" href="{{ url_for('my_tasks', status='wip', age_bucket='1–2 days', date_range='all') }}">{{ age_totals.bucket_12 }}</a>
+            </td>
+            <td class="text-end">
+              <a class="cell-link" href="{{ url_for('my_tasks', status='wip', age_bucket='3–5 days', date_range='all') }}">{{ age_totals.bucket_35 }}</a>
+            </td>
+            <td class="text-end">
+              <a class="cell-link" href="{{ url_for('my_tasks', status='wip', age_bucket='5 days+', date_range='all') }}">{{ age_totals.bucket_5p }}</a>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="note mt-2">
+      Counts include only items currently assigned to you.
+      Age buckets use the most recent touch (assignment, SME/QC activity, completion, or update).
+    </div>
+  </div>
+</div>
+
+<!-- Chaser Cycle (Current Week) -->
+<div class="card hover-lift mt-4 shadow-sm status-card">
+  <div class="card-body hover-lift">
+    <div class="d-flex align-items-center justify-content-between">
+      <h5 class="card-title mb-0">Chaser Cycle (Current Week)</h5>
+      <span class="note">Live (due date buckets)</span>
+    </div>
+
+    <div class="table-responsive mt-2">
+      <table class="mb-0 table table-clean table-sm table-striped">
+        <thead class="table-light">
+          <tr>
+            <th>Date</th>
+            <th class="text-center">Overdue</th>
+            <th class="text-center">7</th>
+            <th class="text-center">14</th>
+            <th class="text-center">21</th>
+            <th class="text-center">28</th>
+            <th class="text-center">NTC</th>
+          </tr>
+</thead>
+        <tbody>
+{% if chaser_week_rows %}
+  {% for row in chaser_week_rows %}
+    <tr>
+      <td class="fw-semibold">{{ row.date }}</td>
+
+      {# Overdue #}
+      {% set v = row.get('Overdue', 0) %}
+      <td class="text-center">
+        {% if v > 0 %}
+          <a class="cell-link" href="{{ url_for('my_tasks', date_range=_sel, overdue='1', week_date=row.iso) }}">
+            <span class="chip chip-danger">{{ v }}</span>
+          </a>
+        {% else %}
+          {{ v }}
+        {% endif %}
+      </td>
+
+      {# 7 #}
+      {% set v = row.get('7', 0) %}
+      <td class="text-center">
+        {% if v > 0 %}
+          <a class="cell-link" href="{{ url_for('my_tasks', date_range=_sel, chaser_type='7', week_date=row.iso) }}">
+            <span class="chip chip-warn">{{ v }}</span>
+          </a>
+        {% else %}
+          {{ v }}
+        {% endif %}
+      </td>
+
+      {# 14 #}
+      {% set v = row.get('14', 0) %}
+      <td class="text-center">
+        {% if v > 0 %}
+          <a class="cell-link" href="{{ url_for('my_tasks', date_range=_sel, chaser_type='14', week_date=row.iso) }}">
+            <span class="chip chip-warn">{{ v }}</span>
+          </a>
+        {% else %}
+          {{ v }}
+        {% endif %}
+      </td>
+
+      {# 21 #}
+      {% set v = row.get('21', 0) %}
+      <td class="text-center">
+        {% if v > 0 %}
+          <a class="cell-link" href="{{ url_for('my_tasks', date_range=_sel, chaser_type='21', week_date=row.iso) }}">
+            <span class="chip chip-warn">{{ v }}</span>
+          </a>
+        {% else %}
+          {{ v }}
+        {% endif %}
+      </td>
+
+      {# 28 #}
+      {% set v = row.get('28', 0) %}
+      <td class="text-center">
+        {% if v > 0 %}
+          <a class="cell-link" href="{{ url_for('my_tasks', date_range=_sel, chaser_type='28', week_date=row.iso) }}">
+            <span class="chip chip-warn">{{ v }}</span>
+          </a>
+        {% else %}
+          {{ v }}
+        {% endif %}
+      </td>
+
+      {# NTC #}
+      {% set v = row.get('NTC', 0) %}
+      <td class="text-center">
+        {% if v > 0 %}
+          <a class="cell-link" href="{{ url_for('my_tasks', date_range=_sel, chaser_type='NTC', week_date=row.iso) }}">
+            <span class="chip chip-warn">{{ v }}</span>
+          </a>
+        {% else %}
+          {{ v }}
+        {% endif %}
+      </td>
+
+    </tr>
+  {% endfor %}
+{% elif chaser_cycle %}
+  {# Legacy fallback #}
+  {% for label, rows in (chaser_cycle.items() if chaser_cycle is mapping else chaser_cycle|dictsort) %}
+    {% set ns = namespace(total=0) %}
+    {% for k in chaser_keys %}
+      {% set ns.total = ns.total + (rows.get(k, 0) or 0) %}
+    {% endfor %}
+    {% if ns.total > 0 %}
+      <tr>
+        <td class="fw-semibold">{{ label }}</td>
+        {% for k in chaser_keys %}
+          {% set v = rows.get(k, 0) or 0 %}
+          {% set cls = (
+              'hm-danger'  if (v and k == 'overdue') else
+              'hm-warning' if (v and k == today_key) else
+              'hm-success' if (v) else
+              'hm-zero'
+          ) %}
+          <td class="text-end {{ cls }}">
+            {% if v > 0 %}
+              <a class="cell-link" href="{{ url_for('my_tasks', status='wip', chaser_label=label, chaser_due=k, date_range=_sel) }}">{{ v }}</a>
+            {% else %}
+              {{ v }}
+            {% endif %}
+          </td>
+        {% endfor %}
+      </tr>
+    {% endif %}
+  {% endfor %}
+{% else %}
+  <tr>
+    <td colspan="7" class="text-muted text-center">No chaser data.</td>
+  </tr>
+{% endif %}
+</tbody>
+      </table>
+    </div>
+
+    <div class="note mt-2">
+      Volumes are clickable and will take you to your <em>My Tasks</em> view filtered to the selected due date/overdue bucket.
+    </div>
+  </div>
+</div>
+
+</div> {# /.container #}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const pctx = document.getElementById('qcPieChart');
+  if (pctx) {
+    const qc = {{ {'pass': qc_pass_cnt|default(0), 'fail': qc_fail_cnt|default(0)}|tojson }};
+    new Chart(pctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Pass','Fail'],
+        datasets: [{
+          data: [qc.pass, qc.fail],
+          backgroundColor: ['#198754', '#dc3545'],
+          hoverBackgroundColor: ['#198754', '#dc3545']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+  const dctx = document.getElementById('dailyOutputChart');
+  if (dctx) {
+    new Chart(dctx, {
+      type: 'bar',
+      data: {
+        labels: {{ (daily_labels or [])|tojson }},
+        datasets: [{ label: 'Completed', data: {{ (daily_counts or [])|tojson }} }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { grid:{display:false} },
+          y: { beginAtZero:true, ticks: { precision:0 } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

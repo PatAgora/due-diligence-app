@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-4">
+  <h1 class="fw-bold mb-3">Allocate QC (Bulk) – Level {{ level }}</h1>
+
+  <form method="post" class="card shadow-sm p-3 mb-3">
+    {% if csrf_token is defined %}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% endif %}
+
+    <div class="row g-2 align-items-center">
+      <div class="col-auto">
+        <label class="me-2 mb-0">Assign to</label>
+        <select name="qc_reviewer_id" class="form-select form-select-sm w-auto" required>
+          <option value="">Select QC Reviewer…</option>
+          {% for r in reviewers %}
+            <option value="{{ r.id }}">{{ r.display_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-auto">
+        <label class="me-2 mb-0">Task limit</label>
+        <input type="number" name="task_limit" class="form-control form-control-sm w-auto" value="10" min="1" max="500">
+      </div>
+
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm">Allocate</button>
+      </div>
+
+      <div class="col ms-auto text-end">
+        <small class="text-muted">Awaiting assignment: <strong>{{ total_available|default(0) }}</strong></small>
+      </div>
+    </div>
+  </form>
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-white">
+      <strong>Preview (top awaiting cases)</strong>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-striped table-sm align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width:110px;">Task</th>
+            <th style="width:200px;">Completed At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if unassigned_tasks %}
+            {% for row in unassigned_tasks %}
+            <tr>
+              <td>{{ row.task_id }}</td>
+              <td>{{ row.completed_at or '—' }}</td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="2" class="text-center text-muted">No cases awaiting QC assignment.</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

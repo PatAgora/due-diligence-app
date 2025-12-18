@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-4">
+  <h1 class="fw-bold mb-2">Forecast Planning</h1>
+  <p class="text-muted mb-4">
+    We’ve generated the next 6 months of weeks for you. Enter your planned volumes; leave blank for 0.
+  </p>
+
+  <form method="post" class="table-responsive">
+    <!-- hidden CSRF token field -->
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <table class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 30%;">Week Start</th>
+          <th style="width: 70%;">Forecast Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for w in weeks %}
+        <tr>
+          <td>{{ w.label }}</td>
+          <td>
+            <input
+              type="number"
+              name="forecast_{{ w.value }}"
+              class="form-control"
+              min="0"
+              placeholder="0"
+              value="{{ w.forecast or '' }}"
+            >
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="mt-3">
+      <button type="submit" class="btn btn-success">Save All Forecasts</button>
+      <a href="{{ url_for('mi_dashboard') }}" class="btn btn-secondary ms-2">
+        Back to Dashboard
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

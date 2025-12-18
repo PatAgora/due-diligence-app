@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Assign Tasks to Reviewers</h2><div class="row">
+  <!-- Unassigned Tasks Panel -->
+  <div class="col-md-6">
+    <h5>Unassigned Tasks</h5>
+    <form method="POST" id="assignmentForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="list-group task-list mb-3">
+        {% for task in unassigned_tasks %}
+        {# format dd-mm-yyyy from ISO-like updated_at #}
+        {% set _u = task.updated_at or '' %}
+        {% set _ud = _u and (_u[8:10] ~ '-' ~ _u[5:7] ~ '-' ~ _u[0:4]) or '—' %}
+
+        <label class="list-group-item d-flex justify-content-between align-items-center task-card">
+          <input type="checkbox" name="task_ids" value="{{ task.id }}" class="form-check-input me-2">
+          <div class="me-3">
+            <strong>{{ task.task_id }}</strong><br>
+            <small>Status: Under Review &nbsp;|&nbsp; Score: {{ "%.2f"|format(task.total_score or 0) }}</small>
+          </div>
+          <span class="badge bg-secondary">{{ _ud }}</span>
+        </label>
+        {% else %}
+        <p class="text-muted">No unassigned tasks.</p>
+        {% endfor %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Reviewer Selection Panel -->
+  <div class="col-md-6">
+    <h5>Reviewers</h5>
+    <div class="list-group reviewer-list">
+      {% for reviewer in reviewers %}
+      <label class="list-group-item reviewer-card">
+        <input type="radio" name="reviewer_id" form="assignmentForm" value="{{ reviewer.id }}" class="form-check-input me-2">
+        <div class="d-flex flex-column">
+          <strong>{{ reviewer.name }}</strong>
+          <small>Level {{ reviewer.level }} – {{ reviewer.role }}</small>
+          <small class="text-muted">In Progress: {{ assignment_counts.get(reviewer.id, 0) }}</small>
+        </div>
+        <span class="badge bg-primary ms-auto" title="Current Open Tasks">
+          {{ reviewer.open_tasks if reviewer.open_tasks is defined else assignment_counts.get(reviewer.id, 0) }}
+        </span>
+      </label>
+      {% else %}
+      <p class="text-muted">No available reviewers.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Assign Button and Task Count -->
+<div class="mt-4 d-flex justify-content-between align-items-center">
+  <div>
+    <label class="form-label mb-0">Unassigned Tasks Available:</label>
+    <span class="badge bg-secondary">{{ unassigned_count }}</span>
+  </div>
+  <button type="submit" form="assignmentForm" class="btn btn-dark px-4">Assign Selected</button>
+</div>
+
+<style>
+.task-card:hover, .reviewer-card:hover {
+  background-color: #f7f7f7;
+  cursor: pointer;
+}
+.task-list, .reviewer-list {
+  max-height: 450px;
+  overflow-y: auto;
+}
+</style>
+{% endblock %}

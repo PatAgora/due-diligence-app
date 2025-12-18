@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Edit User</h2>
+
+  <form method="POST" class="row g-3">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="col-md-6">
+      <label for="name" class="form-label">Full Name</label>
+      <input type="text" class="form-control" id="name" name="name" value="{{ user.name or '' }}" required>
+    </div>
+
+    <div class="col-md-6">
+      <label for="email" class="form-label">Email</label>
+      <input type="email" class="form-control" id="email" name="email" value="{{ user.email or '' }}" required>
+    </div>
+
+    <div class="col-md-6">
+      <label for="role" class="form-label">Role</label>
+      <select class="form-select" name="role" id="role" required>
+        <option value="">-- Select Role --</option>
+
+        <optgroup label="Team Leads">
+          <option value="team_lead_1" {% if user.role == "team_lead_1" %}selected{% endif %}>Team Lead (Level 1)</option>
+          <option value="team_lead_2" {% if user.role == "team_lead_2" %}selected{% endif %}>Team Lead (Level 2)</option>
+          <option value="team_lead_3" {% if user.role == "team_lead_3" %}selected{% endif %}>Team Lead (Level 3)</option>
+          <option value="qc_1" {% if user.role == "qc_1" %}selected{% endif %}>QC Team Lead (Level 1)</option>
+          <option value="qc_2" {% if user.role == "qc_2" %}selected{% endif %}>QC Team Lead (Level 2)</option>
+          <option value="qc_3" {% if user.role == "qc_3" %}selected{% endif %}>QC Team Lead (Level 3)</option>
+          <option value="qa_1" {% if user.role == "qa_1" %}selected{% endif %}>QA Team Lead (Level 1)</option>
+          <option value="qa_2" {% if user.role == "qa_2" %}selected{% endif %}>QA Team Lead (Level 2)</option>
+          <option value="qa_3" {% if user.role == "qa_3" %}selected{% endif %}>QA Team Lead (Level 3)</option>
+        </optgroup>
+
+        <optgroup label="QC Reviewers">
+          <option value="qc_review_1" {% if user.role == "qc_review_1" %}selected{% endif %}>QC Reviewer (Level 1)</option>
+          <option value="qc_review_2" {% if user.role == "qc_review_2" %}selected{% endif %}>QC Reviewer (Level 2)</option>
+          <option value="qc_review_3" {% if user.role == "qc_review_3" %}selected{% endif %}>QC Reviewer (Level 3)</option>
+        </optgroup>
+
+        <optgroup label="Reviewers">
+          <option value="reviewer_1" {% if user.role == "reviewer_1" %}selected{% endif %}>Reviewer (Level 1)</option>
+          <option value="reviewer_2" {% if user.role == "reviewer_2" %}selected{% endif %}>Reviewer (Level 2)</option>
+          <option value="reviewer_3" {% if user.role == "reviewer_3" %}selected{% endif %}>Reviewer (Level 3)</option>
+        </optgroup>
+
+        <optgroup label="Other Roles">
+          <option value="qc" {% if user.role == "qc" %}selected{% endif %}>QC Reviewer (Legacy)</option>
+          <option value="qa" {% if user.role == "qa" %}selected{% endif %}>QA Reviewer (Legacy)</option>
+          <option value="sme" {% if user.role == "sme" %}selected{% endif %}>Subject Matter Expert</option>
+          <option value="operations_manager" {% if user.role == "operations_manager" %}selected{% endif %}>Operations Manager</option>
+          <option value="admin" {% if user.role == "admin" %}selected{% endif %}>Admin</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="col-md-6">
+      <label for="team_lead" class="form-label">Reporting To (Team Lead)</label>
+      <select class="form-select" name="team_lead" id="team_lead">
+        <option value="">-- None --</option>
+        {% for lead in leads %}
+          {% if lead.name and lead.name != 'None' %}
+            <option value="{{ lead.name }}" {% if user.team_lead == lead.name %}selected{% endif %}>
+              {{ lead.name }}
+            </option>
+          {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-12 mt-3">
+      <button type="submit" class="btn btn-primary">Update User</button>
+      <a href="{{ url_for('list_users') }}" class="btn btn-secondary ms-2">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

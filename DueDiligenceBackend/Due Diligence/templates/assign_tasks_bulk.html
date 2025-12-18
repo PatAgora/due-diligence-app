@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">Bulk Assign Tasks</h2>
+
+<form method="POST" onsubmit="return validateForm();">
+  <!-- ✅ CSRF token added here -->
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="row">
+    <!-- Reviewer Selection -->
+    <div class="col-md-6">
+      <h5>Reviewers</h5>
+      <div class="list-group reviewer-list mb-3">
+        {% for reviewer in reviewers %}
+        <label class="list-group-item reviewer-card">
+          <input type="checkbox" name="selected_reviewers" value="{{ reviewer.id }}" class="form-check-input me-2">
+          <div class="d-flex flex-column">
+            <strong>{{ reviewer.name }}</strong>
+            <small>Level {{ reviewer.level }} – {{ reviewer.role }}</small>
+            <small class="text-muted">Open Tasks: {{ reviewer.open_tasks }}</small>
+          </div>
+          <span class="badge bg-primary ms-auto" title="Current Open Tasks">{{ reviewer.open_tasks }}</span>
+        </label>
+        {% else %}
+        <p class="text-muted">No available reviewers.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Configuration -->
+    <div class="col-md-6">
+      <h5>Assignment Settings</h5>
+      <div class="mb-3">
+        <label for="task_count" class="form-label">Tasks per Reviewer</label>
+        <input type="number" name="task_count" id="task_count" class="form-control" value="5" min="1" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="priority" class="form-label">Assignment Priority</label>
+        <select name="priority" id="priority" class="form-select">
+          <option value="score">Highest Score</option>
+          <option value="date">Oldest First</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Task Level</label>
+        <input type="text" class="form-control" value="Level {{ selected_level }}" readonly>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Unassigned Tasks Available:</label>
+        <span class="badge bg-secondary">{{ unassigned_count or 0 }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 d-flex justify-content-end">
+    <button type="submit" name="bulk_assign" value="1" class="btn btn-dark px-4" id="assignBtn">Assign in Bulk</button>
+  </div>
+
+  {% if request.args.get('success') %}
+  <div class="alert alert-success mt-4">Tasks have been assigned successfully.</div>
+  {% endif %}
+</form>
+
+<script>
+function validateForm() {
+  const reviewers = document.querySelectorAll('input[name="selected_reviewers"]:checked');
+  if (reviewers.length === 0) {
+    alert("Please select at least one reviewer.");
+    return false;
+  }
+  return true;
+}
+</script>
+
+<style>
+.reviewer-card:hover {
+  background-color: #f7f7f7;
+  cursor: pointer;
+}
+.reviewer-list {
+  max-height: 450px;
+  overflow-y: auto;
+}
+</style>
+{% endblock %}

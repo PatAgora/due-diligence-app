@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="container py-4">
+    <h1>Developer Regression Tests</h1>
+    <form method="post">
+      <button type="submit" class="btn btn-danger">Run Full Regression Suite</button>
+    </form>
+
+    {% if results %}
+      <hr>
+      <h2>Results</h2>
+      <pre style="background:#f8f9fa; padding:1em; border:1px solid #ddd;">
+{{ results }}
+      </pre>
+    {% endif %}
+  </div>
+{% endblock %}

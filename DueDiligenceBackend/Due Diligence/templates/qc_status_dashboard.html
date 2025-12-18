@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="mb-4">QC Task List – Level {{ level }}</h2>
+
+<!-- Filter Status -->
+<form method="get" class="row mb-4">
+  <div class="col-md-4">
+    <label for="status" class="form-label">Filter by QC Outcome</label>
+    <select class="form-select" id="status" name="status" onchange="this.form.submit()">
+      <option value="">-- All --</option>
+      {% for s in statuses %}
+        <option value="{{ s }}" {% if s == selected_status %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</form>
+
+<!-- Task Table -->
+<div class="table-responsive">
+  <table class="table table-bordered table-sm table-striped align-middle">
+    <thead class="table-dark">
+      <tr>
+        <th>Task ID</th>
+        <th>Customer ID</th>
+        <th>Initial Outcome</th>
+        <th>QC Outcome</th>
+        <th>Scorecard Result</th>
+        <th>Assigned By</th>
+        <th>Assigned Date</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for task in tasks %}
+      <tr class="clickable-row">
+        <td>{{ task.task_id }}</td>
+        <td>{{ task.customer_id }}</td>
+        <td>{{ task.initial_outcome or '—' }}</td>
+        <td>{{ task.qc_outcome or '—' }}</td>
+        <td>{{ task.qc_scorecard_outcome or '—' }}</td>
+        <td>{{ task.assigned_by or '—' }}</td>
+        <td>{{ task.assigned_at or '—' }}</td>
+        <td>
+          <a href="{{ url_for('qcqa_review', task_id=task.task_id) }}" class="btn btn-sm btn-outline-primary">Review</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="8" class="text-center text-muted">No tasks found for selected status.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if tasks|length > 0 %}
+<p class="mt-2 text-muted"><strong>Total:</strong> {{ tasks|length }} tasks</p>
+{% endif %}
+
+<style>
+  .clickable-row:hover {
+    background-color: #fff4e6 !important;
+  }
+</style>
+{% endblock %}

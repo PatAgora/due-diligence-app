@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Scrutinise{% endblock %}</title>
+
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Global Styles -->
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 0;
+      color: #1c1c1c;
+    }
+    header.topbar {
+      background: #0a1e3c;
+      color: #fff;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header.topbar .brand img.logo {
+      height: 36px;
+    }
+    header.topbar .health {
+      font-size: 0.9rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    header.topbar .health.ok {
+      background: #198754;
+      color: white;
+    }
+    header.topbar .health.err {
+      background: #dc3545;
+      color: white;
+    }
+    main {
+      padding: 20px;
+    }
+    footer {
+      margin-top: 40px;
+      padding: 15px;
+      background: #fff;
+      border-top: 1px solid #ddd;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #555;
+    }
+  </style>
+
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="/static/img/scrutinise_logo.png" alt="Scrutinise" class="logo" />
+    </div>
+    <div class="health" id="health">Checking backend…</div>
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>
+    &copy; {{ now().year }} Scrutinise. All rights reserved.
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

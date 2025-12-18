@@ -1,0 +1,43 @@
+/* QCReviewPanel component styles */
+.review-panel {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.review-info p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.readonly-cell {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.review-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.review-buttons .btn {
+  padding: 10px 18px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+}
+

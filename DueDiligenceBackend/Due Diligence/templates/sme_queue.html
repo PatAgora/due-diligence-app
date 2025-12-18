@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>SME Referral Queue</h2>
+
+    <div class="sort-controls mb-3">
+        <strong>Sort by:</strong>
+        <a href="{{ url_for('sme_queue', sort='updated_at') }}" class="btn btn-link">Date Submitted</a>
+        |
+        <a href="{{ url_for('sme_queue', sort='score') }}" class="btn btn-link">Match Score</a>
+    </div>
+
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>Task ID</th>
+                <th>Customer</th>
+                <th>Watchlist</th>
+                <th>Match Score</th>
+                <th>Referral Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+            <tr>
+                <td>{{ task.task_id }}</td>
+                <td>{{ task.customer_id or "—" }}</td>
+                <td>{{ task.watchlist_id or "—" }}</td>
+                <td>{{ task.total_score or "N/A" }}</td>
+                <td>{{ task.updated_at[:10] if task.updated_at else "—" }}</td>
+                <td><a href="{{ url_for('sme_review', task_id=task.task_id) }}" class="btn btn-primary btn-sm">Review</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">No referrals pending SME review.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<style>
+.sort-controls {
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+.sort-controls .btn-link {
+    padding: 0;
+    margin-right: 10px;
+    text-decoration: underline;
+}
+</style>
+{% endblock %}

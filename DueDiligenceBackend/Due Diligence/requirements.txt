@@ -1,0 +1,9 @@
+Flask
+Werkzeug
+Flask-Limiter
+Flask-WTF
+Flask-CORS
+python-dotenv
+bcrypt
+email-validator
+itsdangerous

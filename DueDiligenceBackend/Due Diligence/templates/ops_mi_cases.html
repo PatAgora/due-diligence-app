@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-4">
+  <h2 class="fw-bold mb-3">
+    {{ status }}{% if age_bucket %} · {{ age_bucket }}{% endif %}
+  </h2>
+  {% set _clicked_outcome = (request.args.get('l1_outcome') or request.args.get('outcome'))|default('', true) %}
+  {% set _co = (_clicked_outcome|string|trim|lower) %}
+  {% if _clicked_outcome %}
+{% endif %}
+
+  <p class="text-muted">
+    Filters: {{ date_range|upper }} · Team: {{ team }} · Level: {{ level }}
+  </p>
+  <div class="mb-3">
+    {#<a class="btn btn-sm btn-outline-secondary" href="{{ url_for('mi_dashboard',
+       date_range=date_range, team=team, level=level) }}">← Back to Dashboard</a>#}
+  </div>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Task ID</th>
+          <th>Customer</th>
+          <th>Status</th>
+          <th>Last Touched</th>
+          <th>Updated</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set _rendered = 0 %}
+{% for r in cases %}
+        {% if not _clicked_outcome or r.l1_outcome == _clicked_outcome or r.decision_outcome == _clicked_outcome or r.outcome == _clicked_outcome %}
+        
+{% set _o1 = (r.l1_outcome|default('', true)|string|trim|lower) %}
+{% set _o2 = (r.decision_outcome|default('', true)|string|trim|lower) %}
+{% set _o3 = (r.outcome|default('', true)|string|trim|lower) %}
+{% set _o4 = (r.final_outcome|default('', true)|string|trim|lower) %}
+{% set _o5 = (r.l1_qc_outcome|default('', true)|string|trim|lower) %}
+{% if not _co or _co == _o1 or _co == _o2 or _co == _o3 or _co == _o4 or _co == _o5 %}
+        <tr>
+          <td>
+            <a href="{{ url_for('review', task_id=r.task_id, open_level=r.open_level|default(1, true)) }}"
+               class="text-decoration-none">
+              {{ r.task_id }}{% set _rendered = _rendered + 1 %}
+            </a>
+          </td>
+          <td>{{ r.customer_id or '—' }}</td>
+          <td>{{ r.status }}</td>
+          <td>{{ r.last_touched or '—' }}</td>
+          <td>{{ r.updated_at or '—' }}</td>
+          <td>
+            <a href="{{ url_for('review', task_id=r.task_id, open_level=r.open_level|default(1, true)) }}"
+               class="btn btn-sm btn-primary">
+              Open
+            </a>
+          </td>
+        </tr>
+        {% endif %}
+        {% endif %}
+        {% else %}
+        {% if _rendered == 0 %}{% if _rendered == 0 %}<tr><td colspan="6" class="text-center text-muted">No cases found.</td></tr>{% endif %}{% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
