@@ -3,8 +3,10 @@
   --sidebar-bg: #0b1320;
   --sidebar-link: #c7cfdb;
   --sidebar-link-active: #ffffff;
-  --page-bg: #f9fafb;
-  --brand-orange: #f59e0b;
+  --page-bg: #f5f6f8; /* Agora light grey background */
+  --brand-orange: #F89D43; /* Agora Orange */
+  --agora-navy: #2D3847;
+  --text-dark: #1f2937;
 }
 
 html, body {
