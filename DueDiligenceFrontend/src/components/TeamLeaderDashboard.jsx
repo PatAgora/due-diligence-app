@@ -81,7 +81,7 @@ function TeamLeaderDashboard() {
   return (
     <BaseLayout>
       <div className="container my-4">
-        <h1 className="fw-bold mb-2">Team Leader Dashboard (Level {data.level})</h1>
+        <h1 className="fw-bold mb-2">Team Leader Dashboard</h1>
         <p className="text-muted mb-3">Team: {data.team_lead_name}</p>
 
         {/* Date filter */}
