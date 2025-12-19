@@ -163,10 +163,11 @@ body {
 }
 
 /* Remove all left padding when content-wrap contains my-tasks-container or is a dashboard */
+/* Keep margin-left for sidebar, but remove padding */
 .content-wrap:has(.my-tasks-container),
 .content-wrap.no-left-padding {
   padding-left: 0 !important;
-  padding-right: 10px !important;
+  padding-right: 0 !important;
 }
 
 .my-tasks-container {
@@ -176,17 +177,16 @@ body {
 }
 
 /* Override Bootstrap container and container-fluid for dashboards */
-/* Make dashboards full-width with consistent padding */
+/* Make dashboards full-width starting from sidebar edge */
 .content-wrap.no-left-padding .container,
 .content-wrap.no-left-padding .container-fluid,
 .content-wrap:has(.my-tasks-container) .container,
 .content-wrap:has(.my-tasks-container) .container-fluid {
   max-width: 100% !important;
   width: 100% !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  padding-left: 20px !important;
-  padding-right: 20px !important;
+  margin: 0 !important;
+  padding-left: 15px !important;
+  padding-right: 15px !important;
 }
 
 /* Override Bootstrap px-* classes on dashboards - remove left padding only */
