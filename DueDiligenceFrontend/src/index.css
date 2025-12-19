@@ -16,7 +16,7 @@ html, body {
 }
 
 body {
-  background: var(--page-bg);
+  background: #f5f6f8 !important; /* Agora light grey - exact color */
 }
 
 #root {

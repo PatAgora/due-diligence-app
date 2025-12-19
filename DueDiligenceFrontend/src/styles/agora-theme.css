@@ -17,9 +17,10 @@
   --warning-color: #f59e0b;
   --danger-color: #ef4444;
   
-  /* Background Colors */
+  /* Background Colors - AGORA GREY */
   --dark-bg: var(--agora-navy-dark);
-  --light-bg: #f9fafb;
+  --light-bg: #f5f6f8;  /* Agora light grey - exact color */
+  --page-bg: #f5f6f8;   /* Force page background to Agora grey */
   --border-color: #e5e7eb;
   
   /* Text Colors */
@@ -33,6 +34,24 @@
   
   /* Transitions */
   --transition-fast: all 0.2s ease;
+}
+
+/* FORCE Agora grey background on all main content with highest priority */
+html {
+  background-color: #f5f6f8 !important;
+}
+
+body {
+  background-color: #f5f6f8 !important;
+}
+
+.content-wrap {
+  background-color: #f5f6f8 !important;
+}
+
+.container,
+.container-fluid {
+  background-color: transparent !important;
 }
 
 /* Base Styles */
