@@ -65,7 +65,7 @@ function Login() {
           <div className="logo-wrapper">
             <img
               key="login-logo"
-              src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 66 66'><g fill='none' stroke='%23ff6a00' stroke-width='5'><circle cx='28' cy='28' r='18'/><line x1='41' y1='41' x2='62' y2='62' stroke-linecap='round'/></g></svg>"
+              src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 66 66'><g fill='none' stroke='%23F89D43' stroke-width='5'><circle cx='28' cy='28' r='18'/><line x1='41' y1='41' x2='62' y2='62' stroke-linecap='round'/></g></svg>"
               alt="Scrutinise Logo"
             />
           </div>

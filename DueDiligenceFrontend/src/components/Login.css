@@ -1,13 +1,16 @@
 :root {
-  --scru-orange: #ff6a00;
-  --scru-dark: #111111;
-  --badge-turquoise: #20c997;
+  /* Agora Colors - Match deployed app */
+  --agora-orange: #F89D43;
+  --agora-navy: #2D3847;
+  --agora-navy-dark: #1a2332;
+  --agora-navy-light: #3d4d5f;
+  --badge-turquoise: #10b981;
   --page-gap: 120px;
 }
 
 html, body {
   height: 100%;
-  background: #ffffff;
+  background: linear-gradient(135deg, #1a2332 0%, #2D3847 50%, #3d4d5f 100%);
 }
 
 body {
@@ -21,7 +24,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
+  background: linear-gradient(135deg, #1a2332 0%, #2D3847 50%, #3d4d5f 100%);
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
@@ -30,7 +33,7 @@ body {
   max-width: 1120px;
   border-radius: 26px;
   overflow: hidden;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   background: #fff;
@@ -38,7 +41,7 @@ body {
 }
 
 .auth-left {
-  background: var(--scru-dark);
+  background: var(--agora-navy-dark);
   padding: 64px 56px;
   color: #fff;
   display: flex;
@@ -53,7 +56,7 @@ body {
 .logo-wrapper {
   width: 96px;
   height: 96px;
-  border: 3px solid var(--scru-orange);
+  border: 3px solid var(--agora-orange);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -75,15 +78,15 @@ body {
 @keyframes pulseGlow {
   0%, 100% {
     box-shadow:
-      0 0 0 0 rgba(255, 106, 0, 0.4),
-      0 0 0 0 rgba(255, 106, 0, 0.2),
-      0 0 20px rgba(255, 106, 0, 0.1);
+      0 0 0 0 rgba(248, 157, 67, 0.4),
+      0 0 0 0 rgba(248, 157, 67, 0.2),
+      0 0 20px rgba(248, 157, 67, 0.1);
   }
   50% {
     box-shadow:
-      0 0 0 8px rgba(255, 106, 0, 0.15),
-      0 0 0 16px rgba(255, 106, 0, 0.08),
-      0 0 30px rgba(255, 106, 0, 0.3);
+      0 0 0 8px rgba(248, 157, 67, 0.15),
+      0 0 0 16px rgba(248, 157, 67, 0.08),
+      0 0 30px rgba(248, 157, 67, 0.3);
   }
 }
 
@@ -109,16 +112,16 @@ body {
 @keyframes magnifyingGlassGlow {
   0%, 100% {
     filter:
-      drop-shadow(0 0 3px rgba(255, 106, 0, 0.6))
-      drop-shadow(0 0 6px rgba(255, 106, 0, 0.3))
-      drop-shadow(0 0 9px rgba(255, 106, 0, 0.1));
+      drop-shadow(0 0 3px rgba(248, 157, 67, 0.6))
+      drop-shadow(0 0 6px rgba(248, 157, 67, 0.3))
+      drop-shadow(0 0 9px rgba(248, 157, 67, 0.1));
   }
   50% {
     filter:
-      drop-shadow(0 0 6px rgba(255, 106, 0, 0.9))
-      drop-shadow(0 0 12px rgba(255, 106, 0, 0.6))
-      drop-shadow(0 0 18px rgba(255, 106, 0, 0.3))
-      drop-shadow(0 0 24px rgba(255, 106, 0, 0.1));
+      drop-shadow(0 0 6px rgba(248, 157, 67, 0.9))
+      drop-shadow(0 0 12px rgba(248, 157, 67, 0.6))
+      drop-shadow(0 0 18px rgba(248, 157, 67, 0.3))
+      drop-shadow(0 0 24px rgba(248, 157, 67, 0.1));
   }
 }
 
@@ -131,7 +134,7 @@ body {
 }
 
 .brand-title .highlight {
-  color: var(--scru-orange);
+  color: var(--agora-orange);
   display: block;
 }
 
@@ -154,7 +157,7 @@ body {
 
 .feature i {
   font-size: 1.05rem;
-  color: var(--scru-orange);
+  color: var(--agora-orange);
 }
 
 .auth-right {
@@ -178,7 +181,7 @@ body {
   gap: 8px;
   width: fit-content;
   margin: 0 auto 6px;
-  color: #0a1e3c;
+  color: var(--agora-navy-dark);
   font-weight: 700;
   font-size: 1rem;
   line-height: 1;
@@ -194,7 +197,7 @@ body {
 .brand-mark .mark-icon svg {
   width: 20px;
   height: 20px;
-  stroke: var(--scru-orange);
+  stroke: var(--agora-orange);
   stroke-width: 3;
   fill: none;
 }
@@ -202,7 +205,7 @@ body {
 .login-box h3 {
   text-align: center;
   margin: 8px 0 8px;
-  color: #0a1e3c;
+  color: var(--agora-navy-dark);
   font-weight: 800;
   font-size: 2.25rem;
 }
@@ -219,15 +222,35 @@ body {
 .form-control {
   border-radius: 12px;
   height: 48px;
+  border: 1px solid #d1d5db;
+  transition: all 0.2s ease;
+}
+
+.form-control:focus {
+  border-color: var(--agora-orange);
+  box-shadow: 0 0 0 0.2rem rgba(248, 157, 67, 0.25);
+  outline: none;
 }
 
 .btn-login {
-  background-image: linear-gradient(90deg, #ff6a00, #ff8840);
+  background-color: var(--agora-orange);
   border: none;
   color: #fff;
   height: 48px;
   border-radius: 12px;
   font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-login:hover:not(:disabled) {
+  background-color: #e08932;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-login:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .forgot-password {
@@ -237,12 +260,25 @@ body {
 }
 
 .forgot-password a {
-  color: #0a1e3c;
+  color: var(--agora-navy-dark);
   text-decoration: none;
+  transition: color 0.2s ease;
 }
 
 .forgot-password a:hover {
   text-decoration: underline;
+  color: var(--agora-orange);
+}
+
+.alert {
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.alert-danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
 }
 
 .legal {
@@ -295,4 +331,3 @@ body {
     font-size: 2rem;
   }
 }
-
