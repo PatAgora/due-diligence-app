@@ -57,7 +57,7 @@ function TransactionDashboard({ customerId, taskId }) {
 
   if (loading) {
     return (
-      <div className="container-fluid my-4" style={{ paddingTop: '60px' }}>
+      <div className="container my-4">
         <div className="text-center">
           <div className="spinner-border" role="status">
             <span className="visually-hidden">Loading...</span>
@@ -69,7 +69,7 @@ function TransactionDashboard({ customerId, taskId }) {
 
   if (error) {
     return (
-      <div className="container-fluid my-4" style={{ paddingTop: '60px' }}>
+      <div className="container my-4">
         <div className="alert alert-danger">
           <h5>Error loading dashboard</h5>
           <p>{error}</p>
@@ -83,7 +83,7 @@ function TransactionDashboard({ customerId, taskId }) {
 
   if (!data || !data.filter_meta || !data.filter_meta.customer_id) {
     return (
-      <div className="container-fluid my-4" style={{ paddingTop: '60px' }}>
+      <div className="container my-4">
         <div className="card">
           <div className="card-body">
             <h5>No Transaction Data</h5>
@@ -98,7 +98,7 @@ function TransactionDashboard({ customerId, taskId }) {
   }
 
   return (
-    <div className="container-fluid my-4 px-5" style={{ paddingTop: '60px' }}>
+    <div className="container my-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2 className="fw-bold mb-0">Transaction Dashboard</h2>
         <button className="btn btn-sm btn-outline-secondary" onClick={handleBackToTask}>
