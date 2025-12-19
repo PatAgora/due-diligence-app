@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import '../styles/agora-theme.css';
 import { useSearchParams, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Plot from 'react-plotly.js';

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import '../styles/agora-theme.css';
 import { useSearchParams, Link } from 'react-router-dom';
 import Plot from 'react-plotly.js';
 import './QCDashboard.css';

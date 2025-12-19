@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import '../styles/agora-theme.css';
 import { useSearchParams } from 'react-router-dom';
 import { reviewerAPI } from '../services/api';
 import { usePermissions } from '../contexts/PermissionsContext';

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import '../styles/agora-theme.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useModuleSettings } from '../contexts/ModuleSettingsContext';
 import { usePermissions } from '../contexts/PermissionsContext';

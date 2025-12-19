@@ -4,6 +4,7 @@ import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend } from 'chart.js';
 import BaseLayout from './BaseLayout';
 
+import '../styles/agora-theme.css';
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
 import './OperationsDashboard.css';
 
