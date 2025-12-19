@@ -53,10 +53,10 @@ function SMEDashboard() {
   if (loading) {
     return (
       <BaseLayout>
-        <div className="agora-main-content">
-          <div className="agora-container">
+        <div className="container my-4">
+          <div className="">
             <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
-              <div className="spinner-border" style={{ color: 'var(--agora-orange)' }} role="status">
+              <div className="spinner-border" style={{ color: '#F89D43' }} role="status">
                 <span className="visually-hidden">Loading...</span>
               </div>
             </div>
@@ -69,12 +69,12 @@ function SMEDashboard() {
   if (error) {
     return (
       <BaseLayout>
-        <div className="agora-main-content">
-          <div className="agora-container">
-            <div className="agora-alert agora-alert-danger">
+        <div className="container my-4">
+          <div className="">
+            <div className="alert alert-danger">
               <h4 className="alert-heading">Error</h4>
               <p>{error}</p>
-              <button className="agora-btn agora-btn-primary" onClick={fetchDashboard}>Retry</button>
+              <button className="btn btn-primary" onClick={fetchDashboard}>Retry</button>
             </div>
           </div>
         </div>
@@ -84,8 +84,8 @@ function SMEDashboard() {
 
   return (
     <BaseLayout>
-      <div className="agora-main-content">
-        <div className="agora-container">
+      <div className="container my-4">
+        <div className="">
           <h1 className="fw-bold mb-4" style={{ color: 'var(--agora-navy)' }}>SME Dashboard</h1>
 
           {/* Date filter */}
