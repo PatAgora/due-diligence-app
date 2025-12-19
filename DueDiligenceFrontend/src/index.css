@@ -175,10 +175,17 @@ body {
   padding-right: 0 !important;
 }
 
-/* Override Bootstrap container-fluid padding for my-tasks and dashboards */
+/* Override Bootstrap container and container-fluid for dashboards */
+/* Remove auto margins and make container behave like container-fluid */
+.content-wrap.no-left-padding .container,
 .content-wrap.no-left-padding .container-fluid,
+.content-wrap:has(.my-tasks-container) .container,
 .content-wrap:has(.my-tasks-container) .container-fluid {
-  padding-left: 0 !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 15px !important;
+  padding-right: 15px !important;
   --bs-gutter-x: 0 !important;
 }
 
