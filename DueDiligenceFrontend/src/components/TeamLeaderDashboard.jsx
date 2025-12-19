@@ -53,12 +53,10 @@ function TeamLeaderDashboard() {
   if (loading) {
     return (
       <BaseLayout>
-        <div className="agora-main-content">
-          <div className="agora-container">
-            <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
-              <div className="spinner-border" style={{ color: 'var(--agora-orange)' }} role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
+        <div className="container my-4">
+          <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
             </div>
           </div>
         </div>
@@ -69,13 +67,11 @@ function TeamLeaderDashboard() {
   if (error) {
     return (
       <BaseLayout>
-        <div className="agora-main-content">
-          <div className="agora-container">
-            <div className="agora-alert agora-alert-danger">
-              <h4 className="alert-heading">Error</h4>
-              <p>{error}</p>
-              <button className="agora-btn agora-btn-primary" onClick={fetchDashboard}>Retry</button>
-            </div>
+        <div className="container my-4">
+          <div className="alert alert-danger">
+            <h4 className="alert-heading">Error</h4>
+            <p>{error}</p>
+            <button className="btn btn-primary" onClick={fetchDashboard}>Retry</button>
           </div>
         </div>
       </BaseLayout>
