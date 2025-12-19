@@ -54,7 +54,7 @@ function QADashboard() {
   if (loading) {
     return (
       <BaseLayout>
-        <div className="container my-4">
+        <div className="container-fluid my-4">
           <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
             <div className="spinner-border text-primary" role="status">
               <span className="visually-hidden">Loading...</span>
@@ -68,7 +68,7 @@ function QADashboard() {
   if (error) {
     return (
       <BaseLayout>
-        <div className="container my-4">
+        <div className="container-fluid my-4">
           <div className="alert alert-danger">
             <h4 className="alert-heading">Error</h4>
             <p>{error}</p>
@@ -85,7 +85,7 @@ function QADashboard() {
 
   return (
     <BaseLayout>
-      <div className="container my-4">
+      <div className="container-fluid my-4">
           <h1 className="fw-bold mb-4" style={{ color: 'var(--agora-navy)' }}>QA Dashboard</h1>
 
           {/* Date filter */}

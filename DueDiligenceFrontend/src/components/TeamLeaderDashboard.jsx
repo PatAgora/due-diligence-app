@@ -53,7 +53,7 @@ function TeamLeaderDashboard() {
   if (loading) {
     return (
       <BaseLayout>
-        <div className="container my-4">
+        <div className="container-fluid my-4">
           <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
             <div className="spinner-border text-primary" role="status">
               <span className="visually-hidden">Loading...</span>
@@ -67,7 +67,7 @@ function TeamLeaderDashboard() {
   if (error) {
     return (
       <BaseLayout>
-        <div className="container my-4">
+        <div className="container-fluid my-4">
           <div className="alert alert-danger">
             <h4 className="alert-heading">Error</h4>
             <p>{error}</p>

@@ -53,7 +53,7 @@ function SMEDashboard() {
   if (loading) {
     return (
       <BaseLayout>
-        <div className="container my-4">
+        <div className="container-fluid my-4">
           <div className="">
             <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '400px' }}>
               <div className="spinner-border" style={{ color: '#F89D43' }} role="status">
@@ -69,7 +69,7 @@ function SMEDashboard() {
   if (error) {
     return (
       <BaseLayout>
-        <div className="container my-4">
+        <div className="container-fluid my-4">
           <div className="">
             <div className="alert alert-danger">
               <h4 className="alert-heading">Error</h4>
@@ -84,7 +84,7 @@ function SMEDashboard() {
 
   return (
     <BaseLayout>
-      <div className="container my-4">
+      <div className="container-fluid my-4">
         <div className="">
           <h1 className="fw-bold mb-4" style={{ color: 'var(--agora-navy)' }}>SME Dashboard</h1>
 

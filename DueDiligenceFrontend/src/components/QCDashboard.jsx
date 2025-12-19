@@ -73,7 +73,7 @@ function QCDashboard() {
 
   if (loading) {
     return (
-      <div className="container my-4">
+      <div className="container-fluid my-4">
         <div className="text-center">
           <div className="spinner-border" role="status">
             <span className="visually-hidden">Loading...</span>
@@ -85,7 +85,7 @@ function QCDashboard() {
 
   if (error) {
     return (
-      <div className="container my-4">
+      <div className="container-fluid my-4">
         <div className="alert alert-danger">{error}</div>
       </div>
     );
@@ -94,7 +94,7 @@ function QCDashboard() {
   const data = dashboardData || {};
 
   return (
-    <div className="container my-4">
+    <div className="container-fluid my-4">
       <div className="d-flex align-items-center justify-content-between mb-3">
         <h1 className="fw-bold mb-0">My QC Dashboard (Level {data.level || ''})</h1>
       </div>

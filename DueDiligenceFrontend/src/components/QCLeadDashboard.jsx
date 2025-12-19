@@ -61,7 +61,7 @@ function QCLeadDashboard() {
 
   if (loading) {
     return (
-      <div className="container my-4">
+      <div className="container-fluid my-4">
         <div className="text-center">
           <div className="spinner-border" role="status">
             <span className="visually-hidden">Loading...</span>
@@ -73,7 +73,7 @@ function QCLeadDashboard() {
 
   if (error) {
     return (
-      <div className="container my-4">
+      <div className="container-fluid my-4">
         <div className="alert alert-danger">{error}</div>
       </div>
     );
@@ -137,7 +137,7 @@ function QCLeadDashboard() {
         </div>
       </nav>
       <main style={{ marginLeft: '24px', padding: '10px 10px 10px 0', minHeight: '100%' }}>
-        <div className="container my-4">
+        <div className="container-fluid my-4">
       <div className="d-flex align-items-center justify-content-between mb-3">
         <h1 className="fw-bold mb-0">QC Lead Dashboard (Level {data.level || ''})</h1>
       </div>

@@ -68,7 +68,7 @@ function ReviewerDashboard() {
   };
 
   return (
-    <div className="container my-4">
+    <div className="container-fluid my-4">
       <h1 className="fw-bold mb-2">Reviewer Dashboard</h1>
 
       {/* Date filter */}
