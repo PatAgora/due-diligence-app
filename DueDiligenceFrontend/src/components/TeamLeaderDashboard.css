@@ -1,3 +1,14 @@
+/* Force full-width layout - no margins on dashboard container */
+.container-fluid.my-4 {
+  margin: 1.5rem 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 15px !important;
+  padding-right: 15px !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
 .kpi h6 {
   margin: 0 0 0.5rem 0;
   color: #6c757d;
