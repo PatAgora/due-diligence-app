@@ -80,7 +80,7 @@ function TeamLeaderDashboard() {
 
   return (
     <BaseLayout>
-      <div className="container my-4">
+      <div className="container-fluid my-4">
         <h1 className="fw-bold mb-2">Team Leader Dashboard</h1>
         <p className="text-muted mb-3">Team: {data.team_lead_name}</p>
 
