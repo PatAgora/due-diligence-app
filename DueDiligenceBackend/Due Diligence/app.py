@@ -15237,8 +15237,9 @@ def api_transaction_ai():
                 
                 # Create sample questions (full logic would analyze alerts)
                 sample_questions = [
-                    {"tag": "HIGH_RISK_COUNTRY", "question": f"Can you explain the transactions to high-risk countries for {customer_id}?"},
-                    {"tag": "CASH_DAILY_BREACH", "question": f"Please provide details about the cash transactions for {customer_id}."}
+                    {"tag": "PROHIBITED_COUNTRY", "question": "Can you explain the transaction of £2,011.43 on 23/12/2025?"},
+                    {"tag": "PATTERN_CHANGE", "question": "Can you explain why the transaction of £1,694.71 into your account came from a different country to normal?"},
+                    {"tag": "HIGH_VALUE", "question": "What is the purpose of the below transactions;\n£4,220.71 on 20/12/2025\n£4,723.43 on 11/11/2025"}
                 ]
                 
                 # Clear existing answers and insert new questions
