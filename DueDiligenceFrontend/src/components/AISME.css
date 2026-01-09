@@ -19,7 +19,7 @@
 }
 
 :root {
-  --aisme-brand-dark: #1a1a1a;
+  --aisme-brand-dark: #2D3847;
   --aisme-brand-orange: #ff6b35;
   --aisme-brand-orange-light: #ff8659;
   --aisme-text-primary: #1a1a1a;
@@ -37,7 +37,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  background: var(--aisme-brand-dark);
+  background: linear-gradient(135deg, #1a2332 0%, #2D3847 100%);
   border-bottom: 3px solid var(--aisme-brand-orange);
   padding: 1rem 2rem;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
