@@ -304,7 +304,7 @@ function TransactionAI({ customerId, taskId }) {
         <div className="card-header d-flex align-items-center justify-content-between">
           <div className="fw-semibold">
             {data?.case ? (
-              <>Case #{data.case.id} — {data.case.created_at || '—'}</>
+              <>{data.case.created_at || '—'}</>
             ) : (
               <>No case yet — click "Prepare Questions"</>
             )}
