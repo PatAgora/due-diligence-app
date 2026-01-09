@@ -316,7 +316,7 @@ def map_raw_status_to_enum(raw_status: Optional[str]) -> Optional[ReviewStatus]:
         return ReviewStatus.QC_REWORK
     if "qc" in s and ("in progress" in s or "in-progress" in s or "inprogress" in s):
         return ReviewStatus.QC_IN_PROGRESS
-    if "qc" in s and ("awaiting assignment" in s or "unassigned" in s):
+    if "qc" in s and ("awaiting assignment" in s or "waiting assignment" in s or "unassigned" in s):
         return ReviewStatus.QC_UNASSIGNED
     if "awaiting qc" in s and "rework" not in s:
         return ReviewStatus.AWAITING_QC
