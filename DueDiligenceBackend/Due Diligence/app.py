@@ -144,6 +144,257 @@ def is_task_in_sme_referral_status(task_id: str, conn=None):
         if should_close:
             conn.close()
 
+
+# ==================== AI OUTREACH QUESTION GENERATION ====================
+
+def generate_ai_outreach_questions(customer_id, alerts):
+    """
+    Generate AI Outreach questions using OpenAI GPT based on actual transaction alerts.
+    
+    Args:
+        customer_id: Customer ID
+        alerts: List of alert records from database
+    
+    Returns:
+        List of dicts with 'tag' and 'question' keys
+    """
+    import os
+    import yaml
+    import json
+    from openai import OpenAI
+    
+    # Load OpenAI config
+    config_path = os.path.expanduser("~/.genspark_llm.yaml")
+    config = None
+    
+    if os.path.exists(config_path):
+        with open(config_path, 'r') as f:
+            config = yaml.safe_load(f)
+    
+    # Initialize OpenAI client
+    client = OpenAI(
+        api_key=config.get('openai', {}).get('api_key') if config else os.getenv('OPENAI_API_KEY'),
+        base_url=config.get('openai', {}).get('base_url') if config else os.getenv('OPENAI_BASE_URL', 'https://api.openai.com/v1')
+    )
+    
+    # Format alerts for LLM
+    alert_descriptions = []
+    for i, alert in enumerate(alerts, 1):
+        alert_dict = dict(alert) if hasattr(alert, 'keys') else alert
+        
+        # Format date
+        txn_date = alert_dict[6]  # txn_date
+        if isinstance(txn_date, str) and len(txn_date) >= 10:
+            try:
+                from datetime import datetime
+                dt = datetime.strptime(txn_date[:10], '%Y-%m-%d')
+                formatted_date = dt.strftime('%d/%m/%Y')
+            except:
+                formatted_date = txn_date
+        else:
+            formatted_date = str(txn_date)
+        
+        alert_desc = f"""Alert {i}:
+- Transaction ID: {alert_dict[1]}
+- Date: {formatted_date}
+- Amount: {alert_dict[8]} {alert_dict[7]:.2f}
+- Country: {alert_dict[9]}
+- Direction: {alert_dict[10]}
+- Severity: {alert_dict[3]} (Score: {alert_dict[2]})
+- Reasons: {alert_dict[4]}
+- Rule Tags: {alert_dict[5] or 'N/A'}"""
+        
+        if alert_dict[11]:  # narrative
+            alert_desc += f"\n- Transaction Narrative: {alert_dict[11]}"
+        
+        alert_descriptions.append(alert_desc)
+    
+    alerts_text = "\n\n".join(alert_descriptions)
+    
+    # Create LLM prompt
+    prompt = f"""You are a financial crime compliance analyst creating customer outreach questions for transaction alerts.
+
+CUSTOMER ID: {customer_id}
+
+TRANSACTION ALERTS:
+{alerts_text}
+
+TASK:
+Generate 3-5 specific, professional questions to ask the customer about these alerts. Each question should:
+1. Reference specific transactions (dates, amounts)
+2. Address the alert reasons directly
+3. Be clear and professional
+4. Request explanations or supporting documentation
+5. Be suitable for customer outreach emails
+
+IMPORTANT GUIDELINES:
+- Prioritize CRITICAL and HIGH severity alerts
+- Group similar alerts (e.g., multiple high-value transactions) into one question
+- Be specific with dates and amounts
+- Don't be accusatory - remain professional and neutral
+- Focus on understanding the business purpose and legitimacy
+
+OUTPUT FORMAT (JSON):
+Return a JSON array of question objects. Each object must have:
+- "tag": A short category tag (e.g., "PROHIBITED_COUNTRY", "HIGH_VALUE", "PATTERN_CHANGE", "UNUSUAL_NARRATIVE")
+- "question": The full question text
+
+Example format:
+[
+  {{"tag": "PROHIBITED_COUNTRY", "question": "Can you explain the transaction of £2,011.43 on 23/12/2025 to Iran? Please provide supporting documentation for this payment."}},
+  {{"tag": "HIGH_VALUE", "question": "What was the purpose of the following high-value transactions: £4,220.71 on 20/12/2025 and £4,723.43 on 11/11/2025?"}}
+]
+
+Return ONLY the JSON array, no additional text."""
+
+    try:
+        # Call OpenAI API
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a financial crime compliance analyst. Always return valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=1000
+        )
+        
+        # Parse response
+        content = response.choices[0].message.content.strip()
+        
+        # Extract JSON if wrapped in markdown code blocks
+        if content.startswith("```"):
+            # Remove markdown code block formatting
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+            content = content.strip()
+        
+        questions = json.loads(content)
+        
+        # Validate structure
+        if not isinstance(questions, list) or len(questions) == 0:
+            raise ValueError("Invalid response format from LLM")
+        
+        # Ensure each question has required fields
+        valid_questions = []
+        for q in questions:
+            if isinstance(q, dict) and 'tag' in q and 'question' in q:
+                valid_questions.append({
+                    "tag": str(q['tag']).strip(),
+                    "question": str(q['question']).strip()
+                })
+        
+        if len(valid_questions) == 0:
+            raise ValueError("No valid questions generated")
+        
+        print(f"✅ Generated {len(valid_questions)} AI questions for {customer_id}")
+        return valid_questions[:5]  # Limit to max 5 questions
+        
+    except Exception as e:
+        print(f"❌ Error calling OpenAI API: {str(e)}")
+        raise
+
+
+def generate_fallback_questions(alerts):
+    """
+    Generate simple fallback questions if LLM fails.
+    Uses rule-based logic based on alert severity and reasons.
+    """
+    questions = []
+    
+    # Convert alerts to list of dicts
+    alert_list = []
+    for alert in alerts:
+        alert_dict = dict(alert) if hasattr(alert, 'keys') else alert
+        alert_list.append(alert_dict)
+    
+    # Sort by severity: CRITICAL > HIGH > MEDIUM > LOW
+    severity_order = {'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3}
+    alert_list.sort(key=lambda a: (severity_order.get(a[3], 999), -a[2]))  # severity, then score desc
+    
+    seen_tags = set()
+    
+    for alert_dict in alert_list[:5]:  # Max 5 questions
+        reasons = alert_dict[4].lower()  # reasons
+        amount = f"{alert_dict[8]}{alert_dict[7]:.2f}"  # currency + amount
+        txn_date = str(alert_dict[6])[:10]  # date
+        
+        # Format date
+        try:
+            from datetime import datetime
+            dt = datetime.strptime(txn_date, '%Y-%m-%d')
+            formatted_date = dt.strftime('%d/%m/%Y')
+        except:
+            formatted_date = txn_date
+        
+        # Determine question tag and text based on reasons
+        if 'prohibited' in reasons or 'sanction' in reasons or 'iran' in reasons:
+            if 'PROHIBITED' not in seen_tags:
+                questions.append({
+                    "tag": "PROHIBITED_COUNTRY",
+                    "question": f"Can you explain the transaction of {amount} on {formatted_date}? Please provide supporting documentation and business justification for this payment."
+                })
+                seen_tags.add('PROHIBITED')
+        
+        elif 'exceeds' in reasons or 'high' in reasons or 'enhanced due diligence' in reasons:
+            if 'HIGH_VALUE' not in seen_tags:
+                # Group high-value transactions
+                high_value_alerts = [a for a in alert_list if 'exceeds' in str(a[4]).lower() or 'enhanced due diligence' in str(a[4]).lower()]
+                if len(high_value_alerts) > 1:
+                    txns = ", ".join([f"{a[8]}{a[7]:.2f} on {str(a[6])[:10]}" for a in high_value_alerts[:3]])
+                    questions.append({
+                        "tag": "HIGH_VALUE",
+                        "question": f"What is the purpose of the following high-value transactions: {txns}?"
+                    })
+                else:
+                    questions.append({
+                        "tag": "HIGH_VALUE",
+                        "question": f"Can you explain the purpose of the transaction of {amount} on {formatted_date}?"
+                    })
+                seen_tags.add('HIGH_VALUE')
+        
+        elif 'pattern' in reasons or 'differs' in reasons or 'unusual' in reasons:
+            if 'PATTERN' not in seen_tags:
+                questions.append({
+                    "tag": "PATTERN_CHANGE",
+                    "question": f"Can you explain why the transaction of {amount} on {formatted_date} differs from your normal account activity?"
+                })
+                seen_tags.add('PATTERN')
+        
+        elif 'cash' in reasons:
+            if 'CASH' not in seen_tags:
+                questions.append({
+                    "tag": "CASH_TRANSACTION",
+                    "question": f"Please provide details about the cash transaction of {amount} on {formatted_date}."
+                })
+                seen_tags.add('CASH')
+        
+        else:
+            # Generic question
+            if 'GENERIC' not in seen_tags:
+                questions.append({
+                    "tag": "TRANSACTION_ENQUIRY",
+                    "question": f"Can you provide more information about the transaction of {amount} on {formatted_date}?"
+                })
+                seen_tags.add('GENERIC')
+    
+    # Ensure at least one question
+    if len(questions) == 0 and len(alert_list) > 0:
+        alert_dict = alert_list[0]
+        amount = f"{alert_dict[8]}{alert_dict[7]:.2f}"
+        txn_date = str(alert_dict[6])[:10]
+        questions.append({
+            "tag": "GENERAL",
+            "question": f"Can you provide more information about the transaction of {amount} on {txn_date}?"
+        })
+    
+    print(f"⚠️ Generated {len(questions)} fallback questions (LLM unavailable)")
+    return questions
+
+# ==================== END AI OUTREACH QUESTION GENERATION ====================
+
+
 app = Flask(__name__)
 
 # --- UI helpers for reviewer panel (added) ---
@@ -15217,8 +15468,7 @@ def api_transaction_ai():
             
             # Build questions action
             if action == "build":
-                # For now, create a simple case and questions
-                # Full build_ai_questions logic can be ported later
+                # Get or create AI case
                 case_row = cur.execute(
                     "SELECT * FROM ai_cases WHERE customer_id=? ORDER BY updated_at DESC LIMIT 1",
                     (customer_id,)
@@ -15235,16 +15485,46 @@ def api_transaction_ai():
                         (customer_id,)
                     ).fetchone()
                 
-                # Create sample questions (full logic would analyze alerts)
-                sample_questions = [
-                    {"tag": "PROHIBITED_COUNTRY", "question": "Can you explain the transaction of £2,011.43 on 23/12/2025?"},
-                    {"tag": "PATTERN_CHANGE", "question": "Can you explain why the transaction of £1,694.71 into your account came from a different country to normal?"},
-                    {"tag": "HIGH_VALUE", "question": "What is the purpose of the below transactions;\n£4,220.71 on 20/12/2025\n£4,723.43 on 11/11/2025"}
-                ]
+                # Fetch alerts for this customer in the period
+                alert_sql = """
+                    SELECT a.id, a.txn_id, a.score, a.severity, a.reasons, a.rule_tags,
+                           t.txn_date, t.amount, t.currency, t.country_iso2, t.direction, t.narrative
+                    FROM alerts a
+                    JOIN transactions t ON t.id = a.txn_id
+                    WHERE t.customer_id = ?
+                """
+                alert_params = [customer_id]
+                
+                if p_from and p_to:
+                    alert_sql += " AND t.txn_date BETWEEN ? AND ?"
+                    alert_params.extend([p_from, p_to])
+                
+                alert_sql += " ORDER BY a.score DESC, t.txn_date DESC LIMIT 10"
+                
+                alerts = cur.execute(alert_sql, alert_params).fetchall()
+                
+                if not alerts:
+                    # No alerts found - return error
+                    return jsonify({
+                        "status": "error",
+                        "message": f"No alerts found for {customer_id} in the selected period.",
+                        "customer_id": customer_id,
+                        "period": period
+                    }), 400
+                
+                # Generate questions using LLM
+                try:
+                    generated_questions = generate_ai_outreach_questions(customer_id, alerts)
+                except Exception as e:
+                    print(f"Error generating AI questions: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
+                    # Fallback to simple questions if LLM fails
+                    generated_questions = generate_fallback_questions(alerts)
                 
                 # Clear existing answers and insert new questions
                 cur.execute("DELETE FROM ai_answers WHERE case_id=?", (case_row["id"],))
-                for q in sample_questions:
+                for q in generated_questions:
                     cur.execute(
                         "INSERT INTO ai_answers(case_id, tag, question) VALUES(?,?,?)",
                         (case_row["id"], q["tag"], q["question"])
@@ -15253,7 +15533,7 @@ def api_transaction_ai():
                 
                 return jsonify({
                     "status": "ok",
-                    "message": f"Prepared {len(sample_questions)} question(s) for {customer_id}.",
+                    "message": f"Prepared {len(generated_questions)} AI-generated question(s) for {customer_id}.",
                     "customer_id": customer_id,
                     "period": period
                 })
