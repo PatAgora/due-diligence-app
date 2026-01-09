@@ -271,8 +271,10 @@ function AISME({ taskId, customerId }) {
     <div className="aisme-container" style={{ paddingTop: '60px' }}>
       <div className="aisme-header">
         <div className="aisme-brand">
+          <div className="aisme-logo">
+            <i className="fas fa-brain"></i>
+          </div>
           <div className="aisme-brand-text">
-            <div className="aisme-brand-title">Scrutinise</div>
             <div className="aisme-brand-subtitle">Your SME</div>
           </div>
         </div>
