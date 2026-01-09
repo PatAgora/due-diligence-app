@@ -208,14 +208,15 @@ function TransactionDashboard({ customerId, taskId }) {
                       y: {
                         beginAtZero: true,
                         ticks: {
-                          callback: (value) => value.toLocaleString()
+                          precision: 0,
+                          callback: (value) => Math.floor(value).toLocaleString()
                         }
                       }
                     },
                     plugins: {
                       tooltip: {
                         callbacks: {
-                          label: (context) => `${context.dataset.label}: ${context.parsed.y.toLocaleString()}`
+                          label: (context) => `${context.dataset.label}: ${Math.floor(context.parsed.y).toLocaleString()}`
                         }
                       }
                     }

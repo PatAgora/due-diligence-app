@@ -14826,10 +14826,10 @@ def api_transaction_dashboard():
             "high_risk_total": high_risk_total,
         }
         
-        # Alerts over time — group by TRANSACTION DATE (t.txn_date)
+        # Alerts over time — group by MONTH (t.txn_date)
         if start and end:
             aot_sql = """
-                SELECT strftime('%Y-%m-%d', t.txn_date) d, COUNT(*) c
+                SELECT strftime('%Y-%m', t.txn_date) d, COUNT(*) c
                 FROM alerts a
                 JOIN transactions t ON t.id = a.txn_id
                 WHERE t.customer_id = ? AND t.txn_date BETWEEN ? AND ?
@@ -14838,7 +14838,7 @@ def api_transaction_dashboard():
             aot_params = [customer_id, start, end]
         else:
             aot_sql = """
-                SELECT strftime('%Y-%m-%d', t.txn_date) d, COUNT(*) c
+                SELECT strftime('%Y-%m', t.txn_date) d, COUNT(*) c
                 FROM alerts a
                 JOIN transactions t ON t.id = a.txn_id
                 WHERE t.customer_id = ?
