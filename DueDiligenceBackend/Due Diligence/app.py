@@ -15408,11 +15408,8 @@ def api_transaction_ai():
             ).fetchall()
             answers = [dict(r) for r in answers_rows]
         else:
-            # Show proposed questions if no case exists
-            proposed_questions = [
-                {"tag": "HIGH_RISK_COUNTRY", "question": f"Can you explain the transactions to high-risk countries for {customer_id}?"},
-                {"tag": "CASH_DAILY_BREACH", "question": f"Please provide details about the cash transactions for {customer_id}."}
-            ]
+            # No proposed questions - user must click "Prepare Questions" to generate them
+            proposed_questions = []
         
         conn.close()
         
