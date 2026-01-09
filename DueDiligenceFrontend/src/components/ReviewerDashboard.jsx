@@ -156,7 +156,7 @@ function ReviewerDashboard() {
           <div className="card h-100 hover-lift shadow-sm status-card">
             <div className="card-body hover-lift kpi" kpi-compact>
               <h6>QC Pass %</h6>
-              <div className="num">{dashboardData.qc_pass_pct?.toFixed(1) || 0}%</div>
+              <div className="num">{dashboardData.qc_pass_pct?.toFixed(0) || 0}%</div>
               <div className="small text-muted mt-1">
                 {dashboardData.qc_pass_cnt || 0}/{dashboardData.qc_sample || 0} passed (
                 {dashboardData.qc_fail_cnt || 0} fail)
@@ -196,7 +196,7 @@ function ReviewerDashboard() {
                               const label = context.label || '';
                               const value = context.parsed || 0;
                               const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                              const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                              const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
                               return `${label}: ${value} (${percentage}%)`;
                             }
                           }
