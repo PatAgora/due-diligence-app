@@ -180,10 +180,15 @@ def generate_ai_outreach_questions(customer_id, alerts):
     # Format alerts for LLM
     alert_descriptions = []
     for i, alert in enumerate(alerts, 1):
-        alert_dict = dict(alert) if hasattr(alert, 'keys') else alert
+        # Convert to dict with column names as keys
+        alert_dict = dict(alert) if hasattr(alert, 'keys') else {
+            'id': alert[0], 'txn_id': alert[1], 'score': alert[2], 'severity': alert[3],
+            'reasons': alert[4], 'rule_tags': alert[5], 'txn_date': alert[6], 'amount': alert[7],
+            'currency': alert[8], 'country_iso2': alert[9], 'direction': alert[10], 'narrative': alert[11]
+        }
         
         # Format date
-        txn_date = alert_dict[6]  # txn_date
+        txn_date = alert_dict.get('txn_date', '')
         if isinstance(txn_date, str) and len(txn_date) >= 10:
             try:
                 from datetime import datetime
@@ -195,17 +200,17 @@ def generate_ai_outreach_questions(customer_id, alerts):
             formatted_date = str(txn_date)
         
         alert_desc = f"""Alert {i}:
-- Transaction ID: {alert_dict[1]}
+- Transaction ID: {alert_dict.get('txn_id', 'N/A')}
 - Date: {formatted_date}
-- Amount: {alert_dict[8]} {alert_dict[7]:.2f}
-- Country: {alert_dict[9]}
-- Direction: {alert_dict[10]}
-- Severity: {alert_dict[3]} (Score: {alert_dict[2]})
-- Reasons: {alert_dict[4]}
-- Rule Tags: {alert_dict[5] or 'N/A'}"""
+- Amount: {alert_dict.get('currency', 'GBP')} {alert_dict.get('amount', 0):.2f}
+- Country: {alert_dict.get('country_iso2', 'N/A')}
+- Direction: {alert_dict.get('direction', 'N/A')}
+- Severity: {alert_dict.get('severity', 'N/A')} (Score: {alert_dict.get('score', 0)})
+- Reasons: {alert_dict.get('reasons', 'N/A')}
+- Rule Tags: {alert_dict.get('rule_tags') or 'N/A'}"""
         
-        if alert_dict[11]:  # narrative
-            alert_desc += f"\n- Transaction Narrative: {alert_dict[11]}"
+        if alert_dict.get('narrative'):
+            alert_desc += f"\n- Transaction Narrative: {alert_dict['narrative']}"
         
         alert_descriptions.append(alert_desc)
     
@@ -303,22 +308,29 @@ def generate_fallback_questions(alerts):
     """
     questions = []
     
-    # Convert alerts to list of dicts
+    # Convert alerts to list of dicts with proper column names
     alert_list = []
     for alert in alerts:
-        alert_dict = dict(alert) if hasattr(alert, 'keys') else alert
+        if hasattr(alert, 'keys'):
+            alert_dict = dict(alert)
+        else:
+            alert_dict = {
+                'id': alert[0], 'txn_id': alert[1], 'score': alert[2], 'severity': alert[3],
+                'reasons': alert[4], 'rule_tags': alert[5], 'txn_date': alert[6], 'amount': alert[7],
+                'currency': alert[8], 'country_iso2': alert[9], 'direction': alert[10], 'narrative': alert[11]
+            }
         alert_list.append(alert_dict)
     
     # Sort by severity: CRITICAL > HIGH > MEDIUM > LOW
     severity_order = {'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3}
-    alert_list.sort(key=lambda a: (severity_order.get(a[3], 999), -a[2]))  # severity, then score desc
+    alert_list.sort(key=lambda a: (severity_order.get(a.get('severity', ''), 999), -a.get('score', 0)))
     
     seen_tags = set()
     
     for alert_dict in alert_list[:5]:  # Max 5 questions
-        reasons = alert_dict[4].lower()  # reasons
-        amount = f"{alert_dict[8]}{alert_dict[7]:.2f}"  # currency + amount
-        txn_date = str(alert_dict[6])[:10]  # date
+        reasons = alert_dict.get('reasons', '').lower()
+        amount = f"{alert_dict.get('currency', 'GBP')}{alert_dict.get('amount', 0):.2f}"
+        txn_date = str(alert_dict.get('txn_date', ''))[:10]
         
         # Format date
         try:
@@ -340,9 +352,9 @@ def generate_fallback_questions(alerts):
         elif 'exceeds' in reasons or 'high' in reasons or 'enhanced due diligence' in reasons:
             if 'HIGH_VALUE' not in seen_tags:
                 # Group high-value transactions
-                high_value_alerts = [a for a in alert_list if 'exceeds' in str(a[4]).lower() or 'enhanced due diligence' in str(a[4]).lower()]
+                high_value_alerts = [a for a in alert_list if 'exceeds' in str(a.get('reasons', '')).lower() or 'enhanced due diligence' in str(a.get('reasons', '')).lower()]
                 if len(high_value_alerts) > 1:
-                    txns = ", ".join([f"{a[8]}{a[7]:.2f} on {str(a[6])[:10]}" for a in high_value_alerts[:3]])
+                    txns = ", ".join([f"{a.get('currency', 'GBP')}{a.get('amount', 0):.2f} on {str(a.get('txn_date', ''))[:10]}" for a in high_value_alerts[:3]])
                     questions.append({
                         "tag": "HIGH_VALUE",
                         "question": f"What is the purpose of the following high-value transactions: {txns}?"
@@ -382,8 +394,8 @@ def generate_fallback_questions(alerts):
     # Ensure at least one question
     if len(questions) == 0 and len(alert_list) > 0:
         alert_dict = alert_list[0]
-        amount = f"{alert_dict[8]}{alert_dict[7]:.2f}"
-        txn_date = str(alert_dict[6])[:10]
+        amount = f"{alert_dict.get('currency', 'GBP')}{alert_dict.get('amount', 0):.2f}"
+        txn_date = str(alert_dict.get('txn_date', ''))[:10]
         questions.append({
             "tag": "GENERAL",
             "question": f"Can you provide more information about the transaction of {amount} on {txn_date}?"
