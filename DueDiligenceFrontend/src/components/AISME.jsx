@@ -279,9 +279,6 @@ function AISME({ taskId, customerId }) {
           </div>
         </div>
         <div className="aisme-header-right">
-          <div className={`aisme-health ${healthStatus === 'Online' ? 'ok' : 'err'}`}>
-            SME Status: <span>{healthStatus}</span>
-          </div>
           <button className="aisme-nav-link" onClick={handleBackToTask}>
             <i className="fas fa-arrow-left"></i> Back to Task
           </button>
