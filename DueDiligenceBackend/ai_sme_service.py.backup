@@ -1,0 +1,255 @@
+#!/usr/bin/env python3
+"""
+AI SME FastAPI Service with ChatGPT Integration
+This service provides AI-powered SME assistance using OpenAI's ChatGPT API.
+"""
+
+from fastapi import FastAPI, Form, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
+from typing import Optional
+import json
+import os
+import yaml
+from pathlib import Path
+from openai import OpenAI
+
+from openai import OpenAI
+
+app = FastAPI(title="AI SME Service", version="2.0.0")
+
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize OpenAI client
+def get_openai_client():
+    """Get OpenAI client with configuration from ~/.genspark_llm.yaml or environment"""
+    config_path = Path.home() / '.genspark_llm.yaml'
+    
+    api_key = None
+    base_url = None
+    
+    # Try to load from config file first
+    if config_path.exists():
+        try:
+            with open(config_path, 'r') as f:
+                config = yaml.safe_load(f)
+                if config and 'openai' in config:
+                    api_key = config['openai'].get('api_key')
+                    base_url = config['openai'].get('base_url')
+                    print(f"✅ Loaded OpenAI config from {config_path}")
+        except Exception as e:
+            print(f"⚠️  Could not load config file: {e}")
+    
+    # Fall back to environment variables
+    if not api_key:
+        api_key = os.environ.get('OPENAI_API_KEY')
+    if not base_url:
+        base_url = os.environ.get('OPENAI_BASE_URL')
+    
+    if not api_key:
+        print("⚠️  No OpenAI API key found. Using mock responses.")
+        return None
+    
+    print(f"🔑 OpenAI API Key: {'*' * 20}{api_key[-8:] if len(api_key) > 8 else '****'}")
+    print(f"🌐 Base URL: {base_url or 'https://api.openai.com/v1'}")
+    
+    return OpenAI(
+        api_key=api_key,
+        base_url=base_url
+    )
+
+# Initialize client at startup
+openai_client = get_openai_client()
+
+# Mock knowledge base - fallback responses if OpenAI is not available
+MOCK_RESPONSES = {
+    "sanctions": "Based on the transaction details, sanctions screening involves checking against OFAC, UN, EU, and UK sanctions lists. High-risk countries include Iran, North Korea, Cuba, Russia, and Belarus. Any transactions involving these jurisdictions should be flagged for enhanced due diligence.",
+    
+    "pep": "Politically Exposed Persons (PEPs) are individuals who hold or have held prominent public positions. Enhanced due diligence is required for PEPs due to increased corruption and money laundering risks. This includes source of wealth verification and ongoing monitoring.",
+    
+    "aml": "Anti-Money Laundering (AML) procedures require customer due diligence, ongoing monitoring, and suspicious activity reporting. Key red flags include: unusual transaction patterns, high-risk jurisdictions, cash-intensive businesses, and transactions inconsistent with customer profile.",
+    
+    "risk": "Risk assessment should consider multiple factors: customer type, jurisdiction, transaction patterns, business relationship, and beneficial ownership. High-risk customers require enhanced due diligence and more frequent reviews.",
+    
+    "default": "I understand you have a question about compliance and risk. Based on the context provided, I recommend:\n\n1. Review all available customer documentation\n2. Check for any red flags or unusual patterns\n3. Verify the source of funds\n4. Ensure all enhanced due diligence is completed\n5. Document your findings thoroughly\n\nIf you need more specific guidance, please provide additional details about the case."
+}
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    llm_status = "openai" if openai_client else "mock"
+    return {
+        "status": "ok",
+        "llm_backend": llm_status,
+        "bot_name": "AI SME Assistant (ChatGPT)",
+        "auto_yes_ms": 30000,
+        "service": "AI SME Service with ChatGPT",
+        "version": "2.0.0",
+        "openai_enabled": openai_client is not None
+    }
+
+@app.post("/query")
+async def query_sme(
+    query: str = Form(...),
+    task_id: Optional[str] = Form(None),
+    customer_id: Optional[str] = Form(None),
+    context: Optional[str] = Form(None)
+):
+    """
+    Handle AI SME queries using ChatGPT API
+    Returns a response based on the question asked
+    """
+    print(f"\n📝 AI SME Query received:")
+    print(f"   Query: {query}")
+    print(f"   Task ID: {task_id}")
+    print(f"   Customer ID: {customer_id}")
+    
+    if not query or len(query.strip()) == 0:
+        raise HTTPException(status_code=400, detail="Query cannot be empty")
+    
+    # Use ChatGPT if available, otherwise fall back to mock responses
+    if openai_client:
+        try:
+            # Build context message
+            context_parts = []
+            if task_id:
+                context_parts.append(f"Task ID: {task_id}")
+            if customer_id:
+                context_parts.append(f"Customer ID: {customer_id}")
+            if context:
+                context_parts.append(f"Context: {context}")
+            
+            context_message = "\n".join(context_parts) if context_parts else "No additional context provided."
+            
+            # Create system prompt for compliance/due diligence expert
+            system_prompt = """You are an expert compliance and due diligence Subject Matter Expert (SME) specializing in:
+- Anti-Money Laundering (AML) regulations
+- Know Your Customer (KYC) procedures
+- Sanctions screening (OFAC, UN, EU, UK)
+- Politically Exposed Persons (PEP) screening
+- Risk assessment and mitigation
+- Transaction monitoring
+- Enhanced Due Diligence (EDD)
+- Financial crime prevention
+
+Provide clear, actionable guidance based on industry best practices and regulatory requirements. 
+Keep responses concise but comprehensive. If specific documentation or additional information is needed, clearly state what is required."""
+            
+            # Call ChatGPT API
+            print(f"🤖 Calling ChatGPT API...")
+            completion = openai_client.chat.completions.create(
+                model="gpt-4",  # Using GPT-4 for better quality responses
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": f"Context:\n{context_message}\n\nQuestion:\n{query}"}
+                ],
+                temperature=0.7,
+                max_tokens=1000
+            )
+            
+            response_text = completion.choices[0].message.content
+            print(f"✅ ChatGPT response received ({len(response_text)} chars)")
+            
+            return {
+                "status": "success",
+                "response": response_text,
+                "query": query,
+                "task_id": task_id,
+                "customer_id": customer_id,
+                "source": "ChatGPT (AI SME)",
+                "model": "gpt-4"
+            }
+            
+        except Exception as e:
+            print(f"❌ ChatGPT API error: {str(e)}")
+            print(f"   Falling back to mock responses...")
+            # Fall through to mock responses on error
+    
+    # Fallback: Simple keyword matching to provide relevant responses
+    query_lower = query.lower()
+    response_text = MOCK_RESPONSES["default"]
+    
+    if any(word in query_lower for word in ["sanction", "sanctioned", "ofac", "embargo"]):
+        response_text = MOCK_RESPONSES["sanctions"]
+    elif any(word in query_lower for word in ["pep", "politically exposed", "public official"]):
+        response_text = MOCK_RESPONSES["pep"]
+    elif any(word in query_lower for word in ["aml", "money laundering", "suspicious", "red flag"]):
+        response_text = MOCK_RESPONSES["aml"]
+    elif any(word in query_lower for word in ["risk", "assessment", "due diligence"]):
+        response_text = MOCK_RESPONSES["risk"]
+    
+    return {
+        "status": "success",
+        "response": response_text,
+        "query": query,
+        "task_id": task_id,
+        "customer_id": customer_id,
+        "source": "AI SME Mock Service (Fallback)",
+        "model": "mock"
+    }
+
+@app.post("/referral")
+async def create_referral(
+    question: str = Form(...),
+    task_id: Optional[str] = Form(None),
+    customer_id: Optional[str] = Form(None),
+    context: Optional[str] = Form(None)
+):
+    """
+    Create an SME referral
+    """
+    print(f"\n📨 SME Referral created:")
+    print(f"   Question: {question}")
+    print(f"   Task ID: {task_id}")
+    print(f"   Customer ID: {customer_id}")
+    
+    return {
+        "status": "success",
+        "message": "Referral created successfully",
+        "referral_id": f"REF-{task_id or 'UNKNOWN'}",
+        "question": question
+    }
+
+@app.post("/feedback")
+async def submit_feedback(
+    query_id: Optional[str] = Form(None),
+    rating: Optional[str] = Form(None),
+    feedback: Optional[str] = Form(None)
+):
+    """
+    Submit feedback on AI SME response
+    """
+    print(f"\n⭐ Feedback received:")
+    print(f"   Rating: {rating}")
+    print(f"   Feedback: {feedback}")
+    
+    return {
+        "status": "success",
+        "message": "Feedback received"
+    }
+
+if __name__ == "__main__":
+    print("🚀 Starting AI SME Service with ChatGPT Integration on http://localhost:8000")
+    print("📚 Available endpoints:")
+    print("   GET  /health   - Health check")
+    print("   POST /query    - Ask AI SME a question (ChatGPT-powered)")
+    print("   POST /referral - Create SME referral")
+    print("   POST /feedback - Submit feedback")
+    print(f"\n🤖 LLM Backend: {'OpenAI ChatGPT' if openai_client else 'Mock Responses (Fallback)'}")
+    if openai_client:
+        print("✅ ChatGPT API is configured and ready!")
+    else:
+        print("⚠️  ChatGPT API not configured. Using mock responses.")
+        print("   To enable ChatGPT, configure ~/.genspark_llm.yaml or set environment variables:")
+        print("   - OPENAI_API_KEY")
+        print("   - OPENAI_BASE_URL")
+    print("\n✨ Service ready to handle requests!\n")
+    
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")

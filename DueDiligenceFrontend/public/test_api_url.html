@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test API URL</title>
+</head>
+<body>
+    <h1>API URL Test</h1>
+    <div id="result"></div>
+    
+    <script type="module">
+        // Simulate the same env var resolution as Vite
+        const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+        const API_BASE_URL = VITE_API_BASE_URL || 'http://localhost:5050';
+        
+        const resultDiv = document.getElementById('result');
+        resultDiv.innerHTML += `<strong>Environment Check:</strong><br>`;
+        resultDiv.innerHTML += `VITE_API_BASE_URL (from env): "${VITE_API_BASE_URL}"<br>`;
+        resultDiv.innerHTML += `API_BASE_URL (resolved): "${API_BASE_URL}"<br>`;
+        resultDiv.innerHTML += `Login URL will be: "${API_BASE_URL}/login"<br><br>`;
+        
+        if (API_BASE_URL === 'http://localhost:5050') {
+            resultDiv.innerHTML += `<span style="color: red;">⚠️ WARNING: Using direct localhost URL, not proxy!</span><br>`;
+            resultDiv.innerHTML += `This will cause CORS errors from browser.<br>`;
+        } else if (API_BASE_URL === '') {
+            resultDiv.innerHTML += `<span style="color: green;">✓ CORRECT: Using empty string (will use relative URLs via proxy)</span><br>`;
+        }
+    </script>
+</body>
+</html>

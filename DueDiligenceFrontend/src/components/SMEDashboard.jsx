@@ -5,7 +5,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 import '../styles/agora-theme.css';
 import './SMEDashboard.css';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);

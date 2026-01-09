@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 const FieldVisibilityContext = createContext();
 
@@ -46,6 +46,10 @@ export const FieldVisibilityProvider = ({ children }) => {
           
           setFieldVisibility(visibility);
         }
+      } else if (response.status === 401) {
+        // User doesn't have admin permissions - use default visibility (all visible)
+        console.log('[FieldVisibility] User not authorized for admin endpoint - using defaults');
+        setFieldVisibility({});
       }
     } catch (error) {
       console.error('Error fetching field visibility:', error);

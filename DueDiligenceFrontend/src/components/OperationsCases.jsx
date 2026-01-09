@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import BaseLayout from './BaseLayout';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 function OperationsCases() {
   const [searchParams] = useSearchParams();
@@ -118,7 +118,7 @@ function OperationsCases() {
                   {cases.length > 0 ? (
                     cases.map((c) => (
                       <tr key={c.id}>
-                        <td>{c.task_id || '—'}</td>
+                        <td>{c.task_id || c.id || '—'}</td>
                         <td>{c.customer_id || '—'}</td>
                         <td>{c.status || '—'}</td>
                         <td>{c.outcome || '—'}</td>
@@ -126,7 +126,7 @@ function OperationsCases() {
                         <td>
                           <button 
                             className="btn btn-sm btn-primary"
-                            onClick={() => navigate(`/view_task/${c.task_id}`)}
+                            onClick={() => navigate(`/view_task/${c.task_id || c.id}`)}
                           >
                             View
                           </button>

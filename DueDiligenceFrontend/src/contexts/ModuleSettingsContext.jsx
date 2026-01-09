@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL !== undefined ? import.meta.env.VITE_API_BASE_URL : '';
 
 const ModuleSettingsContext = createContext();
 
@@ -27,6 +27,9 @@ export function ModuleSettingsProvider({ children }) {
         if (data.success && data.settings) {
           setSettings(data.settings);
         }
+      } else if (response.status === 401) {
+        // User doesn't have admin permissions - use defaults
+        console.log('[ModuleSettings] User not authorized for admin endpoint - using defaults');
       }
     } catch (error) {
       console.error('Error fetching module settings:', error);
@@ -60,4 +63,3 @@ export function useModuleSettings() {
   }
   return context;
 }
-

@@ -6,7 +6,7 @@ import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, PointElement,
 import '../styles/agora-theme.css';
 import './QADashboard.css';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // Register Chart.js components
 ChartJS.register(ArcElement, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);

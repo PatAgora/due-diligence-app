@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL !== undefined ? import.meta.env.VITE_API_BASE_URL : '';
 
 const PermissionsContext = createContext();
 
@@ -31,10 +31,15 @@ export function PermissionsProvider({ children }) {
           // Store permissions as a map: feature -> {can_view, can_edit}
           setPermissions(data.permissions);
         }
+      } else if (response.status === 401 || response.status === 500) {
+        // User not authenticated or server error - use default permissions (all allowed)
+        console.log('[Permissions] Could not fetch permissions - using defaults');
+        setPermissions({});
       }
     } catch (error) {
       console.error('Error fetching permissions:', error);
       // Default to allowing all if permissions can't be loaded
+      setPermissions({});
     } finally {
       setLoading(false);
     }
@@ -66,14 +71,16 @@ export function PermissionsProvider({ children }) {
   const canEdit = (feature) => hasPermission(feature, 'edit');
 
   return (
-    <PermissionsContext.Provider value={{ 
-      permissions, 
-      loading, 
-      hasPermission, 
-      canView, 
-      canEdit,
-      refreshPermissions: fetchPermissions 
-    }}>
+    <PermissionsContext.Provider 
+      value={{ 
+        permissions, 
+        loading, 
+        hasPermission, 
+        canView, 
+        canEdit,
+        refreshPermissions: fetchPermissions 
+      }}
+    >
       {children}
     </PermissionsContext.Provider>
   );
@@ -82,7 +89,7 @@ export function PermissionsProvider({ children }) {
 export function usePermissions() {
   const context = useContext(PermissionsContext);
   if (!context) {
-    // Return default values if context not available (always allow)
+    // Return safe defaults if context not available
     return {
       permissions: {},
       loading: false,
@@ -94,4 +101,3 @@ export function usePermissions() {
   }
   return context;
 }
-

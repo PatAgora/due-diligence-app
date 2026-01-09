@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useModuleSettings } from '../contexts/ModuleSettingsContext';
 import { useFieldVisibility } from '../contexts/FieldVisibilityContext';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 import './QCReviewPanel.css';
 
 function QCReviewPanel() {
@@ -361,55 +361,25 @@ function QCReviewPanel() {
           <tbody>
             {fields
               .filter(field => {
-                // Check visibility for both original and enriched fields
-                const originalVisible = isFieldVisible(field.original);
-                const enrichedVisible = field.enriched ? isFieldVisible(field.enriched) : true;
-                return originalVisible || enrichedVisible;
+                // Only check visibility for original field
+                return isFieldVisible(field.original);
               })
               .map(field => {
                 const originalValue = review[field.original];
-                const enrichedValue = field.enriched ? review[field.enriched] : null;
-                const showEnriched = enrichedValue && enrichedValue !== '' && enrichedValue !== 'None' && enrichedValue !== 'null';
-                const originalVisible = isFieldVisible(field.original);
-                const enrichedVisible = field.enriched ? isFieldVisible(field.enriched) : true;
-                
-                // Skip if neither original nor enriched is visible
-                if (!originalVisible && !enrichedVisible) {
-                  return null;
-                }
                 
                 return (
-                  <React.Fragment key={field.label}>
-                    {originalVisible && (
-                      <tr>
-                        {showEnriched && enrichedVisible && <td rowSpan="2">{field.label}</td>}
-                        {(!showEnriched || !enrichedVisible) && <td>{field.label}</td>}
-                        <td>Original</td>
-                        <td>
-                          <input 
-                            type="text" 
-                            className="form-control form-control-sm" 
-                            value={originalValue || ''} 
-                            readOnly 
-                          />
-                        </td>
-                      </tr>
-                    )}
-                    {showEnriched && enrichedVisible && (
-                      <tr>
-                        {!originalVisible && <td>{field.label}</td>}
-                        <td>Enriched</td>
-                        <td>
-                          <input 
-                            type="text" 
-                            className="form-control form-control-sm" 
-                            value={enrichedValue} 
-                            readOnly 
-                          />
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
+                  <tr key={field.label}>
+                    <td>{field.label}</td>
+                    <td>Original</td>
+                    <td>
+                      <input 
+                        type="text" 
+                        className="form-control form-control-sm" 
+                        value={originalValue || ''} 
+                        readOnly 
+                      />
+                    </td>
+                  </tr>
                 );
               })}
             {/* Display additional customer fields that aren't in the hardcoded list */}

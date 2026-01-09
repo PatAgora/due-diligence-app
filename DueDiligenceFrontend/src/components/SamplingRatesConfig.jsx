@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import BaseLayout from './BaseLayout';
 import './SamplingRatesConfig.css';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 function SamplingRatesConfig() {
   const [globalRate, setGlobalRate] = useState(10);

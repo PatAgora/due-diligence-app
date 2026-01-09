@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 function TransactionExplore({ customerId, taskId }) {
   const navigate = useNavigate();
@@ -9,8 +9,6 @@ function TransactionExplore({ customerId, taskId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
-    direction: '',
-    channel: '',
     risk: '',
     date_from: '',
     date_to: ''
@@ -26,8 +24,6 @@ function TransactionExplore({ customerId, taskId }) {
     try {
       setLoading(true);
       let url = `${BASE_URL}/api/transaction/explore?customer_id=${customerId}`;
-      if (filters.direction) url += `&direction=${filters.direction}`;
-      if (filters.channel) url += `&channel=${filters.channel}`;
       if (filters.risk) url += `&risk=${filters.risk}`;
       if (filters.date_from) url += `&date_from=${filters.date_from}`;
       if (filters.date_to) url += `&date_to=${filters.date_to}`;
@@ -39,6 +35,21 @@ function TransactionExplore({ customerId, taskId }) {
       }
 
       const result = await response.json();
+      
+      // Debug logging
+      console.log('[TransactionExplore] Total transactions:', result.transactions?.length);
+      if (result.transactions && result.transactions.length > 0) {
+        const tx = result.transactions[0];
+        console.log('[TransactionExplore] First transaction:', {
+          id: tx.id,
+          country: tx.counterparty_country,
+          risk_score: tx.risk_score,
+          risk_level: tx.risk_level,
+          has_alert: tx.has_alert,
+          alert_severity: tx.alert_severity
+        });
+      }
+      
       setData(result);
     } catch (err) {
       console.error('Error fetching transactions:', err);
@@ -88,7 +99,7 @@ function TransactionExplore({ customerId, taskId }) {
   return (
     <div className="container-fluid my-4 px-5" style={{ paddingTop: '60px' }}>
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2 className="fw-bold mb-0">Explore Transactions</h2>
+        <h2 className="fw-bold mb-0">Transaction Statement</h2>
         <button className="btn btn-sm btn-outline-secondary" onClick={handleBackToTask}>
           <i className="bi bi-arrow-left"></i> Back to Task
         </button>
@@ -97,45 +108,20 @@ function TransactionExplore({ customerId, taskId }) {
       {/* Filters */}
       <form className="row g-2 mb-3" onSubmit={(e) => { e.preventDefault(); fetchTransactions(); }}>
         <div className="col-auto">
-          <label className="form-label">Direction</label>
-          <select 
-            className="form-select" 
-            value={filters.direction}
-            onChange={(e) => handleFilterChange('direction', e.target.value)}
-          >
-            <option value="">Any</option>
-            <option value="in">In</option>
-            <option value="out">Out</option>
-          </select>
-        </div>
-        <div className="col-auto">
-          <label className="form-label">Channel</label>
-          <select 
-            className="form-select" 
-            value={filters.channel}
-            onChange={(e) => handleFilterChange('channel', e.target.value)}
-          >
-            <option value="">Any</option>
-            {data?.channels?.map(ch => (
-              <option key={ch} value={ch}>{ch}</option>
-            ))}
-          </select>
-        </div>
-        <div className="col-auto">
-          <label className="form-label">Risk</label>
+          <label className="form-label">Risk Level</label>
           <select 
             className="form-select" 
             value={filters.risk}
             onChange={(e) => handleFilterChange('risk', e.target.value)}
           >
-            <option value="">Any</option>
-            <option value="HIGH">High</option>
-            <option value="HIGH_3RD">High 3rd</option>
-            <option value="PROHIBITED">Prohibited</option>
+            <option value="">All Transactions</option>
+            <option value="HIGH">High Risk Only</option>
+            <option value="MEDIUM">Medium Risk</option>
+            <option value="LOW">Low Risk</option>
           </select>
         </div>
         <div className="col-auto">
-          <label className="form-label">From</label>
+          <label className="form-label">From Date</label>
           <input 
             type="date" 
             className="form-control" 
@@ -144,7 +130,7 @@ function TransactionExplore({ customerId, taskId }) {
           />
         </div>
         <div className="col-auto">
-          <label className="form-label">To</label>
+          <label className="form-label">To Date</label>
           <input 
             type="date" 
             className="form-control" 
@@ -153,48 +139,98 @@ function TransactionExplore({ customerId, taskId }) {
           />
         </div>
         <div className="col-auto d-flex align-items-end">
-          <button type="submit" className="btn btn-primary">Apply</button>
+          <button type="submit" className="btn btn-primary">Apply Filters</button>
         </div>
       </form>
 
-      {/* Transactions Table */}
+      {/* Bank Statement Table */}
       <div className="card">
-        <div className="card-body">
+        <div className="card-header bg-light">
+          <h5 className="mb-0">Transaction History</h5>
+        </div>
+        <div className="card-body p-0">
           {data?.transactions && data.transactions.length > 0 ? (
             <div className="table-responsive">
-              <table className="table table-striped table-hover">
-                <thead>
+              <table className="table table-hover mb-0">
+                <thead className="table-light">
                   <tr>
                     <th>Date</th>
-                    <th>ID</th>
-                    <th>Direction</th>
-                    <th className="text-end">Amount</th>
-                    <th>Currency</th>
+                    <th>Reference</th>
+                    <th>Description</th>
+                    <th>Counterparty</th>
                     <th>Country</th>
-                    <th>Channel</th>
-                    <th>Narrative</th>
+                    <th>Payment Method</th>
+                    <th className="text-end">Amount</th>
+                    <th className="text-center">Risk</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {data.transactions.map((tx, idx) => (
-                    <tr key={idx}>
-                      <td>{tx.txn_date}</td>
-                      <td className="text-monospace small">{tx.id}</td>
-                      <td>{tx.direction}</td>
-                      <td className="text-end">£{parseFloat(tx.base_amount || 0).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                      <td>{tx.currency || 'GBP'}</td>
-                      <td>{tx.country_iso2 || '—'}</td>
-                      <td>{tx.channel || '—'}</td>
-                      <td style={{ maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {tx.narrative || '—'}
-                      </td>
-                    </tr>
-                  ))}
+                  {data.transactions.map((tx, idx) => {
+                    // Use risk_level from backend instead of calculating from risk_score
+                    const riskLevel = tx.risk_level || 'LOW';
+                    const riskScore = tx.risk_score || 0;
+                    
+                    // Map risk level to badge class
+                    const riskClass = riskLevel === 'CRITICAL' ? 'danger' :
+                                     riskLevel === 'HIGH' ? 'danger' :
+                                     riskLevel === 'MEDIUM' ? 'warning' : 
+                                     'success';
+                    const riskLabel = riskLevel; // Use backend risk level directly
+                    
+                    return (
+                      <tr key={idx} className={tx.flagged ? 'table-warning' : ''}>
+                        <td className="text-nowrap">
+                          {tx.transaction_date || '—'}
+                        </td>
+                        <td className="text-monospace small">
+                          {tx.reference || `#${tx.id}`}
+                        </td>
+                        <td style={{ minWidth: '200px' }}>
+                          {tx.description || '—'}
+                        </td>
+                        <td style={{ minWidth: '180px' }}>
+                          {tx.counterparty || '—'}
+                        </td>
+                        <td>
+                          <span className={riskLevel === 'CRITICAL' || riskLevel === 'HIGH' ? 'badge bg-danger' : ''}>
+                            {tx.counterparty_country || '—'}
+                          </span>
+                        </td>
+                        <td className="text-nowrap">
+                          {tx.payment_method || '—'}
+                        </td>
+                        <td className="text-end fw-bold text-nowrap">
+                          {tx.currency} {parseFloat(tx.amount || 0).toLocaleString('en-GB', { 
+                            minimumFractionDigits: 2, 
+                            maximumFractionDigits: 2 
+                          })}
+                        </td>
+                        <td className="text-center">
+                          <span className={`badge bg-${riskClass}`}>
+                            {riskLabel}
+                          </span>
+                          <div className="small text-muted">
+                            {(riskScore * 100).toFixed(0)}%
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
+                <tfoot className="table-light">
+                  <tr>
+                    <td colSpan="6" className="text-end fw-bold">Total Transactions:</td>
+                    <td className="text-end fw-bold">{data.transactions.length}</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           ) : (
-            <p className="text-muted">No transactions found for this customer.</p>
+            <div className="p-4 text-center text-muted">
+              <i className="bi bi-inbox" style={{ fontSize: '3rem' }}></i>
+              <p className="mt-2">No transactions found for the selected filters.</p>
+            </div>
           )}
         </div>
       </div>

@@ -8,7 +8,7 @@ import './TeamLeaderDashboard.css';
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 function TeamLeaderDashboard() {
   const [data, setData] = useState(null);

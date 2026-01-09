@@ -35,11 +35,24 @@ export default defineConfig({
         target: 'http://localhost:5050',
         changeOrigin: true,
         secure: false,
+        timeout: 30000, // 30 second timeout
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('LOGIN proxy error:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('Sending Login Request:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('Received Login Response:', proxyRes.statusCode, req.url);
+          });
+        },
       },
       '/logout': {
         target: 'http://localhost:5050',
         changeOrigin: true,
         secure: false,
+        timeout: 30000,
       },
     },
   },

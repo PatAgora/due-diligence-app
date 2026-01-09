@@ -4,7 +4,7 @@ import TransactionDashboard from './TransactionDashboard';
 import TransactionAlerts from './TransactionAlerts';
 import TransactionExplore from './TransactionExplore';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 import TransactionAI from './TransactionAI';
 import TransactionAIRationale from './TransactionAIRationale';
 

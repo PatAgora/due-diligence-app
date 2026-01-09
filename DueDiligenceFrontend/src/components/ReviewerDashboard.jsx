@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import '../styles/agora-theme.css';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { reviewerAPI } from '../services/api';
 import { usePermissions } from '../contexts/PermissionsContext';
-import { Doughnut, Line } from 'react-chartjs-2';
+import { Doughnut, Line, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import './ReviewerDashboard.css';
 
@@ -13,11 +13,11 @@ ChartJS.register(ArcElement, CategoryScale, LinearScale, PointElement, LineEleme
 function ReviewerDashboard() {
   const { canEdit } = usePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [dateRange, setDateRange] = useState(searchParams.get('date_range') || 'all');
+  const [dateRange, setDateRange] = useState(searchParams.get('date_range') || 'wtd');
   const canInteract = canEdit('view_dashboard');
   const [dashboardData, setDashboardData] = useState({
     active_wip: 0,
-    completed_count: 0,
+    cases_submitted: 0,
     qc_sample: 0,
     qc_pass_pct: 0,
     qc_pass_cnt: 0,
@@ -35,7 +35,10 @@ function ReviewerDashboard() {
       setLoading(true);
       setError('');
       try {
+        console.log('[ReviewerDashboard] Fetching dashboard data for dateRange:', dateRange);
         const data = await reviewerAPI.getDashboard(dateRange);
+        console.log('[ReviewerDashboard] Received data:', data);
+        console.log('[ReviewerDashboard] cases_submitted value:', data.cases_submitted);
         setDashboardData(data);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -62,7 +65,7 @@ function ReviewerDashboard() {
   // Helper to render clickable or non-clickable links
   const renderLink = (href, children, className = 'text-decoration-none text-body') => {
     if (canInteract) {
-      return <a href={href} className={className}>{children}</a>;
+      return <Link to={href} className={className}>{children}</Link>;
     }
     return <span className={className} style={{ cursor: 'not-allowed', opacity: 0.6 }}>{children}</span>;
   };
@@ -128,8 +131,8 @@ function ReviewerDashboard() {
               <div className="stretched-link" style={{ cursor: 'not-allowed', opacity: 0.6 }}></div>
             )}
             <div className="card-body hover-lift kpi" kpi-compact>
-              <h6>Completed</h6>
-              <div className="num">{dashboardData.completed_count || 0}</div>
+              <h6>Cases Submitted</h6>
+              <div className="num">{dashboardData.cases_submitted || 0}</div>
             </div>
           </div>
         </div>
@@ -169,8 +172,8 @@ function ReviewerDashboard() {
           <div className="card hover-lift shadow-sm status-card flex-fill">
             <div className="card-body d-flex flex-column">
               <h5 className="card-title">Quality Stats</h5>
-              <div className="mb-2 small text-muted">QC Pass %</div>
-              <div style={{ position: 'relative', height: '230px' }}>
+              <div className="mb-1 small text-muted" style={{ fontSize: '0.75rem' }}>QC Pass %</div>
+              <div style={{ position: 'relative', height: '100px' }}>
                 {dashboardData.qc_sample > 0 ? (
                   <Doughnut
                     data={{
@@ -207,11 +210,11 @@ function ReviewerDashboard() {
                   </div>
                 )}
               </div>
-              <div className="d-flex align-items-center gap-3 mt-3">
+              <div className="d-flex align-items-center gap-2 mt-1" style={{ fontSize: '0.8rem' }}>
                 <div className="d-flex align-items-center gap-1">
                   <span
                     className="rounded-circle d-inline-block"
-                    style={{ width: '12px', height: '12px', background: '#198754' }}
+                    style={{ width: '8px', height: '8px', background: '#198754' }}
                   >
                     &nbsp;
                   </span>
@@ -220,13 +223,13 @@ function ReviewerDashboard() {
                 <div className="d-flex align-items-center gap-1">
                   <span
                     className="rounded-circle d-inline-block"
-                    style={{ width: '12px', height: '12px', background: '#dc3545' }}
+                    style={{ width: '8px', height: '8px', background: '#dc3545' }}
                   >
                     &nbsp;
                   </span>
                   <span>Fail</span>
                 </div>
-                <span className="ms-auto small text-muted">
+                <span className="ms-auto small text-muted" style={{ fontSize: '0.75rem' }}>
                   Sample: {dashboardData.qc_sample || 0}
                 </span>
               </div>
@@ -238,18 +241,17 @@ function ReviewerDashboard() {
           <div className="card hover-lift shadow-sm status-card flex-fill">
             <div className="card-body d-flex flex-column">
               <h5 className="card-title">Individual Output (Completed by Day)</h5>
-              <div className="flex-grow-1 d-flex align-items-center" style={{ minHeight: '230px' }}>
+              <div className="flex-grow-1 d-flex align-items-center" style={{ minHeight: '100px' }}>
                 {dashboardData.daily_labels && dashboardData.daily_labels.length > 0 ? (
-                  <Line
+                  <Bar
                     data={{
                       labels: dashboardData.daily_labels,
                       datasets: [{
                         label: 'Completed',
                         data: dashboardData.daily_counts,
-                        borderColor: '#007bff',
-                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                        tension: 0.3,
-                        fill: true
+                        backgroundColor: '#007bff',
+                        borderColor: '#0056b3',
+                        borderWidth: 1
                       }]
                     }}
                     options={{
@@ -278,14 +280,14 @@ function ReviewerDashboard() {
         </div>
 
         <div className="col d-flex metric-tile">
-          <div className="card h-100 hover-lift shadow-sm status-card equal-square flex-fill">
-            <div className="card-body hover-lift rework-card">
-              <div className="d-flex align-items-center justify-content-between">
+          <div className="card hover-lift shadow-sm status-card equal-square flex-fill">
+            <div className="card-body d-flex flex-column">
+              <div className="d-flex align-items-center justify-content-between mb-1">
                 <h5 className="card-title mb-0">Rework Age Profile</h5>
                 <span className="note">Live (not date-filtered)</span>
               </div>
-              <div className="table-wrap mt-2">
-                <div className="table-responsive w-100">
+              <div className="table-wrap flex-grow-1 d-flex flex-column">
+                <div className="table-responsive w-100 h-100">
                   <table className="align-middle mb-0 table table-clean table-sm table-tight">
                     <thead>
                       <tr>
@@ -460,9 +462,9 @@ function ReviewerDashboard() {
                             <td key={h} className="text-center">
                               {v > 0 ? (
                                 canInteract ? (
-                                  <a href={`/my_tasks?date_range=${dateRange}&chaser_type=${h}&week_date=${row.iso}`} className="text-decoration-none text-body">
+                                  <Link to={`/my_tasks?date_range=${dateRange}&chaser_type=${h}&week_date=${row.iso}`} className="text-decoration-none text-body">
                                     <span className="chip chip-warn">{v}</span>
-                                  </a>
+                                  </Link>
                                 ) : (
                                   <span className="chip chip-warn" style={{ cursor: 'not-allowed', opacity: 0.6 }}>{v}</span>
                                 )
@@ -482,9 +484,9 @@ function ReviewerDashboard() {
                           <td key={hIdx} className="text-center">
                             {overdueCount > 0 ? (
                               canInteract ? (
-                                <a href={`/my_tasks?date_range=${dateRange}&overdue=1&chaser_type=${h}`} className="text-decoration-none text-body">
+                                <Link to={`/my_tasks?date_range=${dateRange}&overdue=1&chaser_type=${h}`} className="text-decoration-none text-body">
                                   <span className="chip chip-danger">{overdueCount}</span>
-                                </a>
+                                </Link>
                               ) : (
                                 <span className="chip chip-danger" style={{ cursor: 'not-allowed', opacity: 0.6 }}>{overdueCount}</span>
                               )

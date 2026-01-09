@@ -4,7 +4,7 @@ import AISMEAdminReferrals from './AISMEAdminReferrals';
 import AISMEAdminFeedback from './AISMEAdminFeedback';
 import AISMEAdminDocs from './AISMEAdminDocs';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 import AISMEAdminConfig from './AISMEAdminConfig';
 import AISMEAdminResolutions from './AISMEAdminResolutions';
 

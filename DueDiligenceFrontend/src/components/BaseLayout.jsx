@@ -5,7 +5,7 @@ import { useModuleSettings } from '../contexts/ModuleSettingsContext';
 import { usePermissions } from '../contexts/PermissionsContext';
 import TopNavbar from './TopNavbar';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 function BaseLayout({ children }) {
   const location = useLocation();
@@ -30,7 +30,7 @@ function BaseLayout({ children }) {
 
   // Get the dashboard path based on user role
   const getDashboardPath = () => {
-    if (role.includes('operations_manager')) return '/operations_dashboard';
+    if (role.includes('operations_manager') || role === 'operations') return '/operations_dashboard';
     if (role === 'admin') return '/admin/users';
     // QC Lead roles: qc_1, qc_2, qc_3 (not qc_lead_)
     if (role === 'qc_1' || role === 'qc_2' || role === 'qc_3') return '/qc_lead_dashboard';
@@ -140,13 +140,23 @@ function BaseLayout({ children }) {
               {!isQCOnMyTasksPage && <hr className="sidebar-divider my-2" style={{ borderColor: 'rgba(255,255,255,0.1)' }} />}
             </>
           )}
+
+          {/* Reviewer My Tasks - ALWAYS visible for reviewers on all pages */}
+          {isModuleEnabled('due_diligence') && role.startsWith('reviewer_') && canView('review_tasks') && (
+            <Link
+              to="/my_tasks"
+              className={`nav-link ${isActive('/my_tasks') ? 'active' : ''}`}
+            >
+              <i className="bi bi-list-check"></i> My Tasks
+            </Link>
+          )}
           
           {/* Hide all other navigation links if QC user is on my tasks page */}
           {!isQCOnMyTasksPage && (
             <>
 
           {/* Operations Manager specific links */}
-          {isModuleEnabled('due_diligence') && role.includes('operations_manager') && canView('assign_tasks') && (
+          {isModuleEnabled('due_diligence') && (role.includes('operations_manager') || role === 'operations') && canView('assign_tasks') && (
             <>
               <Link
                 to="/assign_tasks"
@@ -165,7 +175,7 @@ function BaseLayout({ children }) {
             </>
           )}
 
-          {isModuleEnabled('due_diligence') && role.startsWith('team_lead_') && canView('assign_tasks') && (
+          {isModuleEnabled('due_diligence') && (role.startsWith('team_lead_') || role === 'team_lead') && canView('assign_tasks') && (
             <>
               <Link
                 to="/assign_tasks"
@@ -184,50 +194,7 @@ function BaseLayout({ children }) {
             </>
           )}
 
-          {/* Reviewer links - My Tasks and Assign Tasks */}
-          {isModuleEnabled('due_diligence') && role.startsWith('reviewer_') && (
-            <>
-              {(location.pathname.startsWith('/reviewer_dashboard') || 
-                location.pathname.startsWith('/reviewer_panel') || 
-                location.pathname.startsWith('/view_task')) && canView('review_tasks') && (
-                <Link
-                  to="/my_tasks"
-                  className={`nav-link ${isActive('/my_tasks') ? 'active' : ''}`}
-                >
-                  <i className="bi bi-list-check"></i> My Tasks
-                </Link>
-              )}
-              {canView('assign_tasks') && (
-                <>
-                  <Link
-                    to="/assign_tasks"
-                    className={`nav-link ${isActive('/assign_tasks') && !isActive('/assign_tasks_bulk') ? 'active' : ''}`}
-                  >
-                    <i className="bi bi-person-plus"></i> Assign Tasks
-                  </Link>
-                  <Link
-                    to="/assign_tasks_bulk"
-                    className={`nav-link ${isActive('/assign_tasks_bulk') ? 'active' : ''}`}
-                  >
-                    <i className="bi bi-people"></i> Bulk Assign
-                  </Link>
-                </>
-              )}
-            </>
-          )}
-
-          {/* My Referrals - available to reviewers, team leads, admin, ops (NOT QC, NOT SME) */}
-          {(role.startsWith('reviewer') || 
-            role.startsWith('team_lead_') || role === 'admin' || 
-            role === 'ops_manager' || role === 'operations_manager') && 
-            canView('view_dashboard') && (
-            <Link
-              to="/my_referrals"
-              className={`nav-link ${isActive('/my_referrals') ? 'active' : ''}`}
-            >
-              <i className="bi bi-clipboard-list"></i> My Referrals
-            </Link>
-          )}
+          {/* Reviewer links section removed - My Tasks is now always visible above */}
 
           {/* Referrals - for SME only (unified page with answer capability) */}
           {(role === 'sme' || role.startsWith('sme_')) && (
@@ -446,7 +413,9 @@ function BaseLayout({ children }) {
             </Link>
           )}
           
-          {/* Sumsub Identity Verification - direct link (not dropdown) - only on task view pages - independent of Transaction Review */}
+          {/* Sumsub Identity Verification - TEMPORARILY REMOVED (to be re-added later) */}
+          {/* Removed on 2026-01-08 - will need to add back in the future */}
+          {/* Original code (lines 417-426):
           {isTaskViewPage && taskId && (
             <Link
               to={location.pathname.startsWith('/qc_review/') 
@@ -457,6 +426,7 @@ function BaseLayout({ children }) {
               <i className="fas fa-id-card"></i> Identity Verification
             </Link>
           )}
+          */}
           </>
           )}
         </div>

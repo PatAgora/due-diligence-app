@@ -56,6 +56,7 @@ from dotenv import load_dotenv
 load_dotenv()
 import io
 import os
+load_dotenv("/home/ubuntu/webapp/.env")
 from secrets import token_urlsafe
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -9447,26 +9448,20 @@ def qa_dashboard():
 def api_qa_dashboard():
     """Return QA dashboard data as JSON"""
     from utils import derive_case_status
-    from datetime import datetime, timedelta
-    from collections import defaultdict
     
     role = session.get('role', '').lower()
     if not role or not (role == 'qa' or role.startswith('qa_')):
         return jsonify({'error': 'Access denied. QA role required.'}), 403
     
     try:
-        date_range = request.args.get('date_range', 'wtd')
-        today = datetime.utcnow().date()
-        monday_this = today - timedelta(days=today.weekday())
-        monday_prev = monday_this - timedelta(days=7)
-        sunday_prev = monday_this - timedelta(days=1)
-        
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()
         cur.execute("""
             SELECT
-              r.*,
+              r.id          AS review_id,
+              r.task_id,
+              r.updated_at  AS review_updated_at,
               q.outcome     AS qa_outcome,
               q.comment     AS qa_comment,
               q.updated_at  AS qa_checked_at
@@ -9474,81 +9469,24 @@ def api_qa_dashboard():
             LEFT JOIN qa_checks q ON r.id = q.review_id
             ORDER BY r.updated_at DESC
         """)
-        rows = [dict(row) for row in cur.fetchall()]
+        rows = cur.fetchall()
         conn.close()
 
-        # Filter by date range
-        def _within_range(dt_str):
-            if not dt_str:
-                return False
-            try:
-                d = datetime.fromisoformat(dt_str.replace("Z","").split(".")[0]).date()
-                if date_range == "wtd":   return monday_this <= d <= today
-                if date_range == "prevw": return monday_prev <= d <= sunday_prev
-                if date_range == "30d":   return d >= (today - timedelta(days=30))
-                return True
-            except:
-                return True
-
-        # Filter tasks for date range
-        filtered_rows = []
-        for r in rows:
-            if date_range != 'all':
-                if _within_range(r.get('qa_checked_at')) or _within_range(r.get('updated_at')):
-                    filtered_rows.append(r)
-            else:
-                filtered_rows.append(r)
-
-        # Calculate KPIs
-        total_qa_tasks = len(filtered_rows)
-        pending_qa = sum(1 for r in filtered_rows if not r.get('qa_outcome'))
-        completed_qa = sum(1 for r in filtered_rows if r.get('qa_outcome'))
-        
-        # Calculate average review time (placeholder - would need proper tracking)
-        avg_review_time = 2.5
-        
-        # Outcome distribution
-        outcomes = defaultdict(int)
-        for r in filtered_rows:
-            outcome = r.get('qa_outcome') or 'Pending'
-            outcomes[outcome] += 1
-        
-        # Daily trend
-        daily_reviews = defaultdict(int)
-        for r in filtered_rows:
-            qa_date = r.get('qa_checked_at')
-            if qa_date:
-                try:
-                    date_str = qa_date[:10]
-                    daily_reviews[date_str] += 1
-                except:
-                    pass
-        
-        daily_labels = sorted(daily_reviews.keys())[-7:]
-        daily_counts = [daily_reviews[d] for d in daily_labels]
-
-        # Build entries list for table
         entries = []
-        for row in filtered_rows[:50]:  # Limit to recent 50
-            status = derive_case_status(row)
-            entries.append({
-                'task_id': row.get('task_id'),
-                'status': str(status) if status else 'Unknown',
-                'qa_outcome': row.get('qa_outcome'),
-                'qa_comment': row.get('qa_comment'),
-                'updated_at': row.get('qa_checked_at') or row.get('updated_at')
-            })
+        for row in rows:
+            record = dict(row)
+            status = derive_case_status(record)
+            if status == "Completed":
+                record["status"] = status
+                entries.append({
+                    'task_id': record.get('task_id'),
+                    'status': status,
+                    'qa_outcome': record.get('qa_outcome'),
+                    'qa_comment': record.get('qa_comment'),
+                    'updated_at': record.get('qa_checked_at') or record.get('review_updated_at')
+                })
 
-        return jsonify({
-            'entries': entries,
-            'total_qa_tasks': total_qa_tasks,
-            'pending_qa': pending_qa,
-            'completed_qa': completed_qa,
-            'avg_review_time': avg_review_time,
-            'outcomes': dict(outcomes),
-            'daily_labels': daily_labels,
-            'daily_counts': daily_counts
-        })
+        return jsonify({'entries': entries})
     except Exception as e:
         import traceback
         print(f"Error in api_qa_dashboard: {str(e)}\n{traceback.format_exc()}")
@@ -10701,8 +10639,11 @@ def api_reviewer_dashboard():
             if "overdue" in st:
                 wip["overdue"] += 1
 
-        # Completed count - must match MyTasks "completed" filter
-        completed_count = 0
+        # Cases Submitted - count based on DateSenttoQC date within the filter
+        cases_submitted = 0
+        app.logger.debug(f"[Cases Submitted] Starting count for user_id={user_id}, date_range={date_range}")
+        app.logger.debug(f"[Cases Submitted] Total rows fetched: {len(all_rows_mine)}")
+        
         for r in all_rows_mine:
             if _outcome:
                 ro = str((r.get('outcome') or r.get('final_outcome') or '')).strip()
@@ -10710,17 +10651,13 @@ def api_reviewer_dashboard():
                     continue
             if r.get(completed_by_col) != user_id:
                 continue
-            dt = _parse_dt(r.get(completed_dt_col))
-            if dt and _within_range(dt):
-                # Also check that derived status is actually "Completed"
-                # Use best_status_with_raw_override to get accurate status (includes _in_qc_sampling from query)
-                from utils import best_status_with_raw_override
-                status_enum = best_status_with_raw_override(r)
-                st = (str(status_enum) if status_enum else "").lower()
-                # Only count as completed if status is exactly "Completed"
-                # Tasks in QC workflow (QC Waiting Assignment, QC Pending Review, etc.) should not be counted
-                if st == 'completed':
-                    completed_count += 1
+            # Check DateSenttoQC date instead of date_completed
+            sent_to_qc_dt = _parse_dt(r.get('DateSenttoQC'))
+            app.logger.debug(f"[Cases Submitted] Task {r.get('task_id')}: DateSenttoQC={r.get('DateSenttoQC')}, parsed={sent_to_qc_dt}, in_range={_within_range(sent_to_qc_dt) if sent_to_qc_dt else False}")
+            if sent_to_qc_dt and _within_range(sent_to_qc_dt):
+                cases_submitted += 1
+        
+        app.logger.debug(f"[Cases Submitted] Final count: {cases_submitted}")
 
         # QC stats
         qc_date_col = "qc_check_date"
@@ -11010,7 +10947,7 @@ def api_reviewer_dashboard():
 
         response_data = {
             'active_wip': active_wip,
-            'completed_count': completed_count,
+            'cases_submitted': cases_submitted,
             'qc_sample': qc_sample,
             'qc_pass_pct': qc_pass_pct,
             'qc_pass_cnt': qc_pass_cnt,
@@ -11025,6 +10962,8 @@ def api_reviewer_dashboard():
             'chaser_headers': chaser_week_headers,
             'chaser_overdue': chaser_overdue,
         }
+        
+        print(f"[DASHBOARD API] Returning data: active_wip={active_wip}, cases_submitted={cases_submitted}, qc_sample={qc_sample}")
         
         # Ensure JSON response with proper content-type
         resp = jsonify(response_data)
@@ -11174,9 +11113,11 @@ def api_my_tasks():
                 return False
                 
             if status_key in ('completed',):
-                result = is_completed_by_me and s == 'completed'
-                if raw_status.lower() == 'completed':
-                    print(f"[DEBUG] Task {t['task_id']}: is_completed_by_me={is_completed_by_me}, s='{s}', result={result}")
+                # Match dashboard logic: completed_by = me AND DateSenttoQC exists
+                # This counts tasks that have been submitted to QC (cases submitted)
+                date_sent = r.get('DateSenttoQC')
+                result = is_completed_by_me and bool(date_sent)
+                print(f"[DEBUG COMPLETED] Task {t['task_id']}: completed_by_me={is_completed_by_me}, DateSenttoQC='{date_sent}', result={result}")
                 return result
                 
             if status_key in ('qc_checked','qc','qc-checked'):
@@ -11238,9 +11179,9 @@ def api_my_tasks():
         if date_range and date_range != 'all':
             def _apply_date_filter(t):
                 r = next((row for row in all_rows if (row.get('task_id') or row.get('id')) == t['task_id']), {})
-                # For completed tasks, use date_completed; for others, use updated_at
-                if status_key == 'completed' and r.get(completed_dt):
-                    return _in_range(_parse_iso(r.get(completed_dt)))
+                # For completed tasks (cases submitted), use DateSenttoQC; for others, use updated_at
+                if status_key == 'completed' and r.get('DateSenttoQC'):
+                    return _in_range(_parse_iso(r.get('DateSenttoQC')))
                 return _in_range(_parse_iso(t.get('updated_at')))
             filtered = [t for t in filtered if _apply_date_filter(t)]
 
@@ -11585,44 +11526,6 @@ def api_team_leader_dashboard():
         qc_pass_cnt = sum(1 for o in qc_outcomes if o in ("pass", "pass with feedback"))
         qc_pass_pct = round((qc_pass_cnt / qc_sample) * 100, 1) if qc_sample > 0 else 0.0
         
-        # Get daily output data
-        from collections import defaultdict
-        daily_completions = defaultdict(int)
-        for r in all_completed:
-            dt = r.get(completed_dt)
-            if dt and _within_range(dt):
-                try:
-                    date_str = dt[:10]
-                    daily_completions[date_str] += 1
-                except:
-                    pass
-        
-        daily_labels = sorted(daily_completions.keys())[-7:]
-        daily_counts = [daily_completions[d] for d in daily_labels]
-        
-        # Get individual reviewer performance
-        reviewer_performance = []
-        for rev in reviewers:
-            conn = get_db()
-            cur = conn.cursor()
-            cur.execute(f"""
-                SELECT COUNT(*) as completed
-                FROM reviews
-                WHERE {assign_col} = ? 
-                  AND {completed_dt} IS NOT NULL AND {completed_dt} != ''
-            """, (rev['id'],))
-            completed = cur.fetchone()['completed'] or 0
-            conn.close()
-            
-            if _within_range:  # Filter by date if needed
-                # Re-query with date filter
-                pass  # Use completed count as is for now
-            
-            reviewer_performance.append({
-                'name': rev['name'] or rev['email'].split('@')[0],
-                'completed': completed
-            })
-        
         conn.close()
         
         return jsonify({
@@ -11633,10 +11536,7 @@ def api_team_leader_dashboard():
             'completed_count': completed_count,
             'qc_sample': qc_sample,
             'qc_pass_pct': qc_pass_pct,
-            'reviewers': reviewers,
-            'daily_labels': daily_labels,
-            'daily_counts': daily_counts,
-            'reviewer_performance': reviewer_performance
+            'reviewers': reviewers
         })
     except Exception as e:
         import traceback
@@ -11696,28 +11596,6 @@ def api_sme_dashboard():
         daily_labels = sorted(returns_per_day.keys())[-7:]
         daily_counts = [returns_per_day[d] for d in daily_labels]
         
-        # Calculate age profile by status
-        from collections import defaultdict
-        status_age_map = defaultdict(lambda: {'1–2 days': 0, '3–5 days': 0, '5 days+': 0})
-        
-        for r in rows:
-            status = derive_case_status(r)
-            status_str = str(status) if status else "Unknown"
-            
-            # Calculate age from last touched date
-            last_date = last_touched_date_for_record(r, 1)  # Use level 1
-            if last_date:
-                age_bucket = age_bucket_from_dt(last_date, today)
-                status_age_map[status_str][age_bucket] += 1
-        
-        # Format age rows for frontend
-        age_rows = []
-        for status, buckets in sorted(status_age_map.items()):
-            age_rows.append({
-                'status': status,
-                'age_buckets': buckets
-            })
-        
         return jsonify({
             'selected_date': date_range,
             'open_queue': open_queue,
@@ -11725,8 +11603,7 @@ def api_sme_dashboard():
             'total_returned': total_returned,
             'avg_tat': avg_tat,
             'daily_labels': daily_labels,
-            'daily_counts': daily_counts,
-            'age_rows': age_rows
+            'daily_counts': daily_counts
         })
     except Exception as e:
         import traceback
@@ -13391,6 +13268,7 @@ def api_save_progress(task_id):
             update_fields['outcome'] = outcome
         if rationale:
             update_fields['rationale'] = rationale
+            update_fields['decision_rationale'] = rationale  # Also save to decision_rationale for frontend
         if primary_rationale:
             update_fields['primary_rationale'] = primary_rationale
         if case_summary:
@@ -13490,6 +13368,7 @@ def api_submit_review(task_id):
             'updated_at': now,
             'outcome': outcome,
             'rationale': rationale,
+            'decision_rationale': rationale,  # Also save to decision_rationale for frontend
             'review_end_time': now
         }
         
@@ -13643,6 +13522,7 @@ def api_rework_complete(task_id):
             'updated_at': now,
             'outcome': outcome,
             'rationale': rationale,
+            'decision_rationale': rationale,  # Also save to decision_rationale for frontend
             'review_end_time': now
         }
         
@@ -15097,7 +14977,12 @@ def api_transaction_alerts():
         where_clause = "WHERE " + " AND ".join(where) if where else ""
         
         sql = f"""
-            SELECT a.*, t.country_iso2, t.txn_date
+            SELECT a.*, 
+                   t.id as transaction_id,
+                   t.base_amount as amount,
+                   t.currency,
+                   t.country_iso2, 
+                   t.txn_date as transaction_date
             FROM alerts a
             LEFT JOIN transactions t ON t.id = a.txn_id
             {where_clause}
@@ -15140,7 +15025,22 @@ def api_transaction_alerts():
             d["rule_tags"] = ", ".join(tags_list)
             alerts.append(d)
         
+        # Debug logging
+        print(f"[ALERTS] Returning {len(alerts)} alerts for customer {customer_id}")
+        if alerts:
+            print(f"[ALERTS] Sample alert keys: {list(alerts[0].keys())}")
+            sample = alerts[0]
+            print(f"[ALERTS] Sample alert: transaction_id={sample.get('transaction_id')}, amount={sample.get('amount')}, currency={sample.get('currency')}")
+        
         conn.close()
+        
+        # Debug: print actual JSON being returned
+        import json
+        if alerts:
+            print(f"[ALERTS] First alert being returned:")
+            first_alert = alerts[0]
+            for key in ['transaction_id', 'amount', 'currency', 'transaction_date', 'severity']:
+                print(f"  {key}: {first_alert.get(key)}")
         
         return jsonify({
             "status": "ok",
@@ -15187,7 +15087,6 @@ def api_transaction_explore():
         risk_list = [r.strip().upper() for r in risk.split(",") if r.strip()]
         risk_list = [r for r in risk_list if r in valid_risks]
         if risk_list:
-            join_risk = True
             placeholders = ",".join(["?"] * len(risk_list))
             where.append(f"r.risk_level IN ({placeholders})")
             params.extend(risk_list)
@@ -15199,21 +15098,71 @@ def api_transaction_explore():
             where.append("t.txn_date <= ?")
             params.append(date_to)
         
-        join_clause = "JOIN ref_country_risk r ON r.iso2 = IFNULL(t.country_iso2, '')" if join_risk else ""
         where_clause = "WHERE " + " AND ".join(where)
         
         sql = f"""
             SELECT t.id, t.txn_date, t.customer_id, t.direction, t.base_amount, t.currency,
-                   t.country_iso2, t.channel, t.payer_sort_code, t.payee_sort_code, t.narrative
+                   t.country_iso2, t.channel, t.payer_sort_code, t.payee_sort_code, t.narrative,
+                   r.risk_level, r.score as country_score,
+                   a.id as alert_id, a.severity as alert_severity, a.score as alert_score
             FROM transactions t
-            {join_clause}
+            LEFT JOIN ref_country_risk r ON r.iso2 = IFNULL(t.country_iso2, 'GB')
+            LEFT JOIN alerts a ON a.txn_id = t.id
             {where_clause}
             ORDER BY t.txn_date DESC, t.id DESC
             LIMIT 1000
         """
         
         rows = cur.execute(sql, params).fetchall()
-        transactions = [dict(r) for r in rows]
+        transactions = []
+        print(f"[EXPLORE] Processing {len(rows)} transactions for customer {customer_id}")
+        
+        for r in rows:
+            tx = dict(r)
+            
+            # Calculate risk score based on country risk and alerts
+            country_score = tx.get('country_score', 0) or 0
+            alert_score = tx.get('alert_score', 0) or 0
+            alert_severity = tx.get('alert_severity', '')
+            
+            # Risk score is max of country score and alert score, normalized to 0-1
+            risk_score = max(country_score, alert_score) / 100.0
+            
+            # Determine risk level for display
+            # CRITICAL: PROHIBITED countries or CRITICAL alerts (score 100)
+            if alert_severity == 'CRITICAL' or country_score == 100:
+                risk_level = 'CRITICAL'
+            # HIGH: HIGH alerts or risk score >= 70%
+            elif alert_severity == 'HIGH' or risk_score >= 0.7:
+                risk_level = 'HIGH'
+            # MEDIUM: MEDIUM alerts or risk score >= 40%
+            elif alert_severity == 'MEDIUM' or risk_score >= 0.4:
+                risk_level = 'MEDIUM'
+            else:
+                risk_level = 'LOW'
+            
+            # Debug log for problematic transactions
+            if tx.get('country_iso2') == 'KP' or (alert_severity and alert_severity != 'LOW'):
+                print(f"[EXPLORE] TX {tx.get('id')}: country={tx.get('country_iso2')}, country_score={country_score}, alert_score={alert_score}, alert_severity={alert_severity}, risk_score={risk_score}, risk_level={risk_level}")
+            
+            # Map backend fields to frontend expected field names
+            transactions.append({
+                'id': tx.get('id'),
+                'transaction_date': tx.get('txn_date'),
+                'reference': tx.get('id'),
+                'description': tx.get('narrative'),
+                'counterparty': f"{tx.get('payer_sort_code', '')} / {tx.get('payee_sort_code', '')}" if tx.get('payer_sort_code') else '—',
+                'counterparty_country': tx.get('country_iso2'),
+                'payment_method': tx.get('channel'),
+                'amount': tx.get('base_amount'),
+                'currency': tx.get('currency', 'GBP'),
+                'direction': tx.get('direction'),
+                'risk_score': risk_score,
+                'risk_level': risk_level,
+                'has_alert': bool(tx.get('alert_id')),
+                'alert_severity': alert_severity,
+                'flagged': bool(tx.get('alert_id'))
+            })
         
         # Get distinct channels
         ch_rows = cur.execute("SELECT DISTINCT lower(IFNULL(channel,'')) as ch FROM transactions WHERE customer_id = ? ORDER BY ch", (customer_id,)).fetchall()
@@ -15712,15 +15661,132 @@ def api_transaction_ai_rationale():
             est_income = _to_float_or_none(est_income_str)
             est_expenditure = _to_float_or_none(est_expenditure_str)
             
-            # For now, create a simple rationale text
-            # Full build_rationale_text logic can be ported later if needed
-            rationale_text = f"Rationale for {customer_id} from {p_from or 'start'} to {p_to or 'end'}"
+            # Fetch transaction data for the period to build comprehensive rationale
+            tx_where = ["t.customer_id = ?"]
+            tx_params = [customer_id]
+            if p_from:
+                tx_where.append("t.txn_date >= ?")
+                tx_params.append(p_from)
+            if p_to:
+                tx_where.append("t.txn_date <= ?")
+                tx_params.append(p_to)
+            
+            tx_sql = f"""
+                SELECT t.id, t.txn_date, t.direction, t.base_amount, t.currency, t.country_iso2,
+                       r.risk_level, r.score as country_score,
+                       a.id as alert_id, a.severity as alert_severity, a.reasons
+                FROM transactions t
+                LEFT JOIN ref_country_risk r ON r.iso2 = IFNULL(t.country_iso2, 'GB')
+                LEFT JOIN alerts a ON a.txn_id = t.id
+                WHERE {' AND '.join(tx_where)}
+                ORDER BY t.txn_date DESC
+            """
+            
+            tx_rows = cur.execute(tx_sql, tx_params).fetchall()
+            
+            # Calculate transaction statistics
+            total_in = sum(row['base_amount'] for row in tx_rows if row['direction'] == 'in')
+            total_out = sum(row['base_amount'] for row in tx_rows if row['direction'] == 'out')
+            count_in = sum(1 for row in tx_rows if row['direction'] == 'in')
+            count_out = sum(1 for row in tx_rows if row['direction'] == 'out')
+            
+            # Analyze alerts
+            critical_alerts = [row for row in tx_rows if row['alert_severity'] == 'CRITICAL']
+            high_alerts = [row for row in tx_rows if row['alert_severity'] == 'HIGH']
+            medium_alerts = [row for row in tx_rows if row['alert_severity'] == 'MEDIUM']
+            
+            # Analyze country risk
+            prohibited_txns = [row for row in tx_rows if row['risk_level'] == 'PROHIBITED']
+            high_risk_txns = [row for row in tx_rows if row['risk_level'] in ('HIGH', 'HIGH_3RD')]
+            
+            # Get unique high-risk countries
+            high_risk_countries = set()
+            for row in tx_rows:
+                if row['risk_level'] in ('PROHIBITED', 'HIGH', 'HIGH_3RD'):
+                    high_risk_countries.add(row['country_iso2'])
+            
+            # Build comprehensive rationale text
+            rationale_text = f"Transaction Review Analysis for {customer_id}\n"
+            rationale_text += f"Period: {p_from or 'inception'} to {p_to or 'present'}\n"
+            rationale_text += "=" * 80 + "\n\n"
+            
+            # Business information
             if nature_of_business:
-                rationale_text += f"\nNature of business: {nature_of_business}"
-            if est_income:
-                rationale_text += f"\nEstimated monthly income: £{est_income:,.2f}"
-            if est_expenditure:
-                rationale_text += f"\nEstimated monthly expenditure: £{est_expenditure:,.2f}"
+                rationale_text += f"NATURE OF BUSINESS:\n{nature_of_business}\n\n"
+            
+            # Transaction summary
+            rationale_text += f"TRANSACTION SUMMARY:\n"
+            rationale_text += f"• Total transactions analyzed: {len(tx_rows)}\n"
+            rationale_text += f"• Incoming: {count_in} transactions totaling £{total_in:,.2f}\n"
+            rationale_text += f"• Outgoing: {count_out} transactions totaling £{total_out:,.2f}\n"
+            rationale_text += f"• Net position: £{(total_in - total_out):,.2f}\n\n"
+            
+            # Financial estimates
+            if est_income or est_expenditure:
+                rationale_text += f"ESTIMATED FINANCIALS:\n"
+                if est_income:
+                    rationale_text += f"• Expected monthly income: £{est_income:,.2f}\n"
+                if est_expenditure:
+                    rationale_text += f"• Expected monthly expenditure: £{est_expenditure:,.2f}\n"
+                rationale_text += "\n"
+            
+            # Alerts analysis
+            if critical_alerts or high_alerts or medium_alerts:
+                rationale_text += f"ALERTS IDENTIFIED:\n"
+                if critical_alerts:
+                    rationale_text += f"• CRITICAL: {len(critical_alerts)} alert(s)\n"
+                    for alert in critical_alerts[:3]:  # Show first 3
+                        try:
+                            reasons = json.loads(alert['reasons']) if alert['reasons'] else []
+                            reason_text = reasons[0] if reasons else "High-risk transaction"
+                        except:
+                            reason_text = "High-risk transaction"
+                        rationale_text += f"  - {alert['id']}: {reason_text}\n"
+                
+                if high_alerts:
+                    rationale_text += f"• HIGH: {len(high_alerts)} alert(s)\n"
+                    for alert in high_alerts[:3]:  # Show first 3
+                        try:
+                            reasons = json.loads(alert['reasons']) if alert['reasons'] else []
+                            reason_text = reasons[0] if reasons else "High-risk transaction"
+                        except:
+                            reason_text = "High-risk transaction"
+                        rationale_text += f"  - {alert['id']}: {reason_text}\n"
+                
+                if medium_alerts:
+                    rationale_text += f"• MEDIUM: {len(medium_alerts)} alert(s)\n"
+                
+                rationale_text += "\n"
+            
+            # Country risk analysis
+            if prohibited_txns or high_risk_txns:
+                rationale_text += f"HIGH-RISK JURISDICTIONS:\n"
+                if prohibited_txns:
+                    rationale_text += f"• PROHIBITED countries: {len(prohibited_txns)} transaction(s)\n"
+                    for tx in prohibited_txns[:5]:
+                        rationale_text += f"  - {tx['id']}: {tx['country_iso2']} - £{tx['base_amount']:,.2f} ({tx['direction']})\n"
+                
+                if high_risk_txns:
+                    rationale_text += f"• HIGH risk countries: {len(high_risk_txns)} transaction(s)\n"
+                
+                if high_risk_countries:
+                    rationale_text += f"• Countries of concern: {', '.join(sorted(high_risk_countries))}\n"
+                
+                rationale_text += "\n"
+            
+            # Recommendations
+            rationale_text += f"RECOMMENDATIONS:\n"
+            if critical_alerts or prohibited_txns:
+                rationale_text += "• IMMEDIATE ACTION REQUIRED: Transactions to prohibited jurisdictions identified\n"
+                rationale_text += "• Escalate to senior management and compliance officer\n"
+                rationale_text += "• Consider filing Suspicious Activity Report (SAR)\n"
+            elif high_alerts or high_risk_txns:
+                rationale_text += "• Enhanced due diligence recommended\n"
+                rationale_text += "• Review source of funds and purpose of high-risk transactions\n"
+                rationale_text += "• Obtain additional documentation for transactions to high-risk countries\n"
+            else:
+                rationale_text += "• Standard monitoring procedures apply\n"
+                rationale_text += "• Continue periodic review of transaction patterns\n"
             
             # Check if rationale exists
             existing = cur.execute(

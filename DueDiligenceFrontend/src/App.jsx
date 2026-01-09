@@ -85,24 +85,31 @@ function HomeRedirect() {
   if (role === 'admin') {
     console.log('[HomeRedirect] Redirecting admin to /admin/users');
     return <Navigate to="/admin/users" replace />;
-  } else if (role.startsWith('team_lead')) {
-    const level = role.split('_').pop();
+  } else if (role.startsWith('team_lead') || role === 'team_lead') {
+    console.log('[HomeRedirect] Redirecting team_lead to /team_leader_dashboard');
+    const level = role.includes('_') ? role.split('_').pop() : '1';
     return <Navigate to={`/team_leader_dashboard?level=${level}`} replace />;
-  } else if (role === 'operations_manager') {
+  } else if (role === 'operations_manager' || role === 'operations') {
+    console.log('[HomeRedirect] Redirecting operations to /operations_dashboard');
     return <Navigate to="/operations_dashboard" replace />;
-  } else if (role.startsWith('reviewer')) {
+  } else if (role.startsWith('reviewer') || role.startsWith('reviewer_')) {
+    console.log('[HomeRedirect] Redirecting reviewer to /reviewer_dashboard');
     return <Navigate to="/reviewer_dashboard" replace />;
-  } else if (['qc_1', 'qc_2', 'qc_3'].includes(role)) {
+  } else if (['qc_1', 'qc_2', 'qc_3', 'qc_team_lead'].includes(role)) {
+    console.log('[HomeRedirect] Redirecting QC team lead to /qc_lead_dashboard');
     return <Navigate to="/qc_lead_dashboard" replace />;
-  } else if (role.startsWith('qc_review')) {
+  } else if (role.startsWith('qc_review') || role === 'qc') {
+    console.log('[HomeRedirect] Redirecting QC to /qc_dashboard');
     return <Navigate to="/qc_dashboard" replace />;
-  } else if (role.startsWith('qa')) {
+  } else if (role.startsWith('qa') || role === 'qa') {
+    console.log('[HomeRedirect] Redirecting QA to /qa_dashboard');
     return <Navigate to="/qa_dashboard" replace />;
   } else if (role === 'sme') {
+    console.log('[HomeRedirect] Redirecting SME to /sme_dashboard');
     return <Navigate to="/sme_dashboard" replace />;
   }
   
-  console.log('[HomeRedirect] No role match, redirecting to /login');
+  console.log('[HomeRedirect] No role match for:', role, '- redirecting to /login');
   return <Navigate to="/login" replace />;
 }
 

@@ -32,22 +32,27 @@ function Login() {
       
       // Redirect based on role (matching Flask app.py login() function exactly)
       const role = result.user?.role?.toLowerCase() || '';
+      console.log('[LOGIN] Redirecting user with role:', role);
+      
       if (role === 'admin') {
         navigate('/admin/users');
-      } else if (['qc_1', 'qc_2', 'qc_3'].includes(role)) {
+      } else if (role === 'operations' || role === 'operations_manager') {
+        navigate('/operations_dashboard');
+      } else if (['qc_1', 'qc_2', 'qc_3', 'qc_team_lead'].includes(role)) {
         navigate('/qc_lead_dashboard');
-      } else if (role.startsWith('qc_review')) {
+      } else if (role.startsWith('qc_review') || role === 'qc') {
         navigate('/qc_dashboard');
-      } else if (role.startsWith('team_lead')) {
-        const level = role.split('_').pop();
+      } else if (role.startsWith('team_lead') || role === 'team_lead') {
+        const level = role.includes('_') ? role.split('_').pop() : '1';
         navigate(`/team_leader_dashboard?level=${level}`);
-      } else if (role.startsWith('reviewer')) {
+      } else if (role.startsWith('reviewer') || role.startsWith('reviewer_')) {
         navigate('/reviewer_dashboard');
-      } else if (role === 'qa') {
+      } else if (role === 'qa' || role.startsWith('qa')) {
         navigate('/qa_dashboard');
       } else if (role === 'sme') {
         navigate('/sme_dashboard');
       } else {
+        console.log('[LOGIN] No specific route for role:', role, '- going to home');
         navigate('/');
       }
     } catch (err) {

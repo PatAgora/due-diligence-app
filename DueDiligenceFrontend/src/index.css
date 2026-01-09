@@ -1,6 +1,6 @@
 :root {
   --sidebar-w: 240px;
-  --sidebar-bg: #0b1320;
+  --sidebar-bg: #1a2332;
   --sidebar-link: #c7cfdb;
   --sidebar-link-active: #ffffff;
   --page-bg: #f5f6f8; /* Agora light grey background */
@@ -47,7 +47,7 @@ body {
   left: 0;
   bottom: 0;
   width: var(--sidebar-w);
-  background: #0b1320;
+  background: linear-gradient(135deg, #1a2332 0%, #2D3847 100%);
   color: #eef2f7;
   display: flex;
   flex-direction: column;
@@ -81,7 +81,8 @@ body {
   padding: 10px 12px;
   text-decoration: none;
   text-align: left;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
+  margin-top: 0;
 }
 
 .sidebar-content .nav-link:hover {
@@ -152,7 +153,15 @@ body {
   font-size: 0.95rem;
   padding: 10px 12px 10px 2.5rem;
   text-align: left;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
+  margin-top: 0;
+}
+
+/* Sidebar divider consistent spacing */
+.sidebar-divider {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+  opacity: 0.3;
 }
 
 .content-wrap {

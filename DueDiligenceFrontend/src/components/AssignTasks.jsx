@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import BaseLayout from './BaseLayout';
 import './AssignTasks.css';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 function AssignTasks() {
   const navigate = useNavigate();
@@ -154,11 +154,7 @@ function AssignTasks() {
                               onChange={() => handleTaskToggle(task.id)}
                             />
                             <div>
-                              <strong>{task.task_id}</strong>
-                              <br />
-                              <small className="text-muted">
-                                Status: Under Review | Score: {task.total_score?.toFixed(2) || '0.00'}
-                              </small>
+                              <strong>{task.case_id || task.task_id || `Task #${task.id}`}</strong>
                             </div>
                           </div>
                           <span className="badge bg-secondary">

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
@@ -326,7 +326,10 @@ function TransactionDashboard({ customerId, taskId }) {
                         data: data.trend_in,
                         tension: 0.3,
                         borderColor: '#198754',
-                        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                        backgroundColor: 'rgba(25, 135, 84, 0.05)',
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
                         fill: true
                       },
                       {
@@ -334,7 +337,10 @@ function TransactionDashboard({ customerId, taskId }) {
                         data: data.trend_out,
                         tension: 0.3,
                         borderColor: '#dc3545',
-                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        backgroundColor: 'rgba(220, 53, 69, 0.05)',
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
                         fill: true
                       }
                     ]

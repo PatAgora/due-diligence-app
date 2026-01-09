@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 function TransactionAlerts({ customerId, taskId }) {
   const navigate = useNavigate();
@@ -9,20 +9,27 @@ function TransactionAlerts({ customerId, taskId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [severityFilter, setSeverityFilter] = useState('');
-  const [tagFilter, setTagFilter] = useState('');
 
   useEffect(() => {
     if (customerId) {
       fetchAlerts();
     }
-  }, [customerId, severityFilter, tagFilter]);
+  }, [customerId, severityFilter]);
+
+  const getSeverityOrder = (severity) => {
+    const s = (severity || '').toUpperCase();
+    if (s === 'CRITICAL') return 0;
+    if (s === 'HIGH') return 1;
+    if (s === 'MEDIUM') return 2;
+    if (s === 'LOW') return 3;
+    return 4;
+  };
 
   const fetchAlerts = async () => {
     try {
       setLoading(true);
       let url = `${BASE_URL}/api/transaction/alerts?customer_id=${customerId}`;
       if (severityFilter) url += `&severity=${severityFilter}`;
-      if (tagFilter) url += `&tag=${tagFilter}`;
       
       const response = await fetch(url, { credentials: 'include' });
 
@@ -31,6 +38,29 @@ function TransactionAlerts({ customerId, taskId }) {
       }
 
       const result = await response.json();
+      
+      // Debug logging
+      console.log('[TransactionAlerts] Raw API response:', JSON.stringify(result, null, 2));
+      if (result.alerts && result.alerts.length > 0) {
+        console.log('[TransactionAlerts] First alert fields:', {
+          transaction_id: result.alerts[0].transaction_id,
+          amount: result.alerts[0].amount,
+          currency: result.alerts[0].currency,
+          transaction_date: result.alerts[0].transaction_date,
+          severity: result.alerts[0].severity,
+          country_iso2: result.alerts[0].country_iso2
+        });
+      }
+      
+      // Sort alerts by severity (CRITICAL, HIGH, MEDIUM, LOW)
+      if (result.alerts) {
+        result.alerts.sort((a, b) => {
+          const orderA = getSeverityOrder(a.severity);
+          const orderB = getSeverityOrder(b.severity);
+          return orderA - orderB;
+        });
+      }
+      
       setData(result);
     } catch (err) {
       console.error('Error fetching alerts:', err);
@@ -49,10 +79,10 @@ function TransactionAlerts({ customerId, taskId }) {
 
   const getSeverityBadgeClass = (severity) => {
     const s = (severity || '').toUpperCase();
-    if (s === 'CRITICAL') return 'danger';
-    if (s === 'HIGH') return 'warning';
-    if (s === 'MEDIUM') return 'info';
-    if (s === 'LOW') return 'secondary';
+    if (s === 'CRITICAL') return 'danger';  // Red
+    if (s === 'HIGH') return 'danger';      // Red
+    if (s === 'MEDIUM') return 'warning';   // Orange
+    if (s === 'LOW') return 'success';      // Green (changed from grey)
     return 'secondary';
   };
 
@@ -108,19 +138,6 @@ function TransactionAlerts({ customerId, taskId }) {
             <option value="INFO">Info</option>
           </select>
         </div>
-        <div className="col-auto">
-          <label className="form-label">Tag</label>
-          <select 
-            className="form-select" 
-            value={tagFilter}
-            onChange={(e) => setTagFilter(e.target.value)}
-          >
-            <option value="">All</option>
-            {data?.available_tags?.map(tag => (
-              <option key={tag} value={tag}>{tag}</option>
-            ))}
-          </select>
-        </div>
       </div>
 
       {/* Alerts Table */}
@@ -134,33 +151,59 @@ function TransactionAlerts({ customerId, taskId }) {
                     <th>Date</th>
                     <th>Transaction ID</th>
                     <th>Severity</th>
-                    <th>Score</th>
-                    <th>Reasons</th>
-                    <th>Tags</th>
+                    <th>Amount</th>
                     <th>Country</th>
+                    <th>Reason</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {data.alerts.map((alert, idx) => (
-                    <tr key={idx}>
-                      <td>{alert.txn_date || alert.created_at}</td>
-                      <td className="text-monospace small">{alert.txn_id}</td>
-                      <td>
-                        <span className={`badge bg-${getSeverityBadgeClass(alert.severity)}`}>
-                          {alert.severity}
-                        </span>
-                      </td>
-                      <td>{alert.score}</td>
-                      <td>{alert.reasons || '—'}</td>
-                      <td>{alert.rule_tags || '—'}</td>
-                      <td>{alert.country_iso2 || '—'}</td>
-                    </tr>
-                  ))}
+                  {data.alerts.map((alert, idx) => {
+                    const isHighRisk = alert.risk_score > 0.7;
+                    return (
+                      <tr key={idx}>
+                        <td>{alert.transaction_date || alert.created_at?.split(' ')[0] || '—'}</td>
+                        <td className="text-monospace small">{alert.transaction_id || '—'}</td>
+                        <td>
+                          <span className={`badge bg-${getSeverityBadgeClass(alert.severity)}`}>
+                            {alert.severity}
+                          </span>
+                        </td>
+                        <td>
+                          {alert.amount && alert.currency ? (
+                            <span>
+                              {alert.currency} {parseFloat(alert.amount || 0).toLocaleString('en-GB', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                              })}
+                            </span>
+                          ) : '—'}
+                        </td>
+                        <td>
+                          {isHighRisk && '🔴 '}
+                          {alert.country_iso2 || '—'}
+                        </td>
+                        <td style={{ maxWidth: '400px' }}>
+                          <div style={{ 
+                            whiteSpace: 'normal',
+                            wordWrap: 'break-word'
+                          }}>
+                            {alert.reasons || '—'}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           ) : (
             <p className="text-muted">No alerts found for this customer.</p>
+          )}
+          
+          {data?.alerts && data.alerts.length > 0 && (
+            <div className="mt-3 text-muted small">
+              <strong>Total Alerts:</strong> {data.alerts.length}
+            </div>
           )}
         </div>
       </div>

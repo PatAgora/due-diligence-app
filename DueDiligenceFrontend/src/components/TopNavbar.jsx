@@ -110,15 +110,6 @@ function TopNavbar() {
           paddingLeft: '20px',
           borderLeft: '1px solid rgba(255, 255, 255, 0.2)'
         }}>
-          <span style={{ 
-            fontSize: '12px', 
-            color: 'rgba(255, 255, 255, 0.7)',
-            fontWeight: 500,
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-          }}>
-            Powered By
-          </span>
           <img 
             src="/img/agora_logo.jpg" 
             alt="Agora Consulting" 

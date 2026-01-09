@@ -1,7 +1,10 @@
 // API service for communicating with Flask backend
 
-// Use full URL to Flask backend to avoid proxy issues
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+// IMPORTANT: Always use empty string to force relative URLs (which use Vite proxy)
+// Never use http://localhost:5050 as it will fail from HTTPS pages (mixed content)
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL !== undefined 
+  ? import.meta.env.VITE_API_BASE_URL 
+  : '';
 
 // Helper function to get CSRF token from cookies
 function getCSRFToken() {
@@ -55,17 +58,35 @@ export const authAPI = {
     formData.append('email', email);
     formData.append('password', password);
 
-    const response = await fetch(`${API_BASE_URL}/login`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json',
-      },
-      body: formData.toString(),
-    });
+    let response;
+    try {
+      console.log('[LOGIN] Attempting fetch to:', `${API_BASE_URL}/login`);
+      console.log('[LOGIN] API_BASE_URL value:', API_BASE_URL);
+      response = await fetch(`${API_BASE_URL}/login`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
+        },
+        body: formData.toString(),
+      });
+      console.log('[LOGIN] Fetch successful, status:', response.status);
+    } catch (networkError) {
+      console.error('[LOGIN] Network error during login:', networkError);
+      console.error('[LOGIN] Error type:', networkError.name);
+      console.error('[LOGIN] Error message:', networkError.message);
+      console.error('[LOGIN] Error stack:', networkError.stack);
+      throw networkError; // Throw original error to see actual message
+    }
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      console.error('Error parsing login response:', parseError);
+      throw new Error('Server returned invalid response. Please try again.');
+    }
     
     if (response.ok) {
       // Check if 2FA is required

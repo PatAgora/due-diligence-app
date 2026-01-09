@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Test</title>
+</head>
+<body>
+    <h1>Login Test</h1>
+    <form id="loginForm">
+        <input type="email" id="email" value="ops@scrutinise.co.uk" placeholder="Email"><br>
+        <input type="password" id="password" value="ops123" placeholder="Password"><br>
+        <button type="submit">Login</button>
+    </form>
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.innerHTML = 'Sending request...';
+            
+            try {
+                const formData = new URLSearchParams();
+                formData.append('email', email);
+                formData.append('password', password);
+                
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Accept': 'application/json',
+                    },
+                    body: formData.toString(),
+                });
+                
+                resultDiv.innerHTML = `Status: ${response.status}<br>`;
+                resultDiv.innerHTML += `OK: ${response.ok}<br>`;
+                resultDiv.innerHTML += `Response Type: ${response.headers.get('content-type')}<br>`;
+                
+                const text = await response.text();
+                resultDiv.innerHTML += `Body: ${text}<br>`;
+                
+                const data = JSON.parse(text);
+                resultDiv.innerHTML += `Parsed: ${JSON.stringify(data, null, 2)}`;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `Error: ${error.message}<br>${error.stack}`;
+            }
+        });
+    </script>
+</body>
+</html>

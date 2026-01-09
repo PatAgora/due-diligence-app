@@ -3,10 +3,11 @@ import { useSearchParams, Link, useLocation, useNavigate } from 'react-router-do
 import { useAuth } from '../contexts/AuthContext';
 import { useModuleSettings } from '../contexts/ModuleSettingsContext';
 import { usePermissions } from '../contexts/PermissionsContext';
+import TopNavbar from './TopNavbar';
 
 import './MyTasks.css';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 function MyTasks() {
   const location = useLocation();
@@ -49,11 +50,22 @@ function MyTasks() {
   const date = searchParams.get('date') || '';
   const dateRange = searchParams.get('date_range') || 'all';
   const ageBucket = searchParams.get('age_bucket') || '';
+  const excludeCompleted = searchParams.get('exclude_completed') === 'true';
 
   // Check permissions - can_view allows access, can_edit allows interactions
   // Check both "review_tasks" and "review" (in case database uses "review")
   const canViewTasks = canView('review_tasks') || canView('review');
   const canEditTasks = canEdit('review_tasks') || canEdit('review');
+  
+  // Auto-filter: Exclude completed cases by default on initial load
+  useEffect(() => {
+    // Only apply auto-filter if no status filter is already set
+    if (!searchParams.has('status') && !searchParams.has('exclude_completed')) {
+      const params = new URLSearchParams(searchParams);
+      params.set('exclude_completed', 'true');
+      setSearchParams(params, { replace: true });
+    }
+  }, []); // Run only once on mount
   
   useEffect(() => {
     if (canViewTasks) {
@@ -106,6 +118,20 @@ function MyTasks() {
       params.set('date', newDate);
     } else {
       params.delete('date');
+    }
+    setSearchParams(params);
+  };
+
+  const handleShowCompletedToggle = () => {
+    const params = new URLSearchParams(searchParams);
+    const isCurrentlyExcluded = params.get('exclude_completed') === 'true';
+    
+    if (isCurrentlyExcluded) {
+      // Currently excluding, so now show completed
+      params.delete('exclude_completed');
+    } else {
+      // Currently showing completed, so now exclude
+      params.set('exclude_completed', 'true');
     }
     setSearchParams(params);
   };
@@ -174,7 +200,8 @@ function MyTasks() {
             </a>
           </div>
         </nav>
-        <main style={{ marginLeft: '240px', padding: '10px 10px 10px 0', minHeight: '100%' }}>
+        <TopNavbar />
+        <main style={{ marginLeft: '240px', marginTop: '60px', padding: '10px 10px 10px 0', minHeight: '100%' }}>
           <div className="text-center py-5">
             <div className="spinner-border text-primary" role="status">
               <span className="visually-hidden">Loading...</span>
@@ -188,6 +215,7 @@ function MyTasks() {
   if (error) {
     return (
       <>
+        <TopNavbar />
         <nav className="sidebar-nav scrutinise-dark">
           <div className="sidebar-brand">
             <span className="scrutinise-brand">
@@ -257,27 +285,13 @@ function MyTasks() {
           </a>
         </div>
       </nav>
-      <main style={{ marginLeft: '280px', padding: '20px 20px 20px 0', minHeight: '100%' }}>
+      <TopNavbar />
+      <main style={{ marginLeft: '280px', marginTop: '60px', padding: '20px 20px 20px 0', minHeight: '100%' }}>
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h2 className="mb-0">My Assigned Tasks</h2>
-          <span className="badge bg-primary fs-6">{tasks.length} task(s)</span>
         </div>
 
-        {/* Display active filters */}
-        {(status || ageBucket || date) && (
-          <div className="mb-3">
-            <strong>Filters: </strong>
-            {status && (
-              <span className="badge bg-info me-2">Status: {status}</span>
-            )}
-            {ageBucket && (
-              <span className="badge bg-info me-2">Age: {ageBucket}</span>
-            )}
-            {date && (
-              <span className="badge bg-info me-2">Date: {date}</span>
-            )}
-          </div>
-        )}
+        {/* Display active filters - removed */}
 
         <form method="get" className="mb-3" style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
           <div>
@@ -330,6 +344,19 @@ function MyTasks() {
               <option value="week">This Week</option>
             </select>
           </div>
+
+          <div className="d-flex align-items-center">
+            <input
+              type="checkbox"
+              id="show_completed"
+              checked={!excludeCompleted}
+              onChange={handleShowCompletedToggle}
+              className="form-check-input me-2"
+            />
+            <label htmlFor="show_completed" className="form-check-label">
+              <strong>Show Completed</strong>
+            </label>
+          </div>
         </form>
 
         <div className="table-responsive">
@@ -337,8 +364,6 @@ function MyTasks() {
             <thead className="table-dark">
               <tr>
                 <th>Task ID</th>
-                <th>Hit Type</th>
-                <th>Total Score</th>
                 <th>Status</th>
                 <th>Last Updated</th>
                 <th>Actions</th>
@@ -348,18 +373,16 @@ function MyTasks() {
               {tasks.length > 0 ? (
                 tasks.map((task) => (
                   <tr
-                    key={task.task_id}
+                    key={task.task_id || task.id}
                     style={{ backgroundColor: getRowBgColor(task.status) }}
                   >
-                    <td>{task.task_id}</td>
-                    <td>{task.hit_type || '—'}</td>
-                    <td>{task.total_score || '—'}</td>
+                    <td>{task.task_id || task.id}</td>
                     <td>{task.status}</td>
                     <td>{formatDate(task.updated_at)}</td>
                     <td>
                       {canEditTasks ? (
                         <Link
-                          to={`/view_task/${task.task_id}`}
+                          to={`/view_task/${task.task_id || task.id}`}
                           className="btn btn-sm btn-primary"
                         >
                           Review
@@ -374,7 +397,7 @@ function MyTasks() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="text-center text-muted py-4">
+                  <td colSpan="4" className="text-center text-muted py-4">
                     No tasks found for the selected filters
                   </td>
                 </tr>

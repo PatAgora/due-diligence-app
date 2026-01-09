@@ -6,7 +6,7 @@ import { usePermissions } from '../contexts/PermissionsContext';
 import { useFieldVisibility } from '../contexts/FieldVisibilityContext';
 import './ReviewerPanel.css';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5050';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 function ReviewerPanel() {
   const { taskId } = useParams();
@@ -782,7 +782,7 @@ function ReviewerPanel() {
     }
   };
 
-  const handleSaveChaser = async (chaserNum, date) => {
+  const handleSaveChaser = async (chaserNum, date, silent = false) => {
     const formattedDate = validateAndFormatDate(date);
     if (!formattedDate) {
       return;
@@ -791,7 +791,13 @@ function ReviewerPanel() {
     try {
       setSaving(true);
       const formData = new FormData();
-      formData.append(`chaser${chaserNum}_issued`, formattedDate);
+      
+      // Handle NTC separately
+      if (chaserNum === 'NTC') {
+        formData.append('ntc_issued', formattedDate);
+      } else {
+        formData.append(`chaser${chaserNum}_issued`, formattedDate);
+      }
       
       const response = await fetch(`${BASE_URL}/api/outreach/${taskId}/chasers`, {
         method: 'POST',
@@ -801,16 +807,30 @@ function ReviewerPanel() {
       
       if (response.ok) {
         await fetchTaskData();
-        alert(`Chaser ${chaserNum} date saved successfully.`);
+        if (!silent) {
+          alert(`${chaserNum === 'NTC' ? 'NTC' : `Chaser ${chaserNum}`} date saved successfully.`);
+        }
       } else {
         const errorData = await response.text();
-        alert(`Failed to save chaser date: ${errorData}`);
+        if (!silent) {
+          alert(`Failed to save ${chaserNum === 'NTC' ? 'NTC' : 'chaser'} date: ${errorData}`);
+        }
       }
     } catch (err) {
       console.error('Error saving chaser date:', err);
-      alert('Error saving chaser date. Please try again.');
+      if (!silent) {
+        alert('Error saving chaser date. Please try again.');
+      }
     } finally {
       setSaving(false);
+    }
+  };
+
+  // Auto-save chaser date on blur (when user finishes entering date)
+  const handleChaserDateBlur = async (chaserNum, date) => {
+    const formattedDate = validateAndFormatDate(date);
+    if (formattedDate) {
+      await handleSaveChaser(chaserNum, date, true); // silent = true (no alert)
     }
   };
 
@@ -1344,7 +1364,7 @@ function ReviewerPanel() {
       // Initialize decision data
       setDecisionData({
         outcome: taskData?.review?.outcome || '',
-        rationale: taskData?.review?.rationale || '',
+        rationale: taskData?.review?.decision_rationale || '', // Backend saves to decision_rationale
         financial_crime_reason: taskData?.review?.financial_crime_reason || taskData?.review?.fincrime_reason || '',
         sme_query: taskData?.review?.sme_query || '',
         case_summary: taskData?.review?.case_summary || ''
@@ -1440,6 +1460,58 @@ function ReviewerPanel() {
   );
 
   const renderCustomerDetailsSection = () => {
+    // For entity reviews, show business entity information
+    const isEntityReview = review.task_type === 'entity';
+    
+    if (isEntityReview) {
+      // Simplified entity details view
+      const entityFields = [
+        { label: 'Business Name', value: review.business_name || review.customer_name },
+        { label: 'Entity Type', value: review.entity_type },
+        { label: 'Registration Number', value: review.registration_number },
+        { label: 'Incorporation Date', value: review.incorporation_date },
+        { label: 'Country', value: review.country },
+        { label: 'Address', value: review.address },
+        { label: 'Industry', value: review.industry },
+        { label: 'Nature of Business', value: review.nature_of_business },
+        { label: 'Annual Revenue', value: review.annual_revenue },
+        { label: 'Source of Funds', value: review.source_of_funds },
+      ];
+      
+      return (
+        <div className="table-responsive">
+          <table className="table table-sm">
+            <thead className="table-light">
+              <tr>
+                <th style={{width: '40%'}}>Field</th>
+                <th style={{width: '20%'}}>Source</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {entityFields
+                .filter(field => field.value && field.value !== '' && field.value !== '—')
+                .map(field => (
+                  <tr key={field.label}>
+                    <td className="fw-semibold">{field.label}</td>
+                    <td>Original</td>
+                    <td>
+                      <input 
+                        type="text" 
+                        className="form-control form-control-sm" 
+                        value={field.value || ''} 
+                        readOnly 
+                      />
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+    
+    // Original complex rendering for non-entity reviews
     // Define the customer detail fields using actual field names from database
     const fields = [
       { label: 'Entity Type', original: 'entity_type_original', enriched: 'entity_type_enriched' },
@@ -1460,19 +1532,12 @@ function ReviewerPanel() {
       { label: 'Expected Annual Revenue', original: 'expected_annual_revenue' },
       { label: 'Expected Money into Account', original: 'expected_money_in_account' },
       { label: 'Expected Revenue Sources', original: 'expected_revenue_sources' },
-      { label: 'Expected Transaction Jurisdictions', original: 'expected_txn_jurisdictions' },
-      { label: 'Linked Party Full Name 1', original: 'lp1_full_name_original', enriched: 'lp1_full_name_enriched' },
-      { label: 'Linked Party Role 1', original: 'lp1_role_original', enriched: 'lp1_role_enriched' },
-      { label: 'Linked Party DoB 1', original: 'lp1_dob_original', enriched: 'lp1_dob_enriched' },
-      { label: 'Linked Party Nationality 1', original: 'lp1_nationality_original', enriched: 'lp1_nationality_enriched' },
-      { label: 'Linked Party Country of Residence 1', original: 'lp1_country_residence_original', enriched: 'lp1_country_residence_enriched' },
-      { label: 'Linked Party Address 1', original: 'lp1_correspondence_address_original', enriched: 'lp1_correspondence_address_enriched' },
-      { label: 'Linked Party Appointed On 1', original: 'lp1_appointed_on_original', enriched: 'lp1_appointed_on_enriched' }
+      { label: 'Expected Transaction Jurisdictions', original: 'expected_txn_jurisdictions' }
     ];
 
     // Also get all other customer-related fields from review/match that aren't in the hardcoded list
     const allCustomerFields = {};
-    const excludeKeys = ['task_id', 'match_id', 'id', 'total_score', 'match_score', 
+    const excludeKeys = ['task_id', 'match_id', 'id', 'customer_id', 'total_score', 'match_score', 
                          'match_explanation', 'created_at', 'updated_at', 'watchlist_id',
                          'status', 'outcome', 'rationale', 'assigned_to', 'completed_by',
                          'qc_assigned_to', 'qc_outcome', 'qc_comment', 'qc_rework_required'];
@@ -1497,82 +1562,39 @@ function ReviewerPanel() {
 
     return (
       <div className="table-responsive">
-        <table className="table table-sm">
+        <table className="table table-sm table-borderless" style={{fontSize: '0.875rem'}}>
           <thead className="table-light">
             <tr>
-              <th style={{width: '40%'}}>Field</th>
-              <th style={{width: '20%'}}>Source</th>
-              <th>Value</th>
+              <th style={{width: '35%', padding: '0.25rem 0.5rem'}}>Field</th>
+              <th style={{padding: '0.25rem 0.5rem'}}>Value</th>
             </tr>
           </thead>
           <tbody>
             {fields
               .filter(field => {
-                // Check visibility for both original and enriched fields
-                const originalVisible = isFieldVisible(field.original);
-                const enrichedVisible = field.enriched ? isFieldVisible(field.enriched) : true;
-                return originalVisible || enrichedVisible;
+                // Only check visibility for original field
+                return isFieldVisible(field.original);
               })
               .map(field => {
                 const originalValue = review[field.original];
-                const enrichedValue = field.enriched ? review[field.enriched] : null;
-                const showEnriched = enrichedValue && enrichedValue !== '' && enrichedValue !== 'None' && enrichedValue !== 'null';
-                const originalVisible = isFieldVisible(field.original);
-                const enrichedVisible = field.enriched ? isFieldVisible(field.enriched) : true;
-                
-                // Skip if neither original nor enriched is visible
-                if (!originalVisible && !enrichedVisible) {
-                  return null;
-                }
                 
                 return (
-                  <React.Fragment key={field.label}>
-                    {originalVisible && (
-                      <tr>
-                        {showEnriched && enrichedVisible && <td rowSpan="2">{field.label}</td>}
-                        {(!showEnriched || !enrichedVisible) && <td>{field.label}</td>}
-                        <td>Original</td>
-                        <td>
-                          <input 
-                            type="text" 
-                            className="form-control form-control-sm" 
-                            value={originalValue || ''} 
-                            readOnly 
-                          />
-                        </td>
-                      </tr>
-                    )}
-                    {showEnriched && enrichedVisible && (
-                      <tr>
-                        {!originalVisible && <td>{field.label}</td>}
-                        <td>Enriched</td>
-                        <td>
-                          <input 
-                            type="text" 
-                            className="form-control form-control-sm" 
-                            value={enrichedValue} 
-                            readOnly 
-                          />
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
+                  <tr key={field.label} style={{lineHeight: '1.2'}}>
+                    <td style={{padding: '0.25rem 0.5rem', fontWeight: '500'}}>{field.label}</td>
+                    <td style={{padding: '0.25rem 0.5rem', fontSize: '0.875rem'}}>
+                      {originalValue || '—'}
+                    </td>
+                  </tr>
                 );
               })}
             {/* Display additional customer fields that aren't in the hardcoded list */}
             {Object.entries(allCustomerFields)
               .filter(([key]) => isFieldVisible(key))
               .map(([key, value]) => (
-                <tr key={key}>
-                  <td>{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</td>
-                  <td>Source</td>
-                  <td>
-                    <input 
-                      type="text" 
-                      className="form-control form-control-sm" 
-                      value={value || ''} 
-                      readOnly 
-                    />
+                <tr key={key} style={{lineHeight: '1.2'}}>
+                  <td style={{padding: '0.25rem 0.5rem', fontWeight: '500'}}>{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</td>
+                  <td style={{padding: '0.25rem 0.5rem', fontSize: '0.875rem'}}>
+                    {value || '—'}
                   </td>
                 </tr>
               ))}
@@ -1608,58 +1630,6 @@ function ReviewerPanel() {
         <div className="row g-4">
           {/* Main Content */}
           <div className="col-lg-9 case-main">
-            {/* Case Summary */}
-            <div className="card shadow-sm mb-4">
-              <div className="card-body">
-                <div className="d-flex justify-content-between align-items-center mb-3">
-                  <h2 className="h6 mb-0">Case Summary</h2>
-                  <button 
-                    onClick={handleExportPdf}
-                    disabled={exportingPdf || !pdfLibsReady}
-                    className="btn btn-sm btn-outline-primary"
-                    title={!pdfLibsReady ? 'PDF libraries loading...' : 'Export review as PDF'}
-                  >
-                    {exportingPdf ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                        Building PDF…
-                      </>
-                    ) : (
-                      <>
-                        <i className="bi bi-file-earmark-pdf"></i> Export PDF
-                      </>
-                    )}
-                  </button>
-                </div>
-                <table className="table table-sm table-borderless mb-0">
-                  <tbody>
-                    {renderField('Task ID', taskId)}
-                    {renderField('Customer ID', review.customer_id || '—')}
-                    {renderField('Task Type', review.hit_type || review.record_type)}
-                    <tr>
-                      <td className="fw-semibold">Status</td>
-                      <td>
-                        <span className={`badge bg-${statusClass}`}>{status}</span>
-                      </td>
-                    </tr>
-                    {renderField('Assigned To', (() => {
-                      const assignedToId = review.assigned_to;
-                      if (!assignedToId) return 'Unassigned';
-                      const userName = data?.users?.[assignedToId.toString()];
-                      return userName || review.assigned_to_name || `User ${assignedToId}`;
-                    })())}
-                    {renderField('Current Risk Rating', review.currentriskrating)}
-                    {renderField('Match Score', review.total_score)}
-                    {renderField('Last Updated', review.updated_at ? new Date(review.updated_at).toLocaleString() : '—')}
-                        {renderField('Date Completed', (() => {
-                          const dateStr = review.date_completed;
-                          return dateStr ? new Date(dateStr).toLocaleString() : '—';
-                        })())}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
             {/* Customer Details */}
             <div className="card shadow-sm mb-4">
               <div className="card-header d-flex justify-content-between align-items-center">
@@ -1951,7 +1921,7 @@ function ReviewerPanel() {
                           type="checkbox" 
                           className="form-check-input" 
                           id="outreach_complete"
-                          defaultChecked={review.outreach_complete}
+                          checked={review.outreach_complete || false}
                           onChange={handleOutreachCompleteChange}
                           disabled={saving || !canEditTasks}
                         />
@@ -1981,117 +1951,81 @@ function ReviewerPanel() {
                           <tbody>
                             <tr>
                               <td>1</td>
-                              <td>{review.Chaser1DueDate || '—'}</td>
+                              <td>{review.Chaser1DueDate ? new Date(review.Chaser1DueDate).toLocaleDateString('en-GB') : '—'}</td>
                               <td>
                                 {review.Chaser1IssuedDate ? (
                                   <input type="text" className="form-control form-control-sm" value={review.Chaser1IssuedDate} readOnly />
                                 ) : (
-                                  <div className="input-group input-group-sm">
-                                    <input 
-                                      type="text" 
-                                      className="form-control form-control-sm" 
-                                      placeholder="DD/MM/YYYY"
-                                      value={chaser1Date}
-                                      onChange={(e) => handleDateInput(e, setChaser1Date)}
-                                      maxLength="10"
-                                      disabled={saving || !canEditTasks}
-                                    />
-                                    <button 
-                                      className="btn btn-primary btn-sm" 
-                                      type="button"
-                                      onClick={() => handleSaveChaser(1, chaser1Date)}
-                                      disabled={saving || !chaser1Date || !canEditTasks}
-                                    >
-                                      Save
-                                    </button>
-                                  </div>
+                                  <input 
+                                    type="text" 
+                                    className="form-control form-control-sm" 
+                                    placeholder="DD/MM/YYYY (auto-saves)"
+                                    value={chaser1Date}
+                                    onChange={(e) => handleDateInput(e, setChaser1Date)}
+                                    onBlur={() => handleChaserDateBlur(1, chaser1Date)}
+                                    maxLength="10"
+                                    disabled={saving || !canEditTasks}
+                                  />
                                 )}
                               </td>
                             </tr>
                             <tr>
                               <td>2</td>
-                              <td>{review.Chaser2DueDate || '—'}</td>
+                              <td>{review.Chaser2DueDate ? new Date(review.Chaser2DueDate).toLocaleDateString('en-GB') : '—'}</td>
                               <td>
                                 {review.Chaser2IssuedDate ? (
                                   <input type="text" className="form-control form-control-sm" value={review.Chaser2IssuedDate} readOnly />
                                 ) : (
-                                  <div className="input-group input-group-sm">
-                                    <input 
-                                      type="text" 
-                                      className="form-control form-control-sm" 
-                                      placeholder="DD/MM/YYYY"
-                                      value={chaser2Date}
-                                      onChange={(e) => handleDateInput(e, setChaser2Date)}
-                                      maxLength="10"
-                                      disabled={!review.Chaser1IssuedDate || saving || !canEditTasks}
-                                    />
-                                    <button 
-                                      className="btn btn-primary btn-sm" 
-                                      type="button"
-                                      onClick={() => handleSaveChaser(2, chaser2Date)}
-                                      disabled={!review.Chaser1IssuedDate || saving || !chaser2Date}
-                                    >
-                                      Save
-                                    </button>
-                                  </div>
+                                  <input 
+                                    type="text" 
+                                    className="form-control form-control-sm" 
+                                    placeholder="DD/MM/YYYY (auto-saves)"
+                                    value={chaser2Date}
+                                    onChange={(e) => handleDateInput(e, setChaser2Date)}
+                                    onBlur={() => handleChaserDateBlur(2, chaser2Date)}
+                                    maxLength="10"
+                                    disabled={!review.Chaser1IssuedDate || saving || !canEditTasks}
+                                  />
                                 )}
                               </td>
                             </tr>
                             <tr>
                               <td>3</td>
-                              <td>{review.Chaser3DueDate || '—'}</td>
+                              <td>{review.Chaser3DueDate ? new Date(review.Chaser3DueDate).toLocaleDateString('en-GB') : '—'}</td>
                               <td>
                                 {review.Chaser3IssuedDate ? (
                                   <input type="text" className="form-control form-control-sm" value={review.Chaser3IssuedDate} readOnly />
                                 ) : (
-                                  <div className="input-group input-group-sm">
-                                    <input 
-                                      type="text" 
-                                      className="form-control form-control-sm" 
-                                      placeholder="DD/MM/YYYY"
-                                      value={chaser3Date}
-                                      onChange={(e) => handleDateInput(e, setChaser3Date)}
-                                      maxLength="10"
-                                      disabled={!review.Chaser2IssuedDate || saving}
-                                    />
-                                    <button 
-                                      className="btn btn-primary btn-sm" 
-                                      type="button"
-                                      onClick={() => handleSaveChaser(3, chaser3Date)}
-                                      disabled={!review.Chaser2IssuedDate || saving || !chaser3Date}
-                                    >
-                                      Save
-                                    </button>
-                                  </div>
+                                  <input 
+                                    type="text" 
+                                    className="form-control form-control-sm" 
+                                    placeholder="DD/MM/YYYY (auto-saves)"
+                                    value={chaser3Date}
+                                    onChange={(e) => handleDateInput(e, setChaser3Date)}
+                                    onBlur={() => handleChaserDateBlur(3, chaser3Date)}
+                                    maxLength="10"
+                                    disabled={!review.Chaser2IssuedDate || saving}
+                                  />
                                 )}
                               </td>
                             </tr>
                             <tr>
                               <td>NTC</td>
-                              <td>{review.NTCDueDate || '—'}</td>
+                              <td>{review.NTCDueDate ? new Date(review.NTCDueDate).toLocaleDateString('en-GB') : '—'}</td>
                               <td>
                                 {review.NTCIssuedDate ? (
                                   <input type="text" className="form-control form-control-sm" value={review.NTCIssuedDate} readOnly />
                                 ) : (
-                                  <div className="input-group input-group-sm">
-                                    <input 
-                                      type="text" 
-                                      className="form-control form-control-sm" 
-                                      placeholder="DD/MM/YYYY"
-                                      value={ntcDate}
-                                      onChange={(e) => handleDateInput(e, setNtcDate)}
-                                      maxLength="10"
-                                      disabled={!review.Chaser3IssuedDate || saving}
-                                    />
-                                    <button 
-                                      className="btn btn-primary btn-sm" 
-                                      type="button"
-                                      onClick={handleSaveNTC}
-                                      disabled={!review.Chaser3IssuedDate || saving || !ntcDate}
-                                    >
-                                      Save
-                                    </button>
-                                  </div>
+                                  <input 
+                                    type="text" 
+                                    className="form-control form-control-sm" 
+                                    placeholder="DD/MM/YYYY (auto-saves)"
+                                    value={ntcDate}
+                                    onChange={(e) => handleDateInput(e, setNtcDate)}
+                                    onBlur={() => handleChaserDateBlur('NTC', ntcDate)}
+                                    maxLength="10"
+                                    disabled={!review.Chaser3IssuedDate || saving}
+                                  />
                                 )}
                               </td>
                             </tr>
@@ -2104,7 +2038,7 @@ function ReviewerPanel() {
                           type="checkbox" 
                           className="form-check-input" 
                           id="outreach_complete_chaser"
-                          defaultChecked={review.outreach_complete}
+                          checked={review.outreach_complete || false}
                           onChange={handleOutreachCompleteChange}
                           disabled={saving || !canEditTasks}
                         />
@@ -2210,7 +2144,7 @@ function ReviewerPanel() {
                       className="form-control" 
                       rows="12"
                       style={{ minHeight: '200px', height: '200px' }}
-                      defaultValue={review.rationale || ''}
+                      defaultValue={review.decision_rationale || ''}
                       disabled={saving || isLocked()}
                     />
                   </div>
@@ -2648,7 +2582,55 @@ function ReviewerPanel() {
 
           {/* Sidebar */}
           <div className="col-lg-3">
-            {/* Empty for now - can add other sidebar widgets here */}
+            {/* Case Summary Box */}
+            <div className="card shadow-sm mb-4" style={{position: 'sticky', top: '20px'}}>
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h5 className="mb-0">Case Summary</h5>
+                  <button 
+                    onClick={handleExportPdf}
+                    disabled={exportingPdf || !pdfLibsReady}
+                    className="btn btn-sm btn-outline-primary"
+                    title={!pdfLibsReady ? 'PDF libraries loading...' : 'Export review as PDF'}
+                  >
+                    {exportingPdf ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-1"></span>
+                        PDF…
+                      </>
+                    ) : (
+                      <i className="bi bi-file-earmark-pdf"></i>
+                    )}
+                  </button>
+                </div>
+                <table className="table table-sm table-borderless mb-0" style={{fontSize: '0.85rem'}}>
+                  <tbody>
+                    {renderField('Task ID', taskId)}
+                    {renderField('Customer ID', review.customer_id || '—')}
+                    {renderField('Task Type', review.task_type || review.hit_type || '—')}
+                    <tr>
+                      <td className="fw-semibold" style={{width: '45%'}}>Status</td>
+                      <td>
+                        <span className={`badge bg-${statusClass}`} style={{fontSize: '0.75rem'}}>{status}</span>
+                      </td>
+                    </tr>
+                    {renderField('Assigned To', (() => {
+                      const assignedToId = review.assigned_to;
+                      if (!assignedToId) return 'Unassigned';
+                      const userName = data?.users?.[assignedToId.toString()];
+                      return userName || review.assigned_to_name || `User ${assignedToId}`;
+                    })())}
+                    {renderField('Current Risk Rating', review.currentriskrating)}
+                    {renderField('Match Score', review.total_score)}
+                    {renderField('Last Updated', review.updated_at ? new Date(review.updated_at).toLocaleString() : '—')}
+                    {renderField('Date Completed', (() => {
+                      const dateStr = review.date_completed;
+                      return dateStr ? new Date(dateStr).toLocaleString() : '—';
+                    })())}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>
